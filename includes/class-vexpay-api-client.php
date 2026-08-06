@@ -66,23 +66,23 @@ class VEXPay_API_Client {
 	}
 
 	/**
-	 * POST /v1/payments/c2p/request
+	 * POST /v1/payments/debit/otp — request débito inmediato bank OTP (VES).
 	 *
-	 * @param array $body Body.
+	 * @param array $body Body (banco, monto, telefono, cedula).
 	 * @return array|WP_Error
 	 */
-	public function c2p_request( array $body ) {
-		return $this->request( 'POST', '/v1/payments/c2p/request', $body );
+	public function debit_otp( array $body ) {
+		return $this->request( 'POST', '/v1/payments/debit/otp', $body );
 	}
 
 	/**
-	 * POST /v1/payments/c2p
+	 * POST /v1/payments/debit — execute débito inmediato.
 	 *
-	 * @param array $body Body.
+	 * @param array $body Body (banco, monto, telefono, cedula, nombre, otp, concepto, externalRef?).
 	 * @return array|WP_Error
 	 */
-	public function c2p_execute( array $body ) {
-		return $this->request( 'POST', '/v1/payments/c2p', $body );
+	public function debit_execute( array $body ) {
+		return $this->request( 'POST', '/v1/payments/debit', $body );
 	}
 
 	/**

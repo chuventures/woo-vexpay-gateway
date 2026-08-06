@@ -231,8 +231,154 @@
 		bindBankPicker($(document.body));
 	}
 
+	function bindOtpPin(root) {
+		var pin = (root || document).querySelector('[data-vexpay-otp-pin]');
+		if (!pin || pin.getAttribute('data-vexpay-bound') === '1') {
+			return;
+		}
+		pin.setAttribute('data-vexpay-bound', '1');
+
+		var form = pin.closest('form');
+		var hidden = form ? form.querySelector('#vexpay_token') : null;
+		var cells = Array.prototype.slice.call(pin.querySelectorAll('.vexpay-otp-cell'));
+		if (!hidden || !cells.length) {
+			return;
+		}
+
+		function sync() {
+			var value = '';
+			for (var i = 0; i < cells.length; i += 1) {
+				var digit = String(cells[i].value || '').replace(/\D/g, '');
+				if (!digit) {
+					break;
+				}
+				value += digit.charAt(0);
+			}
+			hidden.value = value;
+			pin.classList.toggle('is-complete', value.length >= 6);
+			pin.classList.remove('is-invalid');
+		}
+
+		function focusAt(index) {
+			var cell = cells[Math.max(0, Math.min(index, cells.length - 1))];
+			if (cell) {
+				cell.focus();
+				cell.select();
+			}
+		}
+
+		function fillFrom(startIndex, digits) {
+			var i = startIndex;
+			var d = 0;
+			while (i < cells.length && d < digits.length) {
+				cells[i].value = digits[d];
+				cells[i].classList.toggle('is-filled', true);
+				i += 1;
+				d += 1;
+			}
+			for (; i < cells.length; i += 1) {
+				cells[i].value = '';
+				cells[i].classList.remove('is-filled');
+			}
+			sync();
+			if (d >= cells.length) {
+				focusAt(cells.length - 1);
+			} else {
+				focusAt(startIndex + d);
+			}
+		}
+
+		cells.forEach(function (cell, index) {
+			cell.addEventListener('input', function () {
+				var digits = String(cell.value || '').replace(/\D/g, '');
+				if (!digits) {
+					cell.value = '';
+					cell.classList.remove('is-filled');
+					sync();
+					return;
+				}
+				if (digits.length > 1) {
+					fillFrom(index, digits.slice(0, cells.length - index));
+					return;
+				}
+				cell.value = digits.charAt(0);
+				cell.classList.add('is-filled');
+				sync();
+				if (index < cells.length - 1) {
+					focusAt(index + 1);
+				}
+			});
+
+			cell.addEventListener('keydown', function (event) {
+				if (event.key === 'Backspace') {
+					if (cell.value) {
+						cell.value = '';
+						cell.classList.remove('is-filled');
+						sync();
+						event.preventDefault();
+						return;
+					}
+					if (index > 0) {
+						event.preventDefault();
+						cells[index - 1].value = '';
+						cells[index - 1].classList.remove('is-filled');
+						sync();
+						focusAt(index - 1);
+					}
+					return;
+				}
+				if (event.key === 'ArrowLeft' && index > 0) {
+					event.preventDefault();
+					focusAt(index - 1);
+					return;
+				}
+				if (event.key === 'ArrowRight' && index < cells.length - 1) {
+					event.preventDefault();
+					focusAt(index + 1);
+				}
+			});
+
+			cell.addEventListener('paste', function (event) {
+				var text = (event.clipboardData || window.clipboardData).getData('text') || '';
+				var digits = text.replace(/\D/g, '');
+				if (!digits) {
+					return;
+				}
+				event.preventDefault();
+				fillFrom(0, digits.slice(0, cells.length));
+			});
+
+			cell.addEventListener('focus', function () {
+				cell.select();
+				pin.classList.add('is-focused');
+			});
+
+			cell.addEventListener('blur', function () {
+				window.setTimeout(function () {
+					if (!pin.contains(document.activeElement)) {
+						pin.classList.remove('is-focused');
+					}
+				}, 0);
+			});
+		});
+
+		if (form) {
+			form.addEventListener('submit', function (event) {
+				sync();
+				if (!/^\d{6,8}$/.test(hidden.value)) {
+					event.preventDefault();
+					pin.classList.add('is-invalid');
+					focusAt(Math.min(hidden.value.length, cells.length - 1));
+				}
+			});
+		}
+
+		focusAt(0);
+	}
+
 	$(function () {
 		bindSplitFields();
+		bindOtpPin(document);
 		$(document.body).on('updated_checkout', bindSplitFields);
 	});
 })(jQuery);

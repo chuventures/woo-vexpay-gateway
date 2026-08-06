@@ -19,8 +19,14 @@ class VEXPay_Helpers {
 	public const META_DEBTOR_PHONE  = '_vexpay_debtor_phone';
 	public const META_DEBTOR_BANK   = '_vexpay_debtor_bank';
 	public const META_USD_AMOUNT    = '_vexpay_usd_amount';
+	public const META_BCV_RATE      = '_vexpay_bcv_rate';
+	public const META_VES_AMOUNT    = '_vexpay_ves_amount';
 	public const META_STATUS        = '_vexpay_status';
 	public const META_OTP_REQUESTED = '_vexpay_otp_requested';
+	public const META_OTP_RESEND_AT = '_vexpay_otp_resend_at';
+
+	/** Minimum seconds between OTP re-requests. */
+	public const OTP_RESEND_COOLDOWN = 45;
 
 	/** User meta / WC session key for remembered C2P payer details. */
 	public const PROFILE_META_KEY = '_vexpay_debtor_profile';
@@ -419,6 +425,7 @@ class VEXPay_Helpers {
 	public static function map_payment_status( string $status ): string {
 		switch ( strtoupper( $status ) ) {
 			case 'COMPLETED':
+			case 'ACCP':
 				return 'complete';
 			case 'FAILED':
 			case 'CANCELED':
@@ -426,10 +433,87 @@ class VEXPay_Helpers {
 			case 'REVERSED':
 				return 'refund';
 			case 'PENDING':
+			case 'AC00':
 				return 'hold';
 			default:
 				return 'ignore';
 		}
+	}
+
+	/**
+	 * Map a débito inmediato execute wire payload into a status-bearing receipt.
+	 *
+	 * @param array $result API response.
+	 * @return array
+	 */
+	public static function normalize_debit_execute_result( array $result ): array {
+		if ( empty( $result['status'] ) && ! empty( $result['code'] ) ) {
+			$code = strtoupper( (string) $result['code'] );
+			if ( 'ACCP' === $code ) {
+				$result['status'] = 'COMPLETED';
+			} elseif ( 'AC00' === $code ) {
+				$result['status'] = 'PENDING';
+			} else {
+				$result['status'] = 'FAILED';
+				if ( empty( $result['failureCode'] ) ) {
+					$result['failureCode'] = $code;
+				}
+			}
+		}
+
+		if ( empty( $result['bankReference'] ) ) {
+			$ref = '';
+			if ( ! empty( $result['reference'] ) ) {
+				$ref = (string) $result['reference'];
+			} elseif ( ! empty( $result['id'] ) ) {
+				$ref = (string) $result['id'];
+			} elseif ( ! empty( $result['Id'] ) ) {
+				$ref = (string) $result['Id'];
+			}
+			if ( '' !== $ref ) {
+				$result['bankReference'] = $ref;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Payer display name for débito (max 20 chars).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	public static function payer_nombre_from_order( WC_Order $order ): string {
+		$name = trim( $order->get_formatted_billing_full_name() );
+		if ( '' === $name ) {
+			$name = trim( $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() );
+		}
+		if ( '' === $name ) {
+			$name = 'Cliente';
+		}
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( $name, 0, 20 );
+		}
+		return substr( $name, 0, 20 );
+	}
+
+	/**
+	 * Statement concept for débito (max 30 chars).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	public static function debit_concepto_for_order( WC_Order $order ): string {
+		$concepto = sprintf(
+			/* translators: %s: order number */
+			__( 'Order #%s', 'woo-vexpay-gateway' ),
+			$order->get_order_number()
+		);
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( $concepto, 0, 30 );
+		}
+		return substr( $concepto, 0, 30 );
 	}
 
 	/**
