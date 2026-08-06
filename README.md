@@ -30,8 +30,7 @@ In WooCommerce → Settings → Payments → VEXPay:
 | Test mode    | Yes                                                                    |
 | Test API key | `dev-local-api-key-test`                                               |
 
-
-
+Click **Test connection** — expect a success message with bank count and BCV rate. Then save settings.
 
 ## C2P flow
 
