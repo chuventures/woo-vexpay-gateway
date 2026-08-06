@@ -148,6 +148,22 @@ class VEXPay_Helpers {
 	}
 
 	/**
+	 * Human-readable success message after a connection probe.
+	 *
+	 * @param int   $bank_count Banks returned.
+	 * @param float $bcv_rate   BCV rate from quote.
+	 * @return string
+	 */
+	public static function format_connection_success( int $bank_count, float $bcv_rate ): string {
+		return sprintf(
+			/* translators: 1: bank count 2: BCV rate */
+			__( 'Connected to VEXPay. API key is valid. %1$d banks available; BCV rate %2$s.', 'woo-vexpay-gateway' ),
+			$bank_count,
+			number_format( $bcv_rate, 4, '.', '' )
+		);
+	}
+
+	/**
 	 * Read a checkout field from classic POST or Blocks payment_data.
 	 *
 	 * @param string $key Field key.

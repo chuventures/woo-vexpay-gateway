@@ -1,0 +1,24 @@
+.vexpay-connection-result {
+	margin-top: 0.75em;
+	padding: 0.6em 0.85em;
+	border-left: 4px solid transparent;
+	max-width: 40rem;
+	display: none;
+}
+
+.vexpay-connection-result.vexpay-connection-ok,
+.vexpay-connection-result.vexpay-connection-error {
+	display: block;
+}
+
+.vexpay-connection-result.vexpay-connection-ok {
+	background: #edfaef;
+	border-left-color: #00a32a;
+	color: #1e1e1e;
+}
+
+.vexpay-connection-result.vexpay-connection-error {
+	background: #fcf0f1;
+	border-left-color: #d63638;
+	color: #1e1e1e;
+}

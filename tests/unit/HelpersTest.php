@@ -63,4 +63,11 @@ final class HelpersTest extends TestCase {
 	public function test_external_ref(): void {
 		$this->assertSame( 'wc_order_42', VEXPay_Helpers::external_ref_for_order( 42 ) );
 	}
+
+	public function test_format_connection_success(): void {
+		$msg = VEXPay_Helpers::format_connection_success( 12, 36.5 );
+		$this->assertStringContainsString( '12', $msg );
+		$this->assertStringContainsString( '36.5000', $msg );
+		$this->assertStringContainsString( 'VEXPay', $msg );
+	}
 }

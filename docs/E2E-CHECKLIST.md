@@ -8,6 +8,8 @@ Prerequisites: `npx wp-env start` in this repo; `pnpm dev` in `ve-banking` (API 
 - [ ] WooCommerce → Settings → Payments → VEXPay → Enable
 - [ ] API base URL: `http://host.docker.internal:3010` (Docker) or `http://localhost:3010`
 - [ ] Test mode ON; Test API key: `dev-local-api-key-test`
+- [ ] Click **Test connection** → success message with bank count + BCV rate
+- [ ] Wrong key → unauthorized error message
 - [ ] Save settings; confirm WooCommerce log or settings show webhook endpoint ID / secret filled
 - [ ] If webhook URL is not reachable from the API host, register manually in VEXPay dashboard pointing at `http://…/wc-api/vexpay_webhook` (or use a tunnel such as ngrok)
 

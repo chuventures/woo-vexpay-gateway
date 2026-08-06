@@ -17,6 +17,7 @@ VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank O
 = Features =
 
 * C2P checkout: cédula/RIF, phone, bank, then OTP confirmation
+* **Test connection** button — verify API key and reachability from the shop
 * Live and Test API keys (VEXPay twin environments)
 * Signed webhooks for payment status reconciliation
 * Full C2P reverse mapped to WooCommerce refunds
@@ -37,7 +38,7 @@ You configure your own API keys from the VEXPay dashboard. This plugin does not 
 1. Install and activate WooCommerce.
 2. Install and activate this plugin.
 3. Go to **WooCommerce → Settings → Payments → VEXPay**.
-4. Enter your API base URL, Live and/or Test API keys, and enable the gateway.
+4. Enter your API base URL, Live and/or Test API keys, click **Test connection**, then enable the gateway.
 5. Save settings (the plugin registers a webhook endpoint automatically when possible).
 6. Place a test order with your Test API key.
 

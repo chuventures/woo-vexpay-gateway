@@ -35,6 +35,9 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
 		add_action( 'woocommerce_api_vexpay_otp', array( $this, 'handle_otp_submit' ) );
 		add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_otp_notice' ) );
+
+		add_action( 'wp_ajax_vexpay_test_connection', array( $this, 'ajax_test_connection' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 	}
 
 	/**
@@ -106,6 +109,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'description' => __( 'x-api-key for the Test twin.', 'woo-vexpay-gateway' ),
 				'default'     => '',
 			),
+			'connection_test'  => array(
+				'title'       => __( 'Connection', 'woo-vexpay-gateway' ),
+				'type'        => 'vexpay_connection_test',
+				'description' => __( 'Verify that this WordPress site can reach VEXPay with the API key for the mode selected above (Test or Live). Paste the key, then click Test — you can test before saving.', 'woo-vexpay-gateway' ),
+			),
 			'webhook_secret'   => array(
 				'title'       => __( 'Webhook secret', 'woo-vexpay-gateway' ),
 				'type'        => 'password',
@@ -166,6 +174,160 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 */
 	public function get_webhook_url(): string {
 		return WC()->api_request_url( 'vexpay_webhook' );
+	}
+
+	/**
+	 * Custom settings row: Test connection button.
+	 *
+	 * @param string $key  Field key.
+	 * @param array  $data Field config.
+	 * @return string
+	 */
+	public function generate_vexpay_connection_test_html( $key, $data ) {
+		$field_key = $this->get_field_key( $key );
+		$data      = wp_parse_args(
+			$data,
+			array(
+				'title'       => '',
+				'description' => '',
+			)
+		);
+
+		ob_start();
+		?>
+		<tr valign="top">
+			<th scope="row" class="titledesc">
+				<label><?php echo esc_html( $data['title'] ); ?></label>
+			</th>
+			<td class="forminp">
+				<fieldset>
+					<button type="button" class="button button-secondary" id="vexpay-test-connection">
+						<?php esc_html_e( 'Test connection', 'woo-vexpay-gateway' ); ?>
+					</button>
+					<span class="spinner" id="vexpay-test-connection-spinner" style="float:none;margin:0 8px;visibility:hidden;"></span>
+					<p class="description"><?php echo esc_html( $data['description'] ); ?></p>
+					<div id="vexpay-test-connection-result" class="vexpay-connection-result" aria-live="polite"></div>
+				</fieldset>
+			</td>
+		</tr>
+		<?php
+		unset( $field_key );
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Admin assets on the VEXPay gateway settings screen.
+	 *
+	 * @param string $hook Hook suffix.
+	 */
+	public function enqueue_admin_assets( $hook ): void {
+		if ( 'woocommerce_page_wc-settings' !== $hook ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+		if ( $this->id !== $section ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'vexpay-admin',
+			VEXPAY_GATEWAY_URL . 'assets/css/admin.css',
+			array(),
+			VEXPAY_GATEWAY_VERSION
+		);
+
+		wp_enqueue_script(
+			'vexpay-admin',
+			VEXPAY_GATEWAY_URL . 'assets/js/admin.js',
+			array( 'jquery' ),
+			VEXPAY_GATEWAY_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'vexpay-admin',
+			'vexpayAdmin',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'vexpay_test_connection' ),
+				'i18n'    => array(
+					'testing' => __( 'Testing…', 'woo-vexpay-gateway' ),
+					'failed'  => __( 'Connection failed.', 'woo-vexpay-gateway' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * AJAX: probe VEXPay with the key for the selected mode.
+	 */
+	public function ajax_test_connection(): void {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'You do not have permission to test the connection.', 'woo-vexpay-gateway' ) ),
+				403
+			);
+		}
+
+		check_ajax_referer( 'vexpay_test_connection', 'nonce' );
+
+		$base = isset( $_POST['api_base_url'] ) ? esc_url_raw( wp_unslash( $_POST['api_base_url'] ) ) : '';
+		if ( '' === $base ) {
+			$base = (string) $this->get_option( 'api_base_url', 'https://api.banking.chuventures.com' );
+		}
+		$base = untrailingslashit( $base );
+
+		$testmode = isset( $_POST['testmode'] ) && 'yes' === sanitize_text_field( wp_unslash( $_POST['testmode'] ) );
+
+		$posted_live = isset( $_POST['live_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['live_api_key'] ) ) : '';
+		$posted_test = isset( $_POST['test_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['test_api_key'] ) ) : '';
+
+		// Password inputs are empty unless retyped — fall back to saved keys.
+		$live_key = '' !== $posted_live ? $posted_live : (string) $this->get_option( 'live_api_key', '' );
+		$test_key = '' !== $posted_test ? $posted_test : (string) $this->get_option( 'test_api_key', '' );
+		$api_key  = $testmode ? $test_key : $live_key;
+
+		if ( '' === $api_key ) {
+			wp_send_json_error(
+				array(
+					'message' => $testmode
+						? __( 'Enter a Test API key (or save one first), then try again.', 'woo-vexpay-gateway' )
+						: __( 'Enter a Live API key (or save one first), then try again.', 'woo-vexpay-gateway' ),
+				)
+			);
+		}
+
+		$client = new VEXPay_API_Client( $base, $api_key, 15 );
+		$result = $client->test_connection();
+
+		if ( is_wp_error( $result ) ) {
+			$status  = $result->get_error_data( 'status' );
+			$message = $result->get_error_message();
+			if ( 401 === (int) $status || 403 === (int) $status ) {
+				$message = __( 'API key rejected (unauthorized). Check Live vs Test mode and that the key is active in the VEXPay dashboard.', 'woo-vexpay-gateway' );
+			}
+			VEXPay_Logger::error( 'Connection test failed: ' . $message );
+			wp_send_json_error(
+				array(
+					'message' => $message,
+					'mode'    => $testmode ? 'test' : 'live',
+					'baseUrl' => $base,
+				)
+			);
+		}
+
+		VEXPay_Logger::info( 'Connection test OK (' . ( $testmode ? 'test' : 'live' ) . ')' );
+		wp_send_json_success(
+			array(
+				'message'   => $result['message'],
+				'mode'      => $testmode ? 'test' : 'live',
+				'baseUrl'   => $base,
+				'bankCount' => $result['bank_count'] ?? 0,
+				'bcvRate'   => $result['bcv_rate'] ?? null,
+			)
+		);
 	}
 
 	/**

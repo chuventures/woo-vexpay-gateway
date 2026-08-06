@@ -155,6 +155,38 @@ class VEXPay_API_Client {
 	}
 
 	/**
+	 * Probe API key + reachability (banks + quote).
+	 *
+	 * @return array{ok:bool,message:string,bank_count?:int,bcv_rate?:float,details?:string}|WP_Error
+	 */
+	public function test_connection() {
+		$banks = $this->get_banks();
+		if ( is_wp_error( $banks ) ) {
+			return $banks;
+		}
+
+		$list = isset( $banks['banks'] ) && is_array( $banks['banks'] ) ? $banks['banks'] : $banks;
+		if ( ! is_array( $list ) ) {
+			$list = array();
+		}
+		$bank_count = count( $list );
+
+		$quote = $this->get_quote( 1.0 );
+		if ( is_wp_error( $quote ) ) {
+			return $quote;
+		}
+
+		$bcv = isset( $quote['bcvRate'] ) ? (float) $quote['bcvRate'] : 0.0;
+
+		return array(
+			'ok'         => true,
+			'bank_count' => $bank_count,
+			'bcv_rate'   => $bcv,
+			'message'    => VEXPay_Helpers::format_connection_success( $bank_count, $bcv ),
+		);
+	}
+
+	/**
 	 * HTTP request.
 	 *
 	 * @param string     $method Method.
