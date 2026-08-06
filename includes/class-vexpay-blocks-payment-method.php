@@ -85,9 +85,10 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 	 * @return array
 	 */
 	public function get_payment_method_data(): array {
-		$banks = array();
-		$title = $this->gateway_settings['title'] ?? __( 'VEXPay', 'woo-vexpay-gateway' );
-		$desc  = $this->gateway_settings['description'] ?? '';
+		$banks         = array();
+		$saved_profile = VEXPay_Helpers::empty_debtor_profile();
+		$title         = $this->gateway_settings['title'] ?? __( 'VEXPay', 'woo-vexpay-gateway' );
+		$desc          = $this->gateway_settings['description'] ?? '';
 
 		$gateways = WC()->payment_gateways()->payment_gateways();
 		if ( ! empty( $gateways['vexpay'] ) && $gateways['vexpay'] instanceof VEXPay_Gateway ) {
@@ -96,17 +97,19 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			 *
 			 * @var VEXPay_Gateway $gw
 			 */
-			$gw    = $gateways['vexpay'];
-			$banks = $gw->fetch_banks_list();
+			$gw            = $gateways['vexpay'];
+			$banks         = $gw->fetch_banks_list();
+			$saved_profile = $gw->get_debtor_profile();
 		}
 
 		return array(
-			'title'       => $title,
-			'description' => $desc,
-			'supports'    => array( 'products' ),
-			'testmode'    => isset( $this->gateway_settings['testmode'] ) && 'yes' === $this->gateway_settings['testmode'],
-			'banks'       => $banks,
-			'icon'        => VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg',
+			'title'        => $title,
+			'description'  => $desc,
+			'supports'     => array( 'products' ),
+			'testmode'     => isset( $this->gateway_settings['testmode'] ) && 'yes' === $this->gateway_settings['testmode'],
+			'banks'        => $banks,
+			'icon'         => VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg',
+			'savedProfile' => $saved_profile,
 		);
 	}
 }

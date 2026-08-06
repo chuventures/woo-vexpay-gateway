@@ -243,11 +243,24 @@
 	const Content = ( props ) => {
 		const { eventRegistration, emitResponse } = props;
 		const { onPaymentSetup } = eventRegistration;
-		const [ idType, setIdType ] = useState( 'V' );
-		const [ idNumber, setIdNumber ] = useState( '' );
-		const [ phonePrefix, setPhonePrefix ] = useState( '0412' );
-		const [ phoneNumber, setPhoneNumber ] = useState( '' );
-		const [ debtorBank, setDebtorBank ] = useState( '' );
+		const saved = settings.savedProfile || {};
+		const [ idType, setIdType ] = useState(
+			ID_TYPES.includes( String( saved.id_type || '' ).toUpperCase() )
+				? String( saved.id_type ).toUpperCase()
+				: 'V'
+		);
+		const [ idNumber, setIdNumber ] = useState(
+			String( saved.id_number || '' ).replace( /\D+/g, '' ).slice( 0, 9 )
+		);
+		const [ phonePrefix, setPhonePrefix ] = useState(
+			PHONE_PREFIXES.includes( String( saved.phone_prefix || '' ) )
+				? String( saved.phone_prefix )
+				: '0412'
+		);
+		const [ phoneNumber, setPhoneNumber ] = useState(
+			String( saved.phone_number || '' ).replace( /\D+/g, '' ).slice( 0, 7 )
+		);
+		const [ debtorBank, setDebtorBank ] = useState( String( saved.bank || '' ) );
 
 		useEffect( () => {
 			const unsubscribe = onPaymentSetup( () => {

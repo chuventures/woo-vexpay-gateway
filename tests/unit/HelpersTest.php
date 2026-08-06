@@ -74,6 +74,50 @@ final class HelpersTest extends TestCase {
 		$this->assertNull( VEXPay_Helpers::normalize_bank_code( '' ) );
 	}
 
+	public function test_format_simf_bank_code(): void {
+		$this->assertSame( '0102', VEXPay_Helpers::format_simf_bank_code( 102 ) );
+		$this->assertSame( '0102', VEXPay_Helpers::format_simf_bank_code( '0102' ) );
+		$this->assertSame( '', VEXPay_Helpers::format_simf_bank_code( '' ) );
+	}
+
+	public function test_split_debtor_id(): void {
+		$this->assertSame(
+			array( 'type' => 'V', 'number' => '12345678' ),
+			VEXPay_Helpers::split_debtor_id( 'V12345678' )
+		);
+		$this->assertSame(
+			array( 'type' => 'J', 'number' => '123456789' ),
+			VEXPay_Helpers::split_debtor_id( 'j123456789' )
+		);
+		// P is API-valid but not in checkout selector → map type to V, keep digits.
+		$this->assertSame(
+			array( 'type' => 'V', 'number' => '12345678' ),
+			VEXPay_Helpers::split_debtor_id( 'P12345678' )
+		);
+	}
+
+	public function test_split_phone(): void {
+		$this->assertSame(
+			array( 'prefix' => '0412', 'number' => '1234567' ),
+			VEXPay_Helpers::split_phone( '584121234567' )
+		);
+		$this->assertSame(
+			array( 'prefix' => '0414', 'number' => '9333844' ),
+			VEXPay_Helpers::split_phone( '04149333844' )
+		);
+	}
+
+	public function test_profile_from_normalized(): void {
+		$profile = VEXPay_Helpers::profile_from_normalized( 'V12345678', '584121234567', '0102' );
+		$this->assertSame( 'V', $profile['id_type'] );
+		$this->assertSame( '12345678', $profile['id_number'] );
+		$this->assertSame( '0412', $profile['phone_prefix'] );
+		$this->assertSame( '1234567', $profile['phone_number'] );
+		$this->assertSame( '0102', $profile['bank'] );
+		$this->assertTrue( VEXPay_Helpers::debtor_profile_has_values( $profile ) );
+		$this->assertFalse( VEXPay_Helpers::debtor_profile_has_values( VEXPay_Helpers::empty_debtor_profile() ) );
+	}
+
 	public function test_is_valid_token(): void {
 		$this->assertTrue( VEXPay_Helpers::is_valid_token( '123456' ) );
 		$this->assertTrue( VEXPay_Helpers::is_valid_token( '12345678' ) );

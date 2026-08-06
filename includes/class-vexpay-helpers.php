@@ -22,6 +22,12 @@ class VEXPay_Helpers {
 	public const META_STATUS        = '_vexpay_status';
 	public const META_OTP_REQUESTED = '_vexpay_otp_requested';
 
+	/** User meta / WC session key for remembered C2P payer details. */
+	public const PROFILE_META_KEY = '_vexpay_debtor_profile';
+
+	/** WC session key (without underscore prefix). */
+	public const PROFILE_SESSION_KEY = 'vexpay_debtor_profile';
+
 	/**
 	 * Normalize GET /v1/banks payload into [{code,name,logoUrl}, …].
 	 *
@@ -218,6 +224,161 @@ class VEXPay_Helpers {
 		}
 		$num = (int) $digits;
 		return $num > 0 ? $num : null;
+	}
+
+	/**
+	 * Format bank code as 4-digit SIMF string for checkout UI (e.g. 0102).
+	 *
+	 * @param string|int $code Bank code.
+	 * @return string
+	 */
+	public static function format_simf_bank_code( $code ): string {
+		$num = self::normalize_bank_code( $code );
+		if ( null === $num ) {
+			return '';
+		}
+		return str_pad( (string) $num, 4, '0', STR_PAD_LEFT );
+	}
+
+	/**
+	 * Empty remembered payer profile shape.
+	 *
+	 * @return array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}
+	 */
+	public static function empty_debtor_profile(): array {
+		return array(
+			'id_type'      => 'V',
+			'id_number'    => '',
+			'phone_prefix' => '0412',
+			'phone_number' => '',
+			'bank'         => '',
+		);
+	}
+
+	/**
+	 * Split normalized debtor ID (V12345678) into type + number for form fields.
+	 *
+	 * @param string $normalized Normalized ID.
+	 * @return array{type:string,number:string}
+	 */
+	public static function split_debtor_id( string $normalized ): array {
+		if ( preg_match( '/^([VEJPG])(\d{6,9})$/', strtoupper( $normalized ), $m ) ) {
+			$type = in_array( $m[1], self::debtor_id_types(), true ) ? $m[1] : 'V';
+			return array(
+				'type'   => $type,
+				'number' => $m[2],
+			);
+		}
+		return array(
+			'type'   => 'V',
+			'number' => '',
+		);
+	}
+
+	/**
+	 * Split normalized 58… phone into local prefix + 7-digit number.
+	 *
+	 * @param string $normalized Normalized phone (58XXXXXXXXXX).
+	 * @return array{prefix:string,number:string}
+	 */
+	public static function split_phone( string $normalized ): array {
+		$phone = self::normalize_phone( $normalized );
+		if ( ! $phone || ! preg_match( '/^58(4\d{9})$/', $phone, $m ) ) {
+			return array(
+				'prefix' => '0412',
+				'number' => '',
+			);
+		}
+
+		$local = '0' . $m[1];
+		foreach ( self::phone_prefixes() as $prefix ) {
+			if ( 0 === strpos( $local, $prefix ) ) {
+				return array(
+					'prefix' => $prefix,
+					'number' => substr( $local, strlen( $prefix ) ),
+				);
+			}
+		}
+
+		return array(
+			'prefix' => '0412',
+			'number' => substr( $local, 4 ),
+		);
+	}
+
+	/**
+	 * Build a checkout profile from normalized C2P payer values.
+	 *
+	 * @param string     $debtor_id Normalized ID.
+	 * @param string     $phone     Normalized 58… phone.
+	 * @param string|int $bank      Bank code (SIMF or int).
+	 * @return array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}
+	 */
+	public static function profile_from_normalized( string $debtor_id, string $phone, $bank ): array {
+		$id    = self::split_debtor_id( $debtor_id );
+		$phone = self::split_phone( $phone );
+
+		return self::sanitize_debtor_profile(
+			array(
+				'id_type'      => $id['type'],
+				'id_number'    => $id['number'],
+				'phone_prefix' => $phone['prefix'],
+				'phone_number' => $phone['number'],
+				'bank'         => self::format_simf_bank_code( $bank ),
+			)
+		);
+	}
+
+	/**
+	 * Sanitize a stored/posted debtor profile for form prefills.
+	 *
+	 * @param mixed $raw Raw profile.
+	 * @return array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}
+	 */
+	public static function sanitize_debtor_profile( $raw ): array {
+		$profile = self::empty_debtor_profile();
+		if ( ! is_array( $raw ) ) {
+			return $profile;
+		}
+
+		$type = isset( $raw['id_type'] ) ? strtoupper( sanitize_text_field( (string) $raw['id_type'] ) ) : 'V';
+		if ( ! in_array( $type, self::debtor_id_types(), true ) ) {
+			$type = 'V';
+		}
+
+		$number = isset( $raw['id_number'] ) ? preg_replace( '/\D+/', '', (string) $raw['id_number'] ) : '';
+		$number = is_string( $number ) ? substr( $number, 0, 9 ) : '';
+
+		$prefix = isset( $raw['phone_prefix'] ) ? sanitize_text_field( (string) $raw['phone_prefix'] ) : '0412';
+		if ( ! in_array( $prefix, self::phone_prefixes(), true ) ) {
+			$prefix = '0412';
+		}
+
+		$phone_number = isset( $raw['phone_number'] ) ? preg_replace( '/\D+/', '', (string) $raw['phone_number'] ) : '';
+		$phone_number = is_string( $phone_number ) ? substr( $phone_number, 0, 7 ) : '';
+
+		$bank = isset( $raw['bank'] ) ? self::format_simf_bank_code( $raw['bank'] ) : '';
+
+		return array(
+			'id_type'      => $type,
+			'id_number'    => $number,
+			'phone_prefix' => $prefix,
+			'phone_number' => $phone_number,
+			'bank'         => $bank,
+		);
+	}
+
+	/**
+	 * Whether a profile has any useful remembered values.
+	 *
+	 * @param array $profile Profile.
+	 * @return bool
+	 */
+	public static function debtor_profile_has_values( array $profile ): bool {
+		$profile = self::sanitize_debtor_profile( $profile );
+		return '' !== $profile['id_number']
+			|| '' !== $profile['phone_number']
+			|| '' !== $profile['bank'];
 	}
 
 	/**

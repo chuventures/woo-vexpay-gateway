@@ -568,18 +568,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			}
 		}
 
-		$debtor_id_type   = isset( $_POST['vexpay_debtor_id_type'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_id_type'] ) ) : 'V'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$debtor_id_number = isset( $_POST['vexpay_debtor_id_number'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_id_number'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$phone_prefix     = isset( $_POST['vexpay_debtor_phone_prefix'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_phone_prefix'] ) ) : '0412'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$phone_number     = isset( $_POST['vexpay_debtor_phone_number'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_phone_number'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$debtor_bank      = isset( $_POST['vexpay_debtor_bank'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_bank'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-
-		if ( ! in_array( strtoupper( $debtor_id_type ), VEXPay_Helpers::debtor_id_types(), true ) ) {
-			$debtor_id_type = 'V';
-		}
-		if ( ! in_array( $phone_prefix, VEXPay_Helpers::phone_prefixes(), true ) ) {
-			$phone_prefix = '0412';
-		}
+		$profile          = $this->get_debtor_profile();
+		$debtor_id_type   = $profile['id_type'];
+		$debtor_id_number = $profile['id_number'];
+		$phone_prefix     = $profile['phone_prefix'];
+		$phone_number     = $profile['phone_number'];
+		$debtor_bank      = $profile['bank'];
 
 		echo '<fieldset id="wc-' . esc_attr( $this->id ) . '-cc-form" class="wc-payment-form vexpay-fields">';
 
@@ -701,6 +695,138 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
+	 * Remembered C2P payer details for checkout prefills.
+	 *
+	 * Priority: posted fields (classic refresh) → WC session → user meta → last VEXPay order.
+	 *
+	 * @return array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}
+	 */
+	public function get_debtor_profile(): array {
+		$posted = $this->debtor_profile_from_request();
+		if ( VEXPay_Helpers::debtor_profile_has_values( $posted ) ) {
+			return $posted;
+		}
+
+		if ( function_exists( 'WC' ) && WC()->session ) {
+			$session = WC()->session->get( VEXPay_Helpers::PROFILE_SESSION_KEY );
+			if ( is_array( $session ) && VEXPay_Helpers::debtor_profile_has_values( $session ) ) {
+				return VEXPay_Helpers::sanitize_debtor_profile( $session );
+			}
+		}
+
+		$user_id = get_current_user_id();
+		if ( $user_id > 0 ) {
+			$meta = get_user_meta( $user_id, VEXPay_Helpers::PROFILE_META_KEY, true );
+			if ( is_array( $meta ) && VEXPay_Helpers::debtor_profile_has_values( $meta ) ) {
+				return VEXPay_Helpers::sanitize_debtor_profile( $meta );
+			}
+
+			$from_order = $this->debtor_profile_from_last_order( $user_id );
+			if ( VEXPay_Helpers::debtor_profile_has_values( $from_order ) ) {
+				return $from_order;
+			}
+		}
+
+		return VEXPay_Helpers::empty_debtor_profile();
+	}
+
+	/**
+	 * Persist C2P payer details to WC session and (when logged in) user meta.
+	 *
+	 * @param string     $debtor_id Normalized debtor ID.
+	 * @param string     $phone     Normalized 58… phone.
+	 * @param string|int $bank      SIMF or numeric bank code.
+	 */
+	public function save_debtor_profile( string $debtor_id, string $phone, $bank ): void {
+		$profile = VEXPay_Helpers::profile_from_normalized( $debtor_id, $phone, $bank );
+		if ( ! VEXPay_Helpers::debtor_profile_has_values( $profile ) ) {
+			return;
+		}
+
+		if ( function_exists( 'WC' ) && WC()->session ) {
+			WC()->session->set( VEXPay_Helpers::PROFILE_SESSION_KEY, $profile );
+		}
+
+		$user_id = get_current_user_id();
+		if ( $user_id > 0 ) {
+			update_user_meta( $user_id, VEXPay_Helpers::PROFILE_META_KEY, $profile );
+		}
+	}
+
+	/**
+	 * Profile from classic checkout POST (or empty).
+	 *
+	 * @return array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}
+	 */
+	private function debtor_profile_from_request(): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- checkout fields; Woo verifies separately.
+		if (
+			! isset( $_POST['vexpay_debtor_id_type'] )
+			&& ! isset( $_POST['vexpay_debtor_id_number'] )
+			&& ! isset( $_POST['vexpay_debtor_phone_prefix'] )
+			&& ! isset( $_POST['vexpay_debtor_phone_number'] )
+			&& ! isset( $_POST['vexpay_debtor_bank'] )
+			&& ! isset( $_POST['vexpay_debtor_id'] )
+			&& ! isset( $_POST['vexpay_debtor_phone'] )
+		) {
+			return VEXPay_Helpers::empty_debtor_profile();
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$id    = VEXPay_Helpers::normalize_debtor_id( VEXPay_Helpers::resolve_debtor_id_from_request() );
+		$phone = VEXPay_Helpers::normalize_phone( VEXPay_Helpers::resolve_phone_from_request() );
+		$bank  = VEXPay_Helpers::get_request_field( 'vexpay_debtor_bank' );
+
+		if ( $id && $phone ) {
+			return VEXPay_Helpers::profile_from_normalized( $id, $phone, $bank );
+		}
+
+		return VEXPay_Helpers::sanitize_debtor_profile(
+			array(
+				'id_type'      => VEXPay_Helpers::get_request_field( 'vexpay_debtor_id_type' ) ?: 'V',
+				'id_number'    => VEXPay_Helpers::get_request_field( 'vexpay_debtor_id_number' ),
+				'phone_prefix' => VEXPay_Helpers::get_request_field( 'vexpay_debtor_phone_prefix' ) ?: '0412',
+				'phone_number' => VEXPay_Helpers::get_request_field( 'vexpay_debtor_phone_number' ),
+				'bank'         => $bank,
+			)
+		);
+	}
+
+	/**
+	 * Build profile from the customer's most recent VEXPay order meta.
+	 *
+	 * @param int $user_id User ID.
+	 * @return array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}
+	 */
+	private function debtor_profile_from_last_order( int $user_id ): array {
+		$orders = wc_get_orders(
+			array(
+				'customer_id'  => $user_id,
+				'payment_method' => 'vexpay',
+				'limit'        => 1,
+				'orderby'      => 'date',
+				'order'        => 'DESC',
+				'return'       => 'objects',
+			)
+		);
+
+		if ( empty( $orders ) || ! $orders[0] instanceof WC_Order ) {
+			return VEXPay_Helpers::empty_debtor_profile();
+		}
+
+		$order = $orders[0];
+		$id    = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
+		$phone = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE );
+		$bank  = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_BANK );
+
+		if ( '' === $id || '' === $phone ) {
+			return VEXPay_Helpers::empty_debtor_profile();
+		}
+
+		return VEXPay_Helpers::profile_from_normalized( $id, $phone, $bank );
+	}
+
+	/**
 	 * Create C2P intent and send customer to OTP step.
 	 *
 	 * @param int $order_id Order ID.
@@ -754,6 +880,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( VEXPay_Helpers::META_OTP_REQUESTED, $otp_requested ? 'yes' : 'no' );
 		$order->update_status( 'on-hold', __( 'VEXPay C2P intent created. Waiting for OTP.', 'woo-vexpay-gateway' ) );
 		$order->save();
+
+		// Remember payer details for session + logged-in account (next checkout).
+		$bank_simf = VEXPay_Helpers::get_request_field( 'vexpay_debtor_bank' );
+		if ( '' === $bank_simf ) {
+			$bank_simf = VEXPay_Helpers::format_simf_bank_code( $debtor_bank );
+		}
+		$this->save_debtor_profile( $debtor_id, $debtor_phone, $bank_simf );
 
 		WC()->cart->empty_cart();
 
