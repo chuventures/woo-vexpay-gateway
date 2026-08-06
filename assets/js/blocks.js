@@ -222,7 +222,31 @@
 
 		return createElement(
 			'div',
-			{ className: 'vexpay-blocks-fields' },
+			{ className: 'vexpay-blocks-fields vexpay-flow' },
+			createElement(
+				'ol',
+				{ className: 'vexpay-steps', 'aria-label': __( 'Payment steps', 'woo-vexpay-gateway' ) },
+				createElement(
+					'li',
+					{ className: 'vexpay-step is-active' },
+					createElement( 'span', { className: 'vexpay-step-num' }, '1' ),
+					createElement(
+						'span',
+						{ className: 'vexpay-step-label' },
+						__( 'Your details', 'woo-vexpay-gateway' )
+					)
+				),
+				createElement(
+					'li',
+					{ className: 'vexpay-step' },
+					createElement( 'span', { className: 'vexpay-step-num' }, '2' ),
+					createElement(
+						'span',
+						{ className: 'vexpay-step-label' },
+						__( 'C2P code', 'woo-vexpay-gateway' )
+					)
+				)
+			),
 			settings.testmode
 				? createElement(
 						'p',
@@ -235,9 +259,25 @@
 						)
 				  )
 				: null,
-			settings.description
-				? createElement( 'p', null, decodeEntities( settings.description ) )
-				: null,
+			createElement(
+				'div',
+				{ className: 'vexpay-step-panel' },
+				createElement(
+					'h3',
+					{ className: 'vexpay-step-title' },
+					__( 'Step 1 — Your details', 'woo-vexpay-gateway' )
+				),
+				createElement(
+					'p',
+					{ className: 'vexpay-step-copy' },
+					__(
+						'Tell us who is paying. Place the order to request the C2P from your bank — then enter the code in step 2.',
+						'woo-vexpay-gateway'
+					)
+				),
+				settings.description
+					? createElement( 'p', null, decodeEntities( settings.description ) )
+					: null,
 			createElement(
 				'div',
 				{ className: 'vexpay-field-group' },
@@ -319,6 +359,7 @@
 					value: debtorBank,
 					onChange: setDebtorBank,
 				} )
+			)
 			)
 		);
 	};

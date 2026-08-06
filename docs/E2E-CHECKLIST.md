@@ -24,8 +24,8 @@ This plugin is tested against the **hosted** VEXPay API. You do not need a local
 
 - [ ] Add a product priced in USD; checkout with VEXPay
 - [ ] Enter cédula type `V` + number `12345678`, phone prefix `0412` + `1234567`, pick a bank
-- [ ] Order becomes `on-hold`; redirect to OTP / order-pay
-- [ ] Enter sandbox OTP from VEXPay Portal Sandbox (Test twin)
+- [ ] Order becomes `on-hold`; redirect to order-pay **receipt** (step 2 — C2P code), not the “cannot be paid” error
+- [ ] Enter sandbox C2P/OTP from VEXPay Portal Sandbox (Test twin)
 - [ ] Order becomes paid (`processing` / `completed`); meta `_vexpay_payment_id` set
 
 ## Failures

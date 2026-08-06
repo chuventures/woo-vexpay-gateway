@@ -21,10 +21,97 @@
 	margin: 1.5rem 0;
 }
 
-.vexpay-otp-form input#vexpay_token {
+.vexpay-otp-form input#vexpay_token,
+.vexpay-otp-input {
 	letter-spacing: 0.15em;
 	font-size: 1.25rem;
 	max-width: 12rem;
+}
+
+.vexpay-steps {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.5rem;
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+}
+
+.vexpay-step {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.55rem 0.65rem;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	background: #f6f7f7;
+	color: #646970;
+	font-size: 0.85rem;
+}
+
+.vexpay-step.is-active {
+	background: #fff;
+	border-color: #2271b1;
+	color: #1e1e1e;
+}
+
+.vexpay-step.is-done {
+	border-color: #00a32a;
+	color: #1e1e1e;
+}
+
+.vexpay-step-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.35rem;
+	height: 1.35rem;
+	border-radius: 999px;
+	background: #dcdcde;
+	color: #1e1e1e;
+	font-weight: 600;
+	font-size: 0.75rem;
+	flex-shrink: 0;
+}
+
+.vexpay-step.is-active .vexpay-step-num {
+	background: #2271b1;
+	color: #fff;
+}
+
+.vexpay-step.is-done .vexpay-step-num {
+	background: #00a32a;
+	color: #fff;
+}
+
+.vexpay-step-title {
+	margin: 0 0 0.35rem;
+	font-size: 1rem;
+}
+
+.vexpay-step-copy {
+	margin: 0 0 0.85rem;
+	font-size: 0.9rem;
+	color: #50575e;
+	line-height: 1.4;
+}
+
+.vexpay-otp-meta {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0.65rem 0.75rem;
+	background: #f6f7f7;
+	border-radius: 2px;
+	font-size: 0.85rem;
+}
+
+.vexpay-otp-meta li {
+	margin: 0.15rem 0;
+}
+
+.vexpay-otp-meta span {
+	color: #646970;
+	margin-right: 0.35rem;
 }
 
 .vexpay-blocks-fields {
