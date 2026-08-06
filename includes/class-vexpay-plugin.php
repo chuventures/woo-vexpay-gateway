@@ -40,11 +40,86 @@ final class VEXPay_Plugin {
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_assets' ) );
 		// Register on the plugin, not the gateway constructor — WC may not instantiate
-		// payment gateways during admin-ajax.php, which would leave the action unregistered (HTTP 400 / "0").
+		// payment gateways during admin-ajax.php / early wc-api requests, which would leave
+		// the action unregistered (blank response / HTTP 400 / "0").
 		add_action( 'wp_ajax_vexpay_test_connection', array( $this, 'ajax_test_connection' ) );
+		add_action( 'woocommerce_api_vexpay_otp', array( $this, 'api_otp_submit' ) );
+		add_action( 'woocommerce_api_vexpay_otp_resend', array( $this, 'api_otp_resend' ) );
+		add_action( 'woocommerce_api_vexpay_otp_change_account', array( $this, 'api_otp_change_account' ) );
+		add_action( 'woocommerce_api_vexpay_otp_form', array( $this, 'api_otp_form' ) );
+		add_action( 'woocommerce_api_vexpay_otp_back_checkout', array( $this, 'api_otp_back_checkout' ) );
 
 		VEXPay_Webhook::init();
 		VEXPay_Blocks::init();
+	}
+
+	/**
+	 * Load the VEXPay gateway instance (instantiates payment gateways if needed).
+	 */
+	private function gateway(): ?VEXPay_Gateway {
+		if ( ! function_exists( 'WC' ) || ! WC()->payment_gateways() ) {
+			return null;
+		}
+		$gateways = WC()->payment_gateways()->payment_gateways();
+		if ( empty( $gateways['vexpay'] ) || ! $gateways['vexpay'] instanceof VEXPay_Gateway ) {
+			return null;
+		}
+		return $gateways['vexpay'];
+	}
+
+	/**
+	 * wc-api: OTP execute.
+	 */
+	public function api_otp_submit(): void {
+		$gateway = $this->gateway();
+		if ( ! $gateway ) {
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+		}
+		$gateway->handle_otp_submit();
+	}
+
+	/**
+	 * wc-api: request / resend débito OTP.
+	 */
+	public function api_otp_resend(): void {
+		$gateway = $this->gateway();
+		if ( ! $gateway ) {
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+		}
+		$gateway->handle_otp_resend();
+	}
+
+	/**
+	 * wc-api: change paying account on OTP step.
+	 */
+	public function api_otp_change_account(): void {
+		$gateway = $this->gateway();
+		if ( ! $gateway ) {
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+		}
+		$gateway->handle_otp_change_account();
+	}
+
+	/**
+	 * wc-api: dedicated OTP page.
+	 */
+	public function api_otp_form(): void {
+		$gateway = $this->gateway();
+		if ( ! $gateway ) {
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+		}
+		$gateway->render_otp_form_page();
+	}
+
+	/**
+	 * wc-api: abandon OTP and return to checkout (restore cart).
+	 */
+	public function api_otp_back_checkout(): void {
+		$gateway = $this->gateway();
+		if ( ! $gateway ) {
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+		}
+		$gateway->handle_otp_back_checkout();
 	}
 
 	/**

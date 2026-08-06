@@ -35,10 +35,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'maybe_register_webhook' ) );
 
 		add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
-		add_action( 'woocommerce_api_vexpay_otp', array( $this, 'handle_otp_submit' ) );
-		add_action( 'woocommerce_api_vexpay_otp_resend', array( $this, 'handle_otp_resend' ) );
-		add_action( 'woocommerce_api_vexpay_otp_change_account', array( $this, 'handle_otp_change_account' ) );
-		add_action( 'woocommerce_api_vexpay_otp_form', array( $this, 'render_otp_form_page' ) );
+		// OTP wc-api hooks are registered on VEXPay_Plugin so they fire even when
+		// payment gateways have not been instantiated yet for the request.
 		add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_otp_notice' ) );
 		add_action( 'template_redirect', array( $this, 'maybe_redirect_order_pay_to_otp' ), 20 );
 		add_filter( 'woocommerce_valid_order_statuses_for_payment', array( $this, 'valid_statuses_for_otp_payment' ), 10, 2 );
@@ -1195,7 +1193,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	/**
 	 * URL for the OTP step (dedicated page — Blocks order-pay skips receipt_page).
 	 *
-	 * @param WC_Order           $order Order.
+	 * @param WC_Order            $order Order.
 	 * @param array<string,mixed> $args  Extra query args.
 	 * @return string
 	 */
@@ -1208,8 +1206,166 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				),
 				$args
 			),
-			WC()->api_request_url( 'vexpay_otp_form' )
+			$this->get_wc_api_url( 'vexpay_otp_form' )
 		);
+	}
+
+	/**
+	 * WooCommerce API endpoint URL (query-string form).
+	 *
+	 * Prefer `?wc-api=` over pretty `/wc-api/.../` so POST bodies survive hosts that
+	 * 301 trailing-slash redirects (which can drop POST → GET and break OTP send).
+	 *
+	 * @param string $endpoint Endpoint slug (e.g. vexpay_otp_resend).
+	 */
+	private function get_wc_api_url( string $endpoint ): string {
+		return add_query_arg( 'wc-api', $endpoint, home_url( '/' ) );
+	}
+
+	/**
+	 * Persist a one-shot flash for the OTP page (wc-api has no reliable WC session).
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $type     success|error|notice.
+	 * @param string $message  Message.
+	 */
+	private function set_otp_flash( int $order_id, string $type, string $message ): void {
+		set_transient(
+			'vexpay_otp_flash_' . $order_id,
+			array(
+				'type'    => $type,
+				'message' => $message,
+			),
+			5 * MINUTE_IN_SECONDS
+		);
+	}
+
+	/**
+	 * Print + clear OTP flash (and any WC session notices).
+	 *
+	 * @param int $order_id Order ID.
+	 */
+	private function print_otp_notices( int $order_id ): void {
+		$flash = get_transient( 'vexpay_otp_flash_' . $order_id );
+		if ( is_array( $flash ) && ! empty( $flash['message'] ) ) {
+			delete_transient( 'vexpay_otp_flash_' . $order_id );
+			// Avoid a second, taller Blocks/classic banner from wc_add_notice().
+			if ( function_exists( 'wc_clear_notices' ) ) {
+				wc_clear_notices();
+			}
+			$type  = isset( $flash['type'] ) ? (string) $flash['type'] : 'notice';
+			$class = 'success' === $type ? 'is-success' : ( 'error' === $type ? 'is-error' : 'is-info' );
+			printf(
+				'<p class="vexpay-otp-flash %1$s" role="status">%2$s</p>',
+				esc_attr( $class ),
+				esc_html( (string) $flash['message'] )
+			);
+			return;
+		}
+
+		if ( function_exists( 'wc_print_notices' ) ) {
+			wc_print_notices();
+		}
+	}
+
+	/**
+	 * Redirect back to the OTP page after a POST handler.
+	 *
+	 * @param WC_Order $order Order.
+	 * @param array    $args  Extra query args.
+	 */
+	private function redirect_to_otp( WC_Order $order, array $args = array() ): void {
+		wp_safe_redirect( $this->get_otp_redirect_url( $order, $args ) );
+		exit;
+	}
+
+	/**
+	 * URL that restores the cart and returns the shopper to checkout.
+	 *
+	 * @param WC_Order $order Order.
+	 */
+	private function get_back_to_checkout_url( WC_Order $order ): string {
+		return add_query_arg(
+			array(
+				'order_id' => $order->get_id(),
+				'key'      => $order->get_order_key(),
+			),
+			$this->get_wc_api_url( 'vexpay_otp_back_checkout' )
+		);
+	}
+
+	/**
+	 * Abandon the OTP step: restore line items to the cart and open checkout.
+	 */
+	public function handle_otp_back_checkout(): void {
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key      = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		$order = $order_id ? wc_get_order( $order_id ) : false;
+		if ( ! $order || '' === $key || ! hash_equals( $order->get_order_key(), $key ) ) {
+			wp_die( esc_html__( 'Invalid order.', 'woo-vexpay-gateway' ), 404 );
+		}
+
+		if ( $this->id !== $order->get_payment_method() ) {
+			wp_die( esc_html__( 'This order is not a VEXPay payment.', 'woo-vexpay-gateway' ), 400 );
+		}
+
+		if ( $order->is_paid() || 'COMPLETED' === strtoupper( (string) $order->get_meta( VEXPay_Helpers::META_STATUS ) ) ) {
+			wp_safe_redirect( $this->get_return_url( $order ) );
+			exit;
+		}
+
+		if ( is_user_logged_in() && (int) $order->get_user_id() > 0 && (int) $order->get_user_id() !== get_current_user_id() && ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( esc_html__( 'You are not allowed to pay for this order.', 'woo-vexpay-gateway' ), 403 );
+		}
+
+		if ( null === WC()->cart && function_exists( 'wc_load_cart' ) ) {
+			wc_load_cart();
+		}
+
+		if ( WC()->session && ! WC()->session->has_session() ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+
+		if ( WC()->cart ) {
+			WC()->cart->empty_cart();
+			foreach ( $order->get_items() as $item ) {
+				if ( ! $item instanceof WC_Order_Item_Product ) {
+					continue;
+				}
+				$product = $item->get_product();
+				if ( ! $product || ! $product->exists() || ! $product->is_purchasable() ) {
+					continue;
+				}
+				$variation_id = $item->get_variation_id();
+				$variations   = array();
+				if ( $variation_id ) {
+					foreach ( $item->get_meta_data() as $meta ) {
+						$data = $meta->get_data();
+						$key  = isset( $data['key'] ) ? (string) $data['key'] : '';
+						if ( 0 === strpos( $key, 'pa_' ) || 0 === strpos( $key, 'attribute_' ) ) {
+							$variations[ $key ] = isset( $data['value'] ) ? (string) $data['value'] : '';
+						}
+					}
+				}
+				WC()->cart->add_to_cart(
+					$item->get_product_id(),
+					max( 1, (int) $item->get_quantity() ),
+					$variation_id,
+					$variations
+				);
+			}
+		}
+
+		if ( $this->order_awaits_otp( $order ) && ! $order->has_status( array( 'cancelled', 'refunded', 'failed' ) ) ) {
+			$order->update_status(
+				'cancelled',
+				__( 'Customer returned to checkout from the VEXPay OTP page.', 'woo-vexpay-gateway' )
+			);
+		}
+
+		wp_safe_redirect( wc_get_checkout_url() );
+		exit;
 	}
 
 	/**
@@ -1303,6 +1459,21 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$usd       = $fx['usd'];
 		$bcv_rate  = $fx['bcv_rate'];
 		$ves       = $fx['ves_amount'];
+
+		$line_items = array();
+		foreach ( $order->get_items() as $item ) {
+			if ( ! $item instanceof WC_Order_Item_Product ) {
+				continue;
+			}
+			$name = trim( (string) $item->get_name() );
+			if ( '' === $name ) {
+				continue;
+			}
+			$line_items[] = array(
+				'name' => $name,
+				'qty'  => max( 1, (int) $item->get_quantity() ),
+			);
+		}
 		?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -1387,6 +1558,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	</div>
 	<main class="vexpay-otp-page__main">
 		<div class="vexpay-otp-page__card">
+			<p class="vexpay-otp-page__back">
+				<a class="vexpay-otp-page__back-link" href="<?php echo esc_url( $this->get_back_to_checkout_url( $order ) ); ?>">
+					<?php echo esc_html__( 'Back to checkout', 'woo-vexpay-gateway' ); ?>
+				</a>
+			</p>
 			<header class="vexpay-otp-page__header">
 				<img
 					class="vexpay-otp-page__logo"
@@ -1417,6 +1593,33 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 						</span>
 					<?php endif; ?>
 				</div>
+				<?php if ( ! empty( $line_items ) ) : ?>
+					<?php if ( 1 === count( $line_items ) ) : ?>
+						<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--items">
+							<span class="vexpay-otp-page__items">
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: 1: product name, 2: quantity */
+										__( '%1$s × %2$d', 'woo-vexpay-gateway' ),
+										$line_items[0]['name'],
+										$line_items[0]['qty']
+									)
+								);
+								?>
+							</span>
+						</div>
+					<?php else : ?>
+						<ul class="vexpay-otp-page__items-list">
+							<?php foreach ( $line_items as $line_item ) : ?>
+								<li class="vexpay-otp-page__items-list-item">
+									<span class="vexpay-otp-page__item-name"><?php echo esc_html( $line_item['name'] ); ?></span>
+									<span class="vexpay-otp-page__item-qty"><?php echo esc_html( '× ' . (string) (int) $line_item['qty'] ); ?></span>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
+				<?php endif; ?>
 				<?php if ( $ves > 0 || $bcv_rate > 0 ) : ?>
 					<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--fx">
 						<?php if ( $ves > 0 ) : ?>
@@ -1450,9 +1653,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			</div>
 
 			<?php
-			if ( function_exists( 'wc_print_notices' ) ) {
-				wc_print_notices();
-			}
+			$this->print_otp_notices( $order_id );
 			$this->receipt_page( $order_id );
 			?>
 
@@ -1552,7 +1753,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			return;
 		}
 
-		$action        = WC()->api_request_url( 'vexpay_otp' );
+		$action        = $this->get_wc_api_url( 'vexpay_otp' );
 		$debtor_id     = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
 		$bank          = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_BANK );
 		$phone         = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE );
@@ -1631,13 +1832,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '</a>';
 		echo '</p>';
 
-		$resend_action = WC()->api_request_url( 'vexpay_otp_resend' );
+		$resend_action = $this->get_wc_api_url( 'vexpay_otp_resend' );
 		$cooldown_left = $this->otp_resend_cooldown_remaining( $order );
 
 		if ( ! $otp_requested ) {
 			echo '<form method="post" action="' . esc_url( $resend_action ) . '" class="vexpay-otp-send-form">';
 			wp_nonce_field( 'vexpay_otp_resend_' . $order_id, 'vexpay_otp_resend_nonce' );
 			echo '<input type="hidden" name="order_id" value="' . esc_attr( (string) $order_id ) . '" />';
+			echo '<input type="hidden" name="key" value="' . esc_attr( $order->get_order_key() ) . '" />';
 			echo '<p class="vexpay-otp-actions">';
 			echo '<button type="submit" class="button alt vexpay-otp-submit vexpay-otp-send">' . esc_html__( 'Send OTP code', 'woo-vexpay-gateway' ) . '</button>';
 			echo '</p>';
@@ -1672,6 +1874,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '<form method="post" action="' . esc_url( $resend_action ) . '" class="vexpay-otp-resend-form">';
 		wp_nonce_field( 'vexpay_otp_resend_' . $order_id, 'vexpay_otp_resend_nonce' );
 		echo '<input type="hidden" name="order_id" value="' . esc_attr( (string) $order_id ) . '" />';
+		echo '<input type="hidden" name="key" value="' . esc_attr( $order->get_order_key() ) . '" />';
 		$resend_label = __( 'Didn’t get it? Resend code', 'woo-vexpay-gateway' );
 		printf(
 			'<button type="submit" class="vexpay-otp-resend"%s data-vexpay-otp-resend>%s</button>',
@@ -1718,7 +1921,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$order_id = $order->get_id();
 		$back_url = $this->get_otp_redirect_url( $order );
-		$action   = WC()->api_request_url( 'vexpay_otp_change_account' );
+		$action   = $this->get_wc_api_url( 'vexpay_otp_change_account' );
 		$banks    = $this->fetch_banks_list();
 		$accounts = $this->get_debtor_accounts( true );
 		$sandbox  = 'yes' === $this->get_option( 'testmode', 'yes' );
@@ -1918,9 +2121,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$bank_simf    = VEXPay_Helpers::format_simf_bank_code( $bank_raw );
 
 		if ( ! $debtor_id || ! $debtor_phone || '' === $bank_simf ) {
-			wc_add_notice( __( 'Enter a valid cédula/RIF, phone, and bank.', 'woo-vexpay-gateway' ), 'error' );
-			wp_safe_redirect( $this->get_otp_redirect_url( $order, array( 'change_account' => '1' ) ) );
-			exit;
+			$this->set_otp_flash( $order_id, 'error', __( 'Enter a valid cédula/RIF, phone, and bank.', 'woo-vexpay-gateway' ) );
+			$this->redirect_to_otp( $order, array( 'change_account' => '1' ) );
 		}
 
 		$order->update_meta_data( VEXPay_Helpers::META_DEBTOR_ID, $debtor_id );
@@ -1950,9 +2152,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$this->save_debtor_profile( $debtor_id, $debtor_phone, $bank_simf );
 
-		wc_add_notice( __( 'Account updated — send a new OTP when you’re ready.', 'woo-vexpay-gateway' ), 'success' );
-		wp_safe_redirect( $this->get_otp_redirect_url( $order, array( 'account_updated' => '1' ) ) );
-		exit;
+		$this->set_otp_flash( $order_id, 'success', __( 'Account updated — send a new OTP when you’re ready.', 'woo-vexpay-gateway' ) );
+		$this->redirect_to_otp( $order, array( 'account_updated' => '1' ) );
 	}
 
 	/**
@@ -1990,9 +2191,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$token = isset( $_POST['vexpay_token'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_token'] ) ) : '';
 		if ( ! VEXPay_Helpers::is_valid_token( $token ) ) {
-			wc_add_notice( __( 'OTP must be 6–8 digits.', 'woo-vexpay-gateway' ), 'error' );
-			wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-			exit;
+			$this->set_otp_flash( $order_id, 'error', __( 'OTP must be 6–8 digits.', 'woo-vexpay-gateway' ) );
+			$this->redirect_to_otp( $order );
 		}
 
 		$debtor_id    = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
@@ -2007,9 +2207,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( '' === $debtor_id || '' === $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
-			wc_add_notice( __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ), 'error' );
-			wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-			exit;
+			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ) );
+			$this->redirect_to_otp( $order );
 		}
 
 		$body = array(
@@ -2026,9 +2225,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$result = $this->get_api_client()->debit_execute( $body );
 		if ( is_wp_error( $result ) ) {
 			$order->add_order_note( 'VEXPay débito failed: ' . $result->get_error_message() );
-			wc_add_notice( $result->get_error_message(), 'error' );
-			wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-			exit;
+			$this->set_otp_flash( $order_id, 'error', $result->get_error_message() );
+			$this->redirect_to_otp( $order );
 		}
 
 		$result = VEXPay_Helpers::normalize_debit_execute_result( $result );
@@ -2041,14 +2239,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$status = strtoupper( (string) $order->get_meta( VEXPay_Helpers::META_STATUS ) );
 		if ( 'PENDING' === $status ) {
-			wc_add_notice( __( 'Payment is processing — hang tight while the bank confirms.', 'woo-vexpay-gateway' ), 'notice' );
+			$this->set_otp_flash( $order_id, 'notice', __( 'Payment is processing — hang tight while the bank confirms.', 'woo-vexpay-gateway' ) );
 			wp_safe_redirect( $this->get_return_url( $order ) );
 			exit;
 		}
 
-		wc_add_notice( __( 'Payment was not completed. Check the OTP code and try again.', 'woo-vexpay-gateway' ), 'error' );
-		wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-		exit;
+		$this->set_otp_flash( $order_id, 'error', __( 'Payment was not completed. Check the OTP code and try again.', 'woo-vexpay-gateway' ) );
+		$this->redirect_to_otp( $order );
 	}
 
 	/**
@@ -2073,6 +2270,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	public function handle_otp_resend(): void {
 		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$nonce    = isset( $_POST['vexpay_otp_resend_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_otp_resend_nonce'] ) ) : '';
+		$key      = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
 
 		if ( ! $order_id || ! wp_verify_nonce( $nonce, 'vexpay_otp_resend_' . $order_id ) ) {
 			wp_die( esc_html__( 'Invalid resend request.', 'woo-vexpay-gateway' ), 403 );
@@ -2083,25 +2281,29 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			wp_die( esc_html__( 'Order not found.', 'woo-vexpay-gateway' ), 404 );
 		}
 
+		if ( '' !== $key && ! hash_equals( $order->get_order_key(), $key ) ) {
+			wp_die( esc_html__( 'Order not found.', 'woo-vexpay-gateway' ), 404 );
+		}
+
 		if ( ! $this->order_awaits_otp( $order ) ) {
-			wc_add_notice( __( 'This order is not waiting for an OTP.', 'woo-vexpay-gateway' ), 'error' );
+			$this->set_otp_flash( $order_id, 'error', __( 'This order is not waiting for an OTP.', 'woo-vexpay-gateway' ) );
 			wp_safe_redirect( $this->get_return_url( $order ) );
 			exit;
 		}
 
-		$cooldown = $this->otp_resend_cooldown_remaining( $order );
+		$cooldown   = $this->otp_resend_cooldown_remaining( $order );
 		$first_send = 'yes' !== (string) $order->get_meta( VEXPay_Helpers::META_OTP_REQUESTED );
 		if ( $cooldown > 0 && ! $first_send ) {
-			wc_add_notice(
+			$this->set_otp_flash(
+				$order_id,
+				'error',
 				sprintf(
 					/* translators: %d: seconds remaining */
 					__( 'Easy — wait %d seconds before requesting another code.', 'woo-vexpay-gateway' ),
 					$cooldown
-				),
-				'error'
+				)
 			);
-			wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-			exit;
+			$this->redirect_to_otp( $order );
 		}
 
 		$debtor_id    = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
@@ -2121,9 +2323,18 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( '' === $debtor_id || '' === $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
-			wc_add_notice( __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ), 'error' );
-			wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-			exit;
+			VEXPay_Logger::error(
+				sprintf(
+					'OTP send skipped for order %d — missing fields (id=%s phone=%s bank=%s ves=%s)',
+					$order_id,
+					$debtor_id !== '' ? 'yes' : 'no',
+					$debtor_phone !== '' ? 'yes' : 'no',
+					$bank_simf !== '' ? 'yes' : 'no',
+					(string) $ves
+				)
+			);
+			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ) );
+			$this->redirect_to_otp( $order );
 		}
 
 		$body = array(
@@ -2133,12 +2344,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			'cedula'   => $debtor_id,
 		);
 
+		VEXPay_Logger::info( sprintf( 'Requesting débito OTP for order %d', $order_id ) );
 		$result = $this->get_api_client()->debit_otp( $body );
 		if ( is_wp_error( $result ) ) {
 			$order->add_order_note( 'VEXPay OTP request failed: ' . $result->get_error_message() );
-			wc_add_notice( $result->get_error_message(), 'error' );
-			wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-			exit;
+			$this->set_otp_flash( $order_id, 'error', $result->get_error_message() );
+			$this->redirect_to_otp( $order );
 		}
 
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, 'PENDING' );
@@ -2151,14 +2362,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		);
 		$order->save();
 
-		wc_add_notice(
+		$this->set_otp_flash(
+			$order_id,
+			'success',
 			$first_send
-				? __( 'Code sent — check your texts (or the VEXPay Portal in sandbox) and drop it in.', 'woo-vexpay-gateway' )
-				: __( 'Fresh code incoming — check your texts and drop it in.', 'woo-vexpay-gateway' ),
-			'success'
+				? __( 'Code sent — check your texts (sandbox: Portal → Sandbox).', 'woo-vexpay-gateway' )
+				: __( 'Fresh code sent — check your texts.', 'woo-vexpay-gateway' )
 		);
-		wp_safe_redirect( $this->get_otp_redirect_url( $order ) );
-		exit;
+		$this->redirect_to_otp( $order );
 	}
 
 	/**

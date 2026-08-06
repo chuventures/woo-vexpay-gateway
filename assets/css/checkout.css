@@ -213,6 +213,38 @@
 	animation: vexpay-otp-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.vexpay-otp-page__back {
+	margin: 0 0 0.85rem;
+}
+
+.vexpay-otp-page__back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.28rem;
+	font-family: var(--vex-font-body);
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: var(--vex-muted);
+	text-decoration: none;
+	line-height: 1.3;
+}
+
+.vexpay-otp-page__back-link::before {
+	content: "←";
+	font-size: 0.75rem;
+	opacity: 0.75;
+}
+
+.vexpay-otp-page__back-link:hover {
+	color: var(--vex-brand);
+}
+
+.vexpay-otp-page__back-link:focus-visible {
+	outline: 2px solid rgba(97, 58, 143, 0.28);
+	outline-offset: 3px;
+	border-radius: 4px;
+}
+
 @keyframes vexpay-otp-enter {
 	from {
 		opacity: 0;
@@ -266,6 +298,59 @@
 	font-size: 0.82rem;
 }
 
+.vexpay-otp-page__summary-row--items {
+	min-width: 0;
+}
+
+.vexpay-otp-page__items {
+	display: block;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: var(--vex-font-display);
+	font-size: 0.82rem;
+	font-weight: 500;
+	color: var(--vex-muted);
+}
+
+.vexpay-otp-page__items-list {
+	display: grid;
+	gap: 0.2rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 4.5rem;
+	overflow: auto;
+}
+
+.vexpay-otp-page__items-list-item {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.65rem;
+	min-width: 0;
+	font-family: var(--vex-font-display);
+	font-size: 0.82rem;
+	font-weight: 500;
+	color: var(--vex-muted);
+	line-height: 1.3;
+}
+
+.vexpay-otp-page__item-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vexpay-otp-page__item-qty {
+	flex-shrink: 0;
+	font-variant-numeric: tabular-nums;
+	color: var(--vex-ink);
+}
+
 .vexpay-otp-page__order {
 	margin: 0;
 	font-family: var(--vex-font-display);
@@ -285,12 +370,16 @@
 
 .vexpay-otp-page__ves {
 	font-family: var(--vex-font-display);
+	font-size: inherit;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	color: var(--vex-ink);
 }
 
 .vexpay-otp-page__rate {
+	font-family: var(--vex-font-display);
+	font-size: inherit;
+	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	color: var(--vex-muted);
 	letter-spacing: 0.01em;
@@ -298,10 +387,64 @@
 
 .vexpay-otp-page .woocommerce-error,
 .vexpay-otp-page .woocommerce-message,
-.vexpay-otp-page .woocommerce-info {
-	margin: 0 0 1rem;
-	border-radius: 10px;
-	font-size: 0.9rem;
+.vexpay-otp-page .woocommerce-info,
+.vexpay-otp-page .wc-block-components-notice-banner {
+	margin: 0 0 0.65rem;
+	padding: 0.4rem 0.65rem;
+	border-radius: 8px;
+	font-size: 0.75rem;
+	line-height: 1.35;
+	font-weight: 500;
+}
+
+.vexpay-otp-page .wc-block-components-notice-banner {
+	align-items: flex-start;
+	gap: 0.4rem;
+	min-height: 0;
+}
+
+.vexpay-otp-page .wc-block-components-notice-banner__content {
+	margin: 0;
+	padding: 0;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.vexpay-otp-page .wc-block-components-notice-banner > svg,
+.vexpay-otp-page .wc-block-components-notice-banner .wc-block-components-notice-banner__icon {
+	width: 0.95rem;
+	height: 0.95rem;
+	flex-shrink: 0;
+	margin-top: 0.1rem;
+}
+
+.vexpay-otp-page .vexpay-otp-flash {
+	margin: 0 0 0.65rem;
+	padding: 0.4rem 0.7rem;
+	border-radius: 8px;
+	border: 1px solid transparent;
+	font-family: var(--vex-font-body);
+	font-size: 0.75rem;
+	font-weight: 500;
+	line-height: 1.35;
+}
+
+.vexpay-otp-page .vexpay-otp-flash.is-success {
+	background: rgba(31, 138, 91, 0.1);
+	border-color: rgba(31, 138, 91, 0.22);
+	color: #176b47;
+}
+
+.vexpay-otp-page .vexpay-otp-flash.is-error {
+	background: rgba(176, 52, 52, 0.08);
+	border-color: rgba(176, 52, 52, 0.22);
+	color: #8a2a2a;
+}
+
+.vexpay-otp-page .vexpay-otp-flash.is-info {
+	background: rgba(97, 58, 143, 0.08);
+	border-color: rgba(97, 58, 143, 0.18);
+	color: var(--vex-brand-deep);
 }
 
 .vexpay-otp-page .vexpay-test-mode {
@@ -417,9 +560,11 @@
 .vexpay-otp-page .vexpay-otp-bank {
 	display: inline-flex;
 	align-items: center;
+	justify-content: flex-end;
 	gap: 0.55rem;
 	min-width: 0;
 	max-width: 75%;
+	margin-left: auto;
 	font-family: var(--vex-font-display);
 	font-weight: 600;
 	color: var(--vex-ink);
@@ -450,6 +595,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	text-align: right;
 }
 
 .vexpay-otp-page .vexpay-otp-form {
@@ -620,6 +766,14 @@
 .vexpay-otp-page button.vexpay-otp-submit:active {
 	transform: translateY(0);
 	filter: brightness(0.98);
+}
+
+.vexpay-otp-page .vexpay-otp-submit.is-loading,
+.vexpay-otp-page button.vexpay-otp-submit.is-loading,
+.vexpay-otp-page .vexpay-otp-resend.is-loading {
+	opacity: 0.72;
+	cursor: wait;
+	pointer-events: none;
 }
 
 .vexpay-otp-page .vexpay-otp-resend-form {

@@ -553,5 +553,12 @@
 		bindOtpPin(document);
 		bindOtpResendCooldown(document);
 		$(document.body).on('updated_checkout', bindSplitFields);
+
+		$(document).on('submit', '.vexpay-otp-send-form, .vexpay-otp-resend-form, .vexpay-otp-form, .vexpay-change-account-form', function () {
+			var $btn = $(this).find('button[type="submit"]').filter(':not(:disabled)').first();
+			if ($btn.length) {
+				$btn.prop('disabled', true).attr('aria-busy', 'true').addClass('is-loading');
+			}
+		});
 	});
 })(jQuery);
