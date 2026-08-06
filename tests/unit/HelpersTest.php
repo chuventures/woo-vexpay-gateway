@@ -188,6 +188,54 @@ final class HelpersTest extends TestCase {
 		$this->assertSame( 'op-1', $pending['bankReference'] );
 	}
 
+	public function test_format_ves_amount(): void {
+		$this->assertSame( 50.0, VEXPay_Helpers::format_ves_amount( 50 ) );
+		$this->assertSame( 50.12, VEXPay_Helpers::format_ves_amount( 50.123 ) );
+		$this->assertSame( 50.13, VEXPay_Helpers::format_ves_amount( '50.129' ) );
+	}
+
+	public function test_mask_phone_for_log(): void {
+		$this->assertSame( '********4567', VEXPay_Helpers::mask_phone_for_log( '584121234567' ) );
+		$this->assertSame( '****', VEXPay_Helpers::mask_phone_for_log( '12' ) );
+	}
+
+	public function test_debit_otp_accepted(): void {
+		$this->assertTrue( VEXPay_Helpers::debit_otp_accepted( array( 'code' => '202', 'success' => true ) ) );
+		$this->assertTrue( VEXPay_Helpers::debit_otp_accepted( array( 'code' => '00' ) ) );
+		$this->assertFalse( VEXPay_Helpers::debit_otp_accepted( array() ) );
+		$this->assertFalse( VEXPay_Helpers::debit_otp_accepted( array( 'code' => '91', 'message' => 'rejected' ) ) );
+		$this->assertFalse( VEXPay_Helpers::debit_otp_accepted( array( 'success' => false, 'code' => '202' ) ) );
+		$this->assertSame( 'rejected', VEXPay_Helpers::debit_otp_error_message( array( 'code' => '91', 'message' => 'rejected' ) ) );
+	}
+
+	public function test_api_key_kind_and_simulated_debit(): void {
+		$this->assertSame( 'live', VEXPay_Helpers::api_key_kind( 'vk_live_abc' ) );
+		$this->assertSame( 'test', VEXPay_Helpers::api_key_kind( 'vk_test_abc' ) );
+		$this->assertSame( 'live', VEXPay_Helpers::api_key_kind( 'dev-local-api-key' ) );
+		$this->assertSame( 'test', VEXPay_Helpers::api_key_kind( 'dev-local-api-key-test' ) );
+		$this->assertSame( 'missing', VEXPay_Helpers::api_key_kind( '' ) );
+		$this->assertSame( 'unknown', VEXPay_Helpers::api_key_kind( 'opaque-key' ) );
+
+		$this->assertTrue( VEXPay_Helpers::debit_otp_is_simulated( true, 'vk_live_abc' ) );
+		$this->assertTrue( VEXPay_Helpers::debit_otp_is_simulated( false, 'vk_test_abc' ) );
+		$this->assertFalse( VEXPay_Helpers::debit_otp_is_simulated( false, 'vk_live_abc' ) );
+	}
+
+	public function test_describe_debit_otp_body(): void {
+		$desc = VEXPay_Helpers::describe_debit_otp_body(
+			array(
+				'banco'    => '0191',
+				'monto'    => 50.0,
+				'telefono' => '584121234567',
+				'cedula'   => 'V12345678',
+			)
+		);
+		$this->assertStringContainsString( 'banco=0191(string)', $desc );
+		$this->assertStringContainsString( 'monto=50.00(double)', $desc );
+		$this->assertStringContainsString( 'telefono=********4567(len=12)', $desc );
+		$this->assertStringContainsString( 'cedula=V********', $desc );
+	}
+
 	public function test_external_ref(): void {
 		$this->assertSame( 'wc_order_42', VEXPay_Helpers::external_ref_for_order( 42 ) );
 	}

@@ -212,7 +212,9 @@ class VEXPay_API_Client {
 		);
 
 		if ( null !== $body ) {
-			$args['body'] = wp_json_encode( $body );
+			// Keep fractional monto (e.g. 50.0) as 50.0 instead of 50 — matches VES wire examples.
+			$flags        = defined( 'JSON_PRESERVE_ZERO_FRACTION' ) ? JSON_PRESERVE_ZERO_FRACTION : 0;
+			$args['body'] = wp_json_encode( $body, $flags );
 		}
 
 		VEXPay_Logger::debug( sprintf( 'API %s %s', $method, $path ) );
@@ -240,6 +242,12 @@ class VEXPay_API_Client {
 			VEXPay_Logger::error( sprintf( 'API %s %s → %d: %s', $method, $path, $code, $message ) );
 			return new WP_Error( 'vexpay_api_error', $message, array( 'status' => $code, 'body' => $data ) );
 		}
+
+		$biz = '';
+		if ( is_array( $data ) && isset( $data['code'] ) && ( is_string( $data['code'] ) || is_numeric( $data['code'] ) ) ) {
+			$biz = ' code=' . (string) $data['code'];
+		}
+		VEXPay_Logger::debug( sprintf( 'API %s %s → %d%s', $method, $path, $code, $biz ) );
 
 		return is_array( $data ) ? $data : array();
 	}

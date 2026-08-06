@@ -44,6 +44,32 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
+		add_action( 'admin_notices', array( $this, 'maybe_admin_key_mode_notice' ) );
+	}
+
+	/**
+	 * Warn when Sandbox is off but the active key still looks like a Test twin.
+	 */
+	public function maybe_admin_key_mode_notice(): void {
+		if ( ! $this->is_gateway_settings_screen() || ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
+		if ( $this->is_sandbox_toggle_on() ) {
+			return;
+		}
+
+		$kind = VEXPay_Helpers::api_key_kind( $this->get_active_api_key() );
+		if ( 'test' !== $kind ) {
+			return;
+		}
+
+		echo '<div class="notice notice-warning"><p>';
+		echo esc_html__(
+			'VEXPay: Sandbox is off, but the Live API key looks like a Test twin (vk_test_…). Débito OTP will stay simulated with no bank SMS. Paste your Live twin key (vk_live_…) into Live API key, save, then retry.',
+			'woo-vexpay-gateway'
+		);
+		echo '</p></div>';
 	}
 
 	/**
@@ -136,20 +162,20 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'title'       => __( 'Sandbox', 'woo-vexpay-gateway' ),
 				'type'        => 'vexpay_toggle',
 				'default'     => 'yes',
-				'description' => __( 'When on, use the sandbox API key and sandbox OTP. Turn off for production payments.', 'woo-vexpay-gateway' ),
+				'description' => __( 'When on, use the Sandbox (Test twin) API key. Débito OTP is simulated — no bank SMS; use Portal → Sandbox. Turn off and paste a Live twin key for real bank SMS.', 'woo-vexpay-gateway' ),
 			),
 			'live_api_key'        => array(
-				'title'       => __( 'API key', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Live API key', 'woo-vexpay-gateway' ),
 				'type'        => 'password',
 				'class'       => 'vexpay-api-key-field vexpay-api-key-production',
-				'description' => __( 'x-api-key from the VEXPay dashboard. Never share publicly.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Live twin x-api-key from the VEXPay dashboard (usually starts with vk_live_). Required for real bank OTP SMS.', 'woo-vexpay-gateway' ),
 				'default'     => '',
 			),
 			'test_api_key'        => array(
-				'title'       => __( 'API key', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Sandbox API key', 'woo-vexpay-gateway' ),
 				'type'        => 'password',
 				'class'       => 'vexpay-api-key-field vexpay-api-key-sandbox',
-				'description' => __( 'Sandbox x-api-key from the VEXPay dashboard.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Test twin x-api-key from the VEXPay dashboard (usually starts with vk_test_). Débito OTP is simulated — no SMS.', 'woo-vexpay-gateway' ),
 				'default'     => '',
 			),
 			'connection_test'     => array(
@@ -198,6 +224,23 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			return (string) $this->get_option( 'test_api_key', '' );
 		}
 		return (string) $this->get_option( 'live_api_key', '' );
+	}
+
+	/**
+	 * Whether the Sandbox toggle is on.
+	 */
+	public function is_sandbox_toggle_on(): bool {
+		return 'yes' === $this->get_option( 'testmode', 'yes' );
+	}
+
+	/**
+	 * Whether débito OTP should be treated as simulated (no bank SMS).
+	 *
+	 * Uses the toggle and the active key twin — a Test key with Sandbox off still
+	 * hits the simulated débito path on the API.
+	 */
+	public function is_debit_otp_simulated(): bool {
+		return VEXPay_Helpers::debit_otp_is_simulated( $this->is_sandbox_toggle_on(), $this->get_active_api_key() );
 	}
 
 	/**
@@ -1108,6 +1151,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		if ( $ves <= 0 && $usd > 0 && $bcv > 0 ) {
 			$ves = round( $usd * $bcv, 2 );
 		}
+		$ves = VEXPay_Helpers::format_ves_amount( $ves );
 		if ( $ves <= 0 ) {
 			wc_add_notice( __( 'Could not get a VES amount from VEXPay FX quote.', 'woo-vexpay-gateway' ), 'error' );
 			return array( 'result' => 'failure' );
@@ -1120,7 +1164,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( VEXPay_Helpers::META_DEBTOR_BANK, $bank_simf );
 		$order->update_meta_data( VEXPay_Helpers::META_USD_AMOUNT, (string) $usd );
 		$order->update_meta_data( VEXPay_Helpers::META_BCV_RATE, (string) $bcv );
-		$order->update_meta_data( VEXPay_Helpers::META_VES_AMOUNT, (string) $ves );
+		$order->update_meta_data( VEXPay_Helpers::META_VES_AMOUNT, number_format( $ves, 2, '.', '' ) );
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, 'PENDING' );
 		$order->update_meta_data( VEXPay_Helpers::META_OTP_REQUESTED, 'no' );
 		$order->delete_meta_data( VEXPay_Helpers::META_OTP_RESEND_AT );
@@ -1758,7 +1802,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$bank          = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_BANK );
 		$phone         = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE );
 		$otp_requested = 'yes' === (string) $order->get_meta( VEXPay_Helpers::META_OTP_REQUESTED );
-		$sandbox       = 'yes' === $this->get_option( 'testmode', 'yes' );
+		$sandbox       = $this->is_debit_otp_simulated();
 		$bank_info     = $this->find_bank_by_code( $bank );
 		$bank_label    = $bank_info['name'] ?? VEXPay_Helpers::format_simf_bank_code( $bank );
 		if ( '' === $bank_label && '' !== $bank ) {
@@ -1843,7 +1887,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '<p class="vexpay-otp-actions">';
 			echo '<button type="submit" class="button alt vexpay-otp-submit vexpay-otp-send">' . esc_html__( 'Send OTP code', 'woo-vexpay-gateway' ) . '</button>';
 			echo '</p>';
-			echo '<p class="vexpay-otp-hint">' . esc_html__( 'We’ll text the code, then you can enter it on the next step.', 'woo-vexpay-gateway' ) . '</p>';
+			if ( $sandbox ) {
+				echo '<p class="vexpay-otp-hint">' . esc_html__( 'Sandbox: no bank SMS — copy the rotating code from VEXPay Portal → Sandbox.', 'woo-vexpay-gateway' ) . '</p>';
+			} else {
+				echo '<p class="vexpay-otp-hint">' . esc_html__( 'We’ll text the code, then you can enter it on the next step.', 'woo-vexpay-gateway' ) . '</p>';
+			}
 			echo '</form>';
 			echo '</div></div>';
 			return;
@@ -1924,7 +1972,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$action   = $this->get_wc_api_url( 'vexpay_otp_change_account' );
 		$banks    = $this->fetch_banks_list();
 		$accounts = $this->get_debtor_accounts( true );
-		$sandbox  = 'yes' === $this->get_option( 'testmode', 'yes' );
+		$sandbox  = $this->is_debit_otp_simulated();
 
 		$debtor_id = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
 		$phone     = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE );
@@ -2195,8 +2243,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$this->redirect_to_otp( $order );
 		}
 
-		$debtor_id    = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
-		$debtor_phone = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE );
+		$debtor_id    = VEXPay_Helpers::normalize_debtor_id( (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID ) );
+		$debtor_phone = VEXPay_Helpers::normalize_phone( (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE ) );
 		$bank_simf    = VEXPay_Helpers::format_simf_bank_code( $order->get_meta( VEXPay_Helpers::META_DEBTOR_BANK ) );
 		$ves          = (float) $order->get_meta( VEXPay_Helpers::META_VES_AMOUNT );
 		$external_ref = (string) $order->get_meta( VEXPay_Helpers::META_EXTERNAL_REF );
@@ -2206,10 +2254,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$ves = $fx['ves_amount'];
 		}
 
-		if ( '' === $debtor_id || '' === $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
+		if ( ! $debtor_id || ! $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
 			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ) );
 			$this->redirect_to_otp( $order );
 		}
+
+		$ves = VEXPay_Helpers::format_ves_amount( $ves );
 
 		$body = array(
 			'banco'       => $bank_simf,
@@ -2306,8 +2356,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$this->redirect_to_otp( $order );
 		}
 
-		$debtor_id    = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID );
-		$debtor_phone = (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE );
+		$debtor_id    = VEXPay_Helpers::normalize_debtor_id( (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_ID ) );
+		$debtor_phone = VEXPay_Helpers::normalize_phone( (string) $order->get_meta( VEXPay_Helpers::META_DEBTOR_PHONE ) );
 		$bank_simf    = VEXPay_Helpers::format_simf_bank_code( $order->get_meta( VEXPay_Helpers::META_DEBTOR_BANK ) );
 		$ves          = (float) $order->get_meta( VEXPay_Helpers::META_VES_AMOUNT );
 
@@ -2318,17 +2368,17 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				$order->update_meta_data( VEXPay_Helpers::META_BCV_RATE, (string) $fx['bcv_rate'] );
 			}
 			if ( $ves > 0 ) {
-				$order->update_meta_data( VEXPay_Helpers::META_VES_AMOUNT, (string) $ves );
+				$order->update_meta_data( VEXPay_Helpers::META_VES_AMOUNT, number_format( $ves, 2, '.', '' ) );
 			}
 		}
 
-		if ( '' === $debtor_id || '' === $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
+		if ( ! $debtor_id || ! $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
 			VEXPay_Logger::error(
 				sprintf(
 					'OTP send skipped for order %d — missing fields (id=%s phone=%s bank=%s ves=%s)',
 					$order_id,
-					$debtor_id !== '' ? 'yes' : 'no',
-					$debtor_phone !== '' ? 'yes' : 'no',
+					$debtor_id ? 'yes' : 'no',
+					$debtor_phone ? 'yes' : 'no',
 					$bank_simf !== '' ? 'yes' : 'no',
 					(string) $ves
 				)
@@ -2337,6 +2387,17 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$this->redirect_to_otp( $order );
 		}
 
+		// Persist re-normalized payer fields so execute uses the same wire values.
+		$order->update_meta_data( VEXPay_Helpers::META_DEBTOR_ID, $debtor_id );
+		$order->update_meta_data( VEXPay_Helpers::META_DEBTOR_PHONE, $debtor_phone );
+		$order->update_meta_data( VEXPay_Helpers::META_DEBTOR_BANK, $bank_simf );
+
+		$ves           = VEXPay_Helpers::format_ves_amount( $ves );
+		$api_key       = $this->get_active_api_key();
+		$key_kind      = VEXPay_Helpers::api_key_kind( $api_key );
+		$toggle_on     = $this->is_sandbox_toggle_on();
+		$simulated     = VEXPay_Helpers::debit_otp_is_simulated( $toggle_on, $api_key );
+
 		$body = array(
 			'banco'    => $bank_simf,
 			'monto'    => $ves,
@@ -2344,7 +2405,32 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			'cedula'   => $debtor_id,
 		);
 
-		VEXPay_Logger::info( sprintf( 'Requesting débito OTP for order %d', $order_id ) );
+		if ( ! $toggle_on && 'test' === $key_kind ) {
+			VEXPay_Logger::error(
+				sprintf(
+					'Débito OTP order %d: Sandbox toggle OFF but active key kind=test — API will simulate OTP (no bank SMS). Paste a Live twin key (vk_live_…) into Live API key.',
+					$order_id
+				)
+			);
+		} elseif ( $toggle_on && 'live' === $key_kind ) {
+			VEXPay_Logger::info(
+				sprintf(
+					'Débito OTP order %d: Sandbox toggle ON but Sandbox API key looks like a Live twin (key=live) — real bank SMS may be charged while UI says sandbox.',
+					$order_id
+				)
+			);
+		}
+
+		VEXPay_Logger::info(
+			sprintf(
+				'Requesting débito OTP for order %d (toggle=%s key=%s simulated=%s %s)',
+				$order_id,
+				$toggle_on ? 'sandbox' : 'live',
+				$key_kind,
+				$simulated ? 'yes' : 'no',
+				VEXPay_Helpers::describe_debit_otp_body( $body )
+			)
+		);
 		$result = $this->get_api_client()->debit_otp( $body );
 		if ( is_wp_error( $result ) ) {
 			$order->add_order_note( 'VEXPay OTP request failed: ' . $result->get_error_message() );
@@ -2352,9 +2438,29 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$this->redirect_to_otp( $order );
 		}
 
+		$otp_code = isset( $result['code'] ) ? (string) $result['code'] : '';
+		$otp_msg  = ( isset( $result['message'] ) && is_string( $result['message'] ) ) ? $result['message'] : '';
+		VEXPay_Logger::info(
+			sprintf(
+				'Débito OTP response for order %d: code=%s accepted=%s%s',
+				$order_id,
+				'' !== $otp_code ? $otp_code : 'n/a',
+				VEXPay_Helpers::debit_otp_accepted( $result ) ? 'yes' : 'no',
+				'' !== $otp_msg ? ' message=' . $otp_msg : ''
+			)
+		);
+
+		if ( ! VEXPay_Helpers::debit_otp_accepted( $result ) ) {
+			$fail_msg = VEXPay_Helpers::debit_otp_error_message( $result );
+			$order->add_order_note( 'VEXPay OTP request failed: ' . $fail_msg );
+			$this->set_otp_flash( $order_id, 'error', $fail_msg );
+			$this->redirect_to_otp( $order );
+		}
+
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, 'PENDING' );
 		$order->update_meta_data( VEXPay_Helpers::META_OTP_REQUESTED, 'yes' );
 		$order->update_meta_data( VEXPay_Helpers::META_OTP_RESEND_AT, (string) time() );
+		$order->update_meta_data( VEXPay_Helpers::META_VES_AMOUNT, number_format( $ves, 2, '.', '' ) );
 		$order->add_order_note(
 			$first_send
 				? __( 'Customer requested VEXPay débito OTP.', 'woo-vexpay-gateway' )
@@ -2362,13 +2468,16 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		);
 		$order->save();
 
-		$this->set_otp_flash(
-			$order_id,
-			'success',
-			$first_send
-				? __( 'Code sent — check your texts (sandbox: Portal → Sandbox).', 'woo-vexpay-gateway' )
-				: __( 'Fresh code sent — check your texts.', 'woo-vexpay-gateway' )
-		);
+		if ( $simulated ) {
+			$flash = $first_send
+				? __( 'Sandbox OTP ready — copy the rotating code from VEXPay Portal → Sandbox (no SMS on Test twin keys).', 'woo-vexpay-gateway' )
+				: __( 'Fresh sandbox OTP ready — copy the current code from VEXPay Portal → Sandbox.', 'woo-vexpay-gateway' );
+		} else {
+			$flash = $first_send
+				? __( 'Code sent — check your texts.', 'woo-vexpay-gateway' )
+				: __( 'Fresh code sent — check your texts.', 'woo-vexpay-gateway' );
+		}
+		$this->set_otp_flash( $order_id, 'success', $flash );
 		$this->redirect_to_otp( $order );
 	}
 

@@ -599,6 +599,150 @@ class VEXPay_Helpers {
 	}
 
 	/**
+	 * Round a VES amount to 2 decimal places for débito API payloads.
+	 *
+	 * @param float|int|string $amount Amount in bolívares.
+	 * @return float
+	 */
+	public static function format_ves_amount( $amount ): float {
+		return round( (float) $amount, 2 );
+	}
+
+	/**
+	 * Classify an API key twin without exposing the secret.
+	 *
+	 * Mode is implied by which twin key the API receives (see VEXPay auth docs).
+	 * Test twins simulate débito OTP (Portal → Sandbox); Live twins reach R4 SMS.
+	 *
+	 * @param string $api_key Raw x-api-key.
+	 * @return string One of: live|test|missing|unknown
+	 */
+	public static function api_key_kind( string $api_key ): string {
+		$key = trim( $api_key );
+		if ( '' === $key ) {
+			return 'missing';
+		}
+
+		if ( preg_match( '/^vk_test_/i', $key ) ) {
+			return 'test';
+		}
+		if ( preg_match( '/^vk_live_/i', $key ) ) {
+			return 'live';
+		}
+
+		// Local seed twins: dev-local-api-key (live) / dev-local-api-key-test (test).
+		$lower = strtolower( $key );
+		if ( str_ends_with( $lower, '-test' ) || str_ends_with( $lower, '_test' ) ) {
+			return 'test';
+		}
+		if ( 'dev-local-api-key' === $lower ) {
+			return 'live';
+		}
+
+		return 'unknown';
+	}
+
+	/**
+	 * Whether débito OTP is expected to be simulated (no bank SMS).
+	 *
+	 * True when the Woo sandbox toggle is on, or the active key is a Test twin.
+	 *
+	 * @param bool   $sandbox_toggle Gateway testmode option.
+	 * @param string $api_key        Active x-api-key.
+	 * @return bool
+	 */
+	public static function debit_otp_is_simulated( bool $sandbox_toggle, string $api_key ): bool {
+		if ( $sandbox_toggle ) {
+			return true;
+		}
+		return 'test' === self::api_key_kind( $api_key );
+	}
+
+	/**
+	 * Mask a phone for logs (keep last 4 digits).
+	 *
+	 * @param string $phone Raw or normalized phone.
+	 * @return string
+	 */
+	public static function mask_phone_for_log( string $phone ): string {
+		$digits = preg_replace( '/\D+/', '', $phone ) ?? '';
+		if ( strlen( $digits ) < 4 ) {
+			return '****';
+		}
+		return str_repeat( '*', strlen( $digits ) - 4 ) . substr( $digits, -4 );
+	}
+
+	/**
+	 * Compact shape summary for débito OTP request logs (no secrets).
+	 *
+	 * @param array $body Request body (banco, monto, telefono, cedula).
+	 * @return string
+	 */
+	public static function describe_debit_otp_body( array $body ): string {
+		$banco    = isset( $body['banco'] ) ? (string) $body['banco'] : '';
+		$telefono = isset( $body['telefono'] ) ? (string) $body['telefono'] : '';
+		$cedula   = isset( $body['cedula'] ) ? (string) $body['cedula'] : '';
+		$monto    = isset( $body['monto'] ) ? $body['monto'] : null;
+		$monto_s  = is_numeric( $monto ) ? number_format( (float) $monto, 2, '.', '' ) : 'n/a';
+
+		return sprintf(
+			'banco=%s(%s) monto=%s(%s) telefono=%s(len=%d) cedula=%s',
+			'' !== $banco ? $banco : 'n/a',
+			gettype( $body['banco'] ?? null ),
+			$monto_s,
+			gettype( $monto ),
+			self::mask_phone_for_log( $telefono ),
+			strlen( preg_replace( '/\D+/', '', $telefono ) ?? '' ),
+			'' !== $cedula ? ( substr( $cedula, 0, 1 ) . str_repeat( '*', max( 0, strlen( $cedula ) - 1 ) ) ) : 'n/a'
+		);
+	}
+
+	/**
+	 * Whether a débito OTP response indicates the bank accepted the request.
+	 *
+	 * HTTP 2xx is checked by the API client; this inspects the wire `code` /
+	 * `success` fields (typically `202` when the payer bank will SMS the OTP).
+	 * OpenAPI marks `code` required — empty/missing code is not treated as success.
+	 *
+	 * @param array $result Decoded API body.
+	 * @return bool
+	 */
+	public static function debit_otp_accepted( array $result ): bool {
+		if ( array_key_exists( 'success', $result ) && false === $result['success'] ) {
+			return false;
+		}
+		if ( ! isset( $result['code'] ) || '' === (string) $result['code'] ) {
+			return false;
+		}
+		$code = strtoupper( (string) $result['code'] );
+		return in_array( $code, array( '202', '00' ), true );
+	}
+
+	/**
+	 * Human-readable error from a rejected débito OTP response.
+	 *
+	 * @param array $result Decoded API body.
+	 * @return string
+	 */
+	public static function debit_otp_error_message( array $result ): string {
+		if ( ! empty( $result['message'] ) && is_string( $result['message'] ) ) {
+			return $result['message'];
+		}
+		if ( ! empty( $result['error'] ) && is_string( $result['error'] ) ) {
+			return $result['error'];
+		}
+		$code = ! empty( $result['code'] ) ? (string) $result['code'] : '';
+		if ( '' !== $code ) {
+			return sprintf(
+				/* translators: %s: API/business code */
+				__( 'OTP request was not accepted (code %s).', 'woo-vexpay-gateway' ),
+				$code
+			);
+		}
+		return __( 'OTP request was not accepted.', 'woo-vexpay-gateway' );
+	}
+
+	/**
 	 * Map a débito inmediato execute wire payload into a status-bearing receipt.
 	 *
 	 * @param array $result API response.
