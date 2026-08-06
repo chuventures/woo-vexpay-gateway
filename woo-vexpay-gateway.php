@@ -28,6 +28,30 @@ define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.banking.chuventures.com' );
 
 /**
+ * Schedule settlement poller (Action Scheduler or WP-Cron).
+ */
+register_activation_hook(
+	__FILE__,
+	static function () {
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-helpers.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-poller.php';
+		VEXPay_Poller::activate();
+	}
+);
+
+/**
+ * Clear settlement poller schedules.
+ */
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-helpers.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-poller.php';
+		VEXPay_Poller::deactivate();
+	}
+);
+
+/**
  * Declare WooCommerce feature compatibility.
  */
 add_action(
@@ -62,6 +86,7 @@ add_action(
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-helpers.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-api-client.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-webhook.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-poller.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-plugin.php';

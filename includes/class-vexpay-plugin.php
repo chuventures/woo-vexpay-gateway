@@ -50,6 +50,7 @@ final class VEXPay_Plugin {
 		add_action( 'woocommerce_api_vexpay_otp_back_checkout', array( $this, 'api_otp_back_checkout' ) );
 
 		VEXPay_Webhook::init();
+		VEXPay_Poller::init();
 		VEXPay_Blocks::init();
 	}
 

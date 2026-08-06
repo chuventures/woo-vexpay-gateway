@@ -2280,6 +2280,20 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		$result = VEXPay_Helpers::normalize_debit_execute_result( $result );
+		$result = $this->ensure_payment_id_after_debit_execute( $order, $result, (string) $body['externalRef'] );
+
+		$exec_status = isset( $result['status'] ) ? strtoupper( (string) $result['status'] ) : '';
+		$exec_pay_id = ! empty( $result['paymentId'] ) ? (string) $result['paymentId'] : '';
+		VEXPay_Logger::info(
+			sprintf(
+				'Débito execute for order %d: status=%s paymentId=%s bankReference=%s',
+				$order_id,
+				'' !== $exec_status ? $exec_status : 'n/a',
+				'' !== $exec_pay_id ? $exec_pay_id : 'missing',
+				! empty( $result['bankReference'] ) ? (string) $result['bankReference'] : '-'
+			)
+		);
+
 		$this->apply_payment_result( $order, $result );
 
 		if ( $order->is_paid() ) {
@@ -2288,7 +2302,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		$status = strtoupper( (string) $order->get_meta( VEXPay_Helpers::META_STATUS ) );
-		if ( 'PENDING' === $status ) {
+		if ( VEXPay_Helpers::is_pending_settlement_status( $status ) ) {
 			$this->set_otp_flash( $order_id, 'notice', __( 'Payment is processing — hang tight while the bank confirms.', 'woo-vexpay-gateway' ) );
 			wp_safe_redirect( $this->get_return_url( $order ) );
 			exit;
@@ -2479,6 +2493,73 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 		$this->set_otp_flash( $order_id, 'success', $flash );
 		$this->redirect_to_otp( $order );
+	}
+
+	/**
+	 * Recover `paymentId` after débito execute when the wire payload omitted it.
+	 *
+	 * ImmediateDebitResponseDto always includes `paymentId`; if it is missing
+	 * (proxy trim, older gateway, etc.), look up by externalRef so the settlement
+	 * poller can call operations/poll.
+	 *
+	 * @param WC_Order $order        Order.
+	 * @param array    $result       Normalized execute receipt.
+	 * @param string   $external_ref Correlation id sent on execute.
+	 * @return array
+	 */
+	private function ensure_payment_id_after_debit_execute( WC_Order $order, array $result, string $external_ref ): array {
+		if ( ! empty( $result['paymentId'] ) ) {
+			return $result;
+		}
+
+		$status = isset( $result['status'] ) ? strtoupper( (string) $result['status'] ) : '';
+		if ( ! VEXPay_Helpers::is_pending_settlement_status( $status ) && 'COMPLETED' !== $status ) {
+			return $result;
+		}
+
+		if ( '' === $external_ref ) {
+			VEXPay_Logger::error(
+				sprintf(
+					'Débito execute for order %d returned status=%s without paymentId and no externalRef to recover.',
+					$order->get_id(),
+					'' !== $status ? $status : 'n/a'
+				)
+			);
+			return $result;
+		}
+
+		VEXPay_Logger::debug(
+			sprintf(
+				'Débito execute for order %d missing paymentId — recovering via by-ref %s.',
+				$order->get_id(),
+				$external_ref
+			)
+		);
+
+		$lookup = $this->get_api_client()->get_payment_by_ref( $external_ref );
+		if ( is_wp_error( $lookup ) ) {
+			VEXPay_Logger::error(
+				sprintf(
+					'Débito execute for order %d: by-ref recovery failed: %s',
+					$order->get_id(),
+					$lookup->get_error_message()
+				)
+			);
+			return $result;
+		}
+
+		$lookup = VEXPay_Helpers::normalize_payment_lookup_result( $lookup );
+		if ( ! empty( $lookup['paymentId'] ) ) {
+			$result['paymentId'] = (string) $lookup['paymentId'];
+		}
+		if ( empty( $result['status'] ) && ! empty( $lookup['status'] ) ) {
+			$result['status'] = (string) $lookup['status'];
+		}
+		if ( empty( $result['bankReference'] ) && ! empty( $lookup['bankReference'] ) ) {
+			$result['bankReference'] = (string) $lookup['bankReference'];
+		}
+
+		return $result;
 	}
 
 	/**

@@ -183,9 +183,98 @@ final class HelpersTest extends TestCase {
 		$this->assertSame( 'COMPLETED', $accp['status'] );
 		$this->assertSame( 'ref-9', $accp['bankReference'] );
 
-		$pending = VEXPay_Helpers::normalize_debit_execute_result( array( 'code' => 'AC00', 'id' => 'op-1' ) );
+		$pending = VEXPay_Helpers::normalize_debit_execute_result(
+			array(
+				'code'      => 'AC00',
+				'Id'        => 'op-1',
+				'paymentId' => 'pay-pending',
+			)
+		);
 		$this->assertSame( 'PENDING', $pending['status'] );
 		$this->assertSame( 'op-1', $pending['bankReference'] );
+		$this->assertSame( 'pay-pending', $pending['paymentId'] );
+
+		// Wire `id` is network op uuid / bank ref — must not be mistaken for paymentId.
+		$legacy = VEXPay_Helpers::normalize_debit_execute_result( array( 'code' => 'AC00', 'id' => 'op-legacy' ) );
+		$this->assertSame( 'PENDING', $legacy['status'] );
+		$this->assertSame( 'op-legacy', $legacy['bankReference'] );
+		$this->assertArrayNotHasKey( 'paymentId', $legacy );
+	}
+
+	public function test_order_awaits_settlement_poll(): void {
+		$this->assertTrue(
+			VEXPay_Helpers::order_awaits_settlement_poll( 'vexpay', 'PENDING', 'pay-uuid', false )
+		);
+		$this->assertTrue(
+			VEXPay_Helpers::order_awaits_settlement_poll( 'vexpay', 'AC00', 'pay-uuid', false )
+		);
+		// Pre-OTP: no payment id yet.
+		$this->assertFalse(
+			VEXPay_Helpers::order_awaits_settlement_poll( 'vexpay', 'PENDING', '', false )
+		);
+		$this->assertSame(
+			'missing_payment_id',
+			VEXPay_Helpers::settlement_poll_eligibility_skip_reason( 'vexpay', 'PENDING', '', false )
+		);
+		$this->assertSame(
+			'status_not_pending:COMPLETED',
+			VEXPay_Helpers::settlement_poll_eligibility_skip_reason( 'vexpay', 'COMPLETED', 'pay-uuid', false )
+		);
+		$this->assertSame(
+			'already_paid',
+			VEXPay_Helpers::settlement_poll_eligibility_skip_reason( 'vexpay', 'PENDING', 'pay-uuid', true )
+		);
+		$this->assertSame(
+			'not_vexpay',
+			VEXPay_Helpers::settlement_poll_eligibility_skip_reason( 'cod', 'PENDING', 'pay-uuid', false )
+		);
+		$this->assertNull(
+			VEXPay_Helpers::settlement_poll_eligibility_skip_reason( 'vexpay', 'PENDING', 'pay-uuid', false )
+		);
+		$this->assertFalse(
+			VEXPay_Helpers::order_awaits_settlement_poll( 'vexpay', 'COMPLETED', 'pay-uuid', false )
+		);
+		$this->assertFalse(
+			VEXPay_Helpers::order_awaits_settlement_poll( 'vexpay', 'PENDING', 'pay-uuid', true )
+		);
+		$this->assertFalse(
+			VEXPay_Helpers::order_awaits_settlement_poll( 'cod', 'PENDING', 'pay-uuid', false )
+		);
+	}
+
+	public function test_poll_cooldown_and_expiry(): void {
+		$now = 1_700_000_000;
+		$this->assertFalse( VEXPay_Helpers::was_polled_recently( 0, $now ) );
+		$this->assertTrue( VEXPay_Helpers::was_polled_recently( $now - 10, $now, 45 ) );
+		$this->assertFalse( VEXPay_Helpers::was_polled_recently( $now - 50, $now, 45 ) );
+		$this->assertFalse( VEXPay_Helpers::is_poll_expired( $now - 100, $now, 172800 ) );
+		$this->assertTrue( VEXPay_Helpers::is_poll_expired( $now - 200000, $now, 172800 ) );
+	}
+
+	public function test_normalize_payment_lookup_result(): void {
+		$receipt = VEXPay_Helpers::normalize_payment_lookup_result(
+			array(
+				'paymentId'     => 'pay-1',
+				'status'        => 'completed',
+				'bankReference' => 'ref-1',
+			)
+		);
+		$this->assertSame( 'COMPLETED', $receipt['status'] );
+
+		$from_poll = VEXPay_Helpers::normalize_payment_lookup_result(
+			array(
+				'kind'      => 'debit',
+				'id'        => 'pay-2',
+				'status'    => 'FAILED',
+				'reference' => 'bank-9',
+			)
+		);
+		$this->assertSame( 'pay-2', $from_poll['paymentId'] );
+		$this->assertSame( 'FAILED', $from_poll['status'] );
+		$this->assertSame( 'bank-9', $from_poll['bankReference'] );
+
+		$from_code = VEXPay_Helpers::normalize_payment_lookup_result( array( 'code' => 'ACCP', 'paymentId' => 'pay-3' ) );
+		$this->assertSame( 'COMPLETED', $from_code['status'] );
 	}
 
 	public function test_format_ves_amount(): void {

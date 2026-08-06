@@ -106,6 +106,24 @@ class VEXPay_API_Client {
 	}
 
 	/**
+	 * POST /v1/payments/operations/poll — nudge gateway reconciliation for a pending entity.
+	 *
+	 * @param string $kind Entity kind (`debit`, `payout`, `verification_deposit`).
+	 * @param string $id   Payment / payout / deposit UUID (not network operation id).
+	 * @return array|WP_Error
+	 */
+	public function poll_payment_operation( string $kind, string $id ) {
+		return $this->request(
+			'POST',
+			'/v1/payments/operations/poll',
+			array(
+				'kind' => $kind,
+				'id'   => $id,
+			)
+		);
+	}
+
+	/**
 	 * POST /v1/payments/:id/reverse
 	 *
 	 * @param string $payment_id Payment ID.

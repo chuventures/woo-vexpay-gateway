@@ -41,12 +41,22 @@ The hosted API must POST to `…/wc-api/vexpay_webhook`. Localhost is not reacha
 - Expose wp-env with a tunnel (e.g. ngrok) and register that public URL in the VEXPay dashboard, or
 - Skip webhook checks at first and verify the OTP happy path (browser redirect), then add webhooks once a public URL exists.
 
-## C2P flow
+### Settlement without webhooks (interim poller)
 
-1. Checkout: cédula, phone, bank → `POST /v1/payments/c2p/request`
-2. Order `on-hold`; customer opens order-pay OTP form
-3. OTP → `POST /v1/payments/c2p`
-4. Webhooks reconcile via `POST …/wc-api/vexpay_webhook` (HMAC `X-Webhook-Signature`)
+When débito returns `AC00` (pending), the VEXPay gateway settles bank-side asynchronously. If webhooks are not reachable yet, the plugin schedules a recurring job (`vexpay_poll_pending_payments`, every 60s via Action Scheduler when WooCommerce provides it, otherwise WP-Cron) that:
+
+1. Finds unpaid VEXPay orders (`on-hold` / `pending`) and skips those without `_vexpay_payment_id` or a pending `_vexpay_status` (pre-OTP orders stay on-hold until OTP execute)
+2. Calls `POST /v1/payments/operations/poll` (fallback: `GET /v1/payments/by-ref/:externalRef` or `GET /v1/payments/:id`)
+3. Applies the same `apply_payment_result` path as webhooks
+
+Per-order cooldown is 45s, so with a 60s schedule you typically see about one API attempt per minute; under light traffic WP-Cron / Action Scheduler may wake every ~2 minutes — that is expected. Enable **Debug log** under gateway settings to see skip reasons, endpoint attempts, and status transitions in WooCommerce → Status → Logs. Keep webhook registration for production once the store URL is public.
+
+## Débito inmediato flow
+
+1. Checkout: cédula, phone, bank → quote + order `on-hold`
+2. Customer opens OTP page → `POST /v1/payments/debit/otp`
+3. OTP → `POST /v1/payments/debit` (`ACCP` paid, `AC00` pending)
+4. Webhooks reconcile via `POST …/wc-api/vexpay_webhook` (HMAC `X-Webhook-Signature`), or the settlement poller when webhooks are unavailable
 
 In Test mode, use the sandbox OTP from the VEXPay Portal (Test twin), not a real bank app.
 

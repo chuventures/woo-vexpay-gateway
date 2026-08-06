@@ -24,9 +24,29 @@ class VEXPay_Helpers {
 	public const META_STATUS        = '_vexpay_status';
 	public const META_OTP_REQUESTED = '_vexpay_otp_requested';
 	public const META_OTP_RESEND_AT = '_vexpay_otp_resend_at';
+	/** Unix timestamp of last settlement poll attempt. */
+	public const META_LAST_POLLED_AT = '_vexpay_last_polled_at';
 
 	/** Minimum seconds between OTP re-requests. */
 	public const OTP_RESEND_COOLDOWN = 45;
+
+	/** WP-Cron / Action Scheduler hook for pending payment settlement. */
+	public const CRON_HOOK = 'vexpay_poll_pending_payments';
+
+	/** Custom WP-Cron schedule name (1 minute). */
+	public const CRON_SCHEDULE = 'vexpay_every_minute';
+
+	/** Seconds between recurring poll runs. */
+	public const POLL_INTERVAL = 60;
+
+	/** Max orders to reconcile per cron tick. */
+	public const POLL_BATCH_LIMIT = 15;
+
+	/** Min seconds between polls for the same order. */
+	public const POLL_ORDER_COOLDOWN = 45;
+
+	/** Stop polling orders older than this many seconds. */
+	public const POLL_MAX_AGE = 172800; // 48 hours.
 
 	/** User meta / WC session key for remembered payer details. */
 	public const PROFILE_META_KEY = '_vexpay_debtor_profile';
@@ -596,6 +616,134 @@ class VEXPay_Helpers {
 			default:
 				return 'ignore';
 		}
+	}
+
+	/**
+	 * Whether a VEXPay status is still awaiting bank settlement.
+	 *
+	 * @param string $status Meta / API status.
+	 * @return bool
+	 */
+	public static function is_pending_settlement_status( string $status ): bool {
+		return in_array( strtoupper( $status ), array( 'PENDING', 'AC00' ), true );
+	}
+
+	/**
+	 * Whether an order is a candidate for settlement polling (no WP/WC calls).
+	 *
+	 * Candidates have a stored payment id (OTP execute created a payment) and a
+	 * pending VEXPay status. Pre-OTP on-hold orders are excluded.
+	 *
+	 * @param string $payment_method Order payment method.
+	 * @param string $vexpay_status  `_vexpay_status` meta.
+	 * @param string $payment_id     `_vexpay_payment_id` meta.
+	 * @param bool   $is_paid        Whether the order is already paid.
+	 * @return bool
+	 */
+	public static function order_awaits_settlement_poll(
+		string $payment_method,
+		string $vexpay_status,
+		string $payment_id,
+		bool $is_paid
+	): bool {
+		return null === self::settlement_poll_eligibility_skip_reason(
+			$payment_method,
+			$vexpay_status,
+			$payment_id,
+			$is_paid
+		);
+	}
+
+	/**
+	 * Why an order is not eligible for settlement API lookup (null = eligible).
+	 *
+	 * Does not cover cooldown / max-age — those are checked separately after eligibility.
+	 *
+	 * @param string $payment_method Order payment method.
+	 * @param string $vexpay_status  `_vexpay_status` meta.
+	 * @param string $payment_id     `_vexpay_payment_id` meta.
+	 * @param bool   $is_paid        Whether the order is already paid.
+	 * @return string|null Machine-readable skip reason, or null when eligible.
+	 */
+	public static function settlement_poll_eligibility_skip_reason(
+		string $payment_method,
+		string $vexpay_status,
+		string $payment_id,
+		bool $is_paid
+	): ?string {
+		if ( 'vexpay' !== $payment_method ) {
+			return 'not_vexpay';
+		}
+		if ( $is_paid ) {
+			return 'already_paid';
+		}
+		if ( '' === trim( $payment_id ) ) {
+			// Checkout / OTP-request set PENDING without a payment row yet.
+			return 'missing_payment_id';
+		}
+		if ( ! self::is_pending_settlement_status( $vexpay_status ) ) {
+			$status = strtoupper( trim( $vexpay_status ) );
+			return '' === $status ? 'status_empty' : 'status_not_pending:' . $status;
+		}
+		return null;
+	}
+
+	/**
+	 * Whether the order was polled too recently.
+	 *
+	 * @param int $last_polled_at Unix timestamp from meta (0 if never).
+	 * @param int $now            Current unix time.
+	 * @param int $cooldown       Seconds between polls.
+	 * @return bool
+	 */
+	public static function was_polled_recently( int $last_polled_at, int $now, int $cooldown = self::POLL_ORDER_COOLDOWN ): bool {
+		if ( $last_polled_at <= 0 ) {
+			return false;
+		}
+		return ( $now - $last_polled_at ) < $cooldown;
+	}
+
+	/**
+	 * Whether the order is too old to keep polling.
+	 *
+	 * @param int $created_at Unix timestamp (order created).
+	 * @param int $now        Current unix time.
+	 * @param int $max_age    Max age in seconds.
+	 * @return bool
+	 */
+	public static function is_poll_expired( int $created_at, int $now, int $max_age = self::POLL_MAX_AGE ): bool {
+		if ( $created_at <= 0 ) {
+			return false;
+		}
+		return ( $now - $created_at ) > $max_age;
+	}
+
+	/**
+	 * Normalize GET payment / by-ref / operations-poll payloads into a receipt
+	 * suitable for {@see VEXPay_Gateway::apply_payment_result()}.
+	 *
+	 * @param array $result API body.
+	 * @return array
+	 */
+	public static function normalize_payment_lookup_result( array $result ): array {
+		// ManualOperationPollResponseDto uses `id` for the payment UUID.
+		if ( empty( $result['paymentId'] ) && ! empty( $result['id'] ) && ! empty( $result['status'] ) ) {
+			$result['paymentId'] = (string) $result['id'];
+		}
+
+		if ( empty( $result['status'] ) && ! empty( $result['code'] ) ) {
+			$result = self::normalize_debit_execute_result( $result );
+		}
+
+		if ( empty( $result['bankReference'] ) && ! empty( $result['reference'] ) ) {
+			$result['bankReference'] = (string) $result['reference'];
+		}
+
+		if ( ! empty( $result['status'] ) ) {
+			$result['status'] = strtoupper( (string) $result['status'] );
+		}
+
+		return $result;
 	}
 
 	/**
