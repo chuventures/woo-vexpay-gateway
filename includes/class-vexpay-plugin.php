@@ -1,0 +1,81 @@
+<?php
+/**
+ * Plugin orchestrator.
+ *
+ * @package VEXPay_Gateway
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Main plugin class.
+ */
+final class VEXPay_Plugin {
+
+	/**
+	 * Singleton.
+	 *
+	 * @var VEXPay_Plugin|null
+	 */
+	private static $instance = null;
+
+	/**
+	 * Instance.
+	 *
+	 * @return VEXPay_Plugin
+	 */
+	public static function instance(): VEXPay_Plugin {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * Hook registrations.
+	 */
+	public function init(): void {
+		load_plugin_textdomain( 'woo-vexpay-gateway', false, dirname( plugin_basename( VEXPAY_GATEWAY_FILE ) ) . '/languages' );
+
+		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_assets' ) );
+
+		VEXPay_Webhook::init();
+		VEXPay_Blocks::init();
+	}
+
+	/**
+	 * Register gateway with WooCommerce.
+	 *
+	 * @param array $gateways Gateways.
+	 * @return array
+	 */
+	public function register_gateway( array $gateways ): array {
+		$gateways[] = 'VEXPay_Gateway';
+		return $gateways;
+	}
+
+	/**
+	 * Front-end CSS/JS for checkout + OTP page.
+	 */
+	public function enqueue_front_assets(): void {
+		if ( ! is_checkout() && ! is_wc_endpoint_url( 'order-pay' ) && ! is_order_received_page() ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'vexpay-gateway',
+			VEXPAY_GATEWAY_URL . 'assets/css/checkout.css',
+			array(),
+			VEXPAY_GATEWAY_VERSION
+		);
+
+		wp_enqueue_script(
+			'vexpay-gateway',
+			VEXPAY_GATEWAY_URL . 'assets/js/checkout.js',
+			array( 'jquery' ),
+			VEXPAY_GATEWAY_VERSION,
+			true
+		);
+	}
+}

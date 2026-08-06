@@ -1,0 +1,44 @@
+.vexpay-test-mode {
+	margin: 0.5em 0 1em;
+	padding: 0.5em 0.75em;
+	background: #fff8e5;
+	border-left: 3px solid #e6a700;
+}
+
+.vexpay-ves-quote {
+	margin: 0.5em 0 1em;
+	font-size: 0.95em;
+}
+
+.vexpay-fields .form-row {
+	margin-bottom: 0.75em;
+}
+
+.vexpay-otp-wrap {
+	max-width: 28rem;
+	margin: 1.5rem 0;
+}
+
+.vexpay-otp-form input#vexpay_token {
+	letter-spacing: 0.15em;
+	font-size: 1.25rem;
+	max-width: 12rem;
+}
+
+.vexpay-blocks-fields {
+	display: grid;
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+.vexpay-blocks-fields label {
+	display: grid;
+	gap: 0.25rem;
+	font-size: 0.9rem;
+}
+
+.vexpay-blocks-fields input,
+.vexpay-blocks-fields select {
+	width: 100%;
+	padding: 0.5rem;
+}
