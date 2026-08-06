@@ -60,38 +60,93 @@
 			var $list = $picker.find('.vexpay-bank-list');
 			var $trigger = $picker.find('.vexpay-bank-trigger');
 			var placeholder = $picker.find('.vexpay-bank-placeholder').text();
+			var activeIndex = -1;
 			$picker.data('placeholder', placeholder);
+
+			function options() {
+				return $list.find('.vexpay-bank-option');
+			}
+
+			function setActive(index) {
+				var $opts = options();
+				if (!$opts.length) {
+					return;
+				}
+				if (index < 0) {
+					index = $opts.length - 1;
+				}
+				if (index >= $opts.length) {
+					index = 0;
+				}
+				activeIndex = index;
+				$opts.removeClass('is-active');
+				var $active = $opts.eq(activeIndex).addClass('is-active');
+				$trigger.attr('aria-activedescendant', $active.attr('id') || null);
+				if ($active.length && $active[0].scrollIntoView) {
+					$active[0].scrollIntoView({ block: 'nearest' });
+				}
+			}
 
 			function close() {
 				$list.attr('hidden', true);
-				$trigger.attr('aria-expanded', 'false');
+				$trigger.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
 				$picker.removeClass('is-open');
+				options().removeClass('is-active');
+				activeIndex = -1;
 			}
 
-			function open() {
+			function open(startIndex) {
 				$list.removeAttr('hidden');
 				$trigger.attr('aria-expanded', 'true');
 				$picker.addClass('is-open');
+				var current = String($input.val() || '');
+				var $opts = options();
+				var idx = 0;
+				if (typeof startIndex === 'number') {
+					idx = startIndex;
+				} else if (current) {
+					$opts.each(function (i) {
+						if (String($(this).data('code')) === current) {
+							idx = i;
+							return false;
+						}
+					});
+				}
+				setActive(idx);
 			}
 
 			function selectOption($opt) {
+				if (!$opt || !$opt.length) {
+					return;
+				}
 				var bank = {
 					code: String($opt.data('code') || ''),
 					name: String($opt.data('name') || ''),
 					logo: String($opt.data('logo') || ''),
 				};
 				$input.val(bank.code).trigger('change');
-				$list.find('.vexpay-bank-option').attr('aria-selected', 'false').removeClass('is-selected');
+				options().attr('aria-selected', 'false').removeClass('is-selected');
 				$opt.attr('aria-selected', 'true').addClass('is-selected');
 				renderTrigger($picker, bank);
 				close();
+				$trigger.trigger('focus');
 			}
+
+			// Stable ids for aria-activedescendant.
+			options().each(function () {
+				var $opt = $(this);
+				if (!$opt.attr('id')) {
+					$opt.attr('id', 'vexpay-bank-option-' + String($opt.data('code') || ''));
+				}
+			});
 
 			var current = String($input.val() || '');
 			if (current) {
-				var $selected = $list.find('.vexpay-bank-option').filter(function () {
-					return String($(this).data('code')) === current;
-				}).first();
+				var $selected = options()
+					.filter(function () {
+						return String($(this).data('code')) === current;
+					})
+					.first();
 				if ($selected.length) {
 					selectOption($selected);
 				}
@@ -104,6 +159,57 @@
 				} else {
 					open();
 				}
+			});
+
+			$trigger.on('keydown', function (e) {
+				var key = e.key;
+				var $opts = options();
+				if (!$opts.length) {
+					return;
+				}
+
+				if (key === 'ArrowDown' || key === 'ArrowUp') {
+					e.preventDefault();
+					if (!$picker.hasClass('is-open')) {
+						open(key === 'ArrowUp' ? $opts.length - 1 : 0);
+						return;
+					}
+					setActive(key === 'ArrowDown' ? activeIndex + 1 : activeIndex - 1);
+					return;
+				}
+				if (key === 'Home' && $picker.hasClass('is-open')) {
+					e.preventDefault();
+					setActive(0);
+					return;
+				}
+				if (key === 'End' && $picker.hasClass('is-open')) {
+					e.preventDefault();
+					setActive($opts.length - 1);
+					return;
+				}
+				if ((key === 'Enter' || key === ' ') && $picker.hasClass('is-open') && activeIndex >= 0) {
+					e.preventDefault();
+					selectOption($opts.eq(activeIndex));
+					return;
+				}
+				if (key === 'Enter' || key === ' ') {
+					e.preventDefault();
+					if ($picker.hasClass('is-open')) {
+						close();
+					} else {
+						open();
+					}
+					return;
+				}
+				if (key === 'Escape' && $picker.hasClass('is-open')) {
+					e.preventDefault();
+					close();
+					$trigger.trigger('focus');
+				}
+			});
+
+			$list.on('mouseenter', '.vexpay-bank-option', function () {
+				setActive(options().index(this));
 			});
 
 			$list.on('click', '.vexpay-bank-option', function (e) {

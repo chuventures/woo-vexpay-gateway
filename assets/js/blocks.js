@@ -44,8 +44,48 @@
 
 	const BankPicker = ( { value, onChange } ) => {
 		const [ open, setOpen ] = useState( false );
+		const [ activeIndex, setActiveIndex ] = useState( -1 );
 		const rootRef = useRef( null );
+		const listRef = useRef( null );
 		const selected = banks.find( ( b ) => String( b.code ) === String( value ) ) || null;
+
+		const openList = ( startIndex ) => {
+			const idx =
+				typeof startIndex === 'number'
+					? startIndex
+					: Math.max(
+							0,
+							banks.findIndex( ( b ) => String( b.code ) === String( value ) )
+					  );
+			setActiveIndex( idx >= 0 ? idx : 0 );
+			setOpen( true );
+		};
+
+		const closeList = () => {
+			setOpen( false );
+			setActiveIndex( -1 );
+		};
+
+		const selectIndex = ( index ) => {
+			const bank = banks[ index ];
+			if ( ! bank ) {
+				return;
+			}
+			onChange( bank.code );
+			closeList();
+		};
+
+		useEffect( () => {
+			if ( ! open || ! listRef.current || activeIndex < 0 ) {
+				return;
+			}
+			const option = listRef.current.querySelector(
+				'[data-bank-index="' + activeIndex + '"]'
+			);
+			if ( option && typeof option.scrollIntoView === 'function' ) {
+				option.scrollIntoView( { block: 'nearest' } );
+			}
+		}, [ open, activeIndex ] );
 
 		useEffect( () => {
 			if ( ! open ) {
@@ -53,21 +93,66 @@
 			}
 			const onDocClick = ( event ) => {
 				if ( rootRef.current && ! rootRef.current.contains( event.target ) ) {
-					setOpen( false );
-				}
-			};
-			const onKey = ( event ) => {
-				if ( event.key === 'Escape' ) {
-					setOpen( false );
+					closeList();
 				}
 			};
 			document.addEventListener( 'mousedown', onDocClick );
-			document.addEventListener( 'keydown', onKey );
 			return () => {
 				document.removeEventListener( 'mousedown', onDocClick );
-				document.removeEventListener( 'keydown', onKey );
 			};
 		}, [ open ] );
+
+		const onTriggerKeyDown = ( event ) => {
+			const key = event.key;
+			if ( key === 'ArrowDown' || key === 'ArrowUp' ) {
+				event.preventDefault();
+				if ( ! open ) {
+					openList( key === 'ArrowUp' ? banks.length - 1 : 0 );
+					return;
+				}
+				setActiveIndex( ( prev ) => {
+					const current = prev < 0 ? 0 : prev;
+					if ( key === 'ArrowDown' ) {
+						return current >= banks.length - 1 ? 0 : current + 1;
+					}
+					return current <= 0 ? banks.length - 1 : current - 1;
+				} );
+				return;
+			}
+			if ( key === 'Home' && open ) {
+				event.preventDefault();
+				setActiveIndex( 0 );
+				return;
+			}
+			if ( key === 'End' && open ) {
+				event.preventDefault();
+				setActiveIndex( banks.length - 1 );
+				return;
+			}
+			if ( ( key === 'Enter' || key === ' ' ) && open && activeIndex >= 0 ) {
+				event.preventDefault();
+				selectIndex( activeIndex );
+				return;
+			}
+			if ( key === 'Enter' || key === ' ' ) {
+				event.preventDefault();
+				if ( open ) {
+					closeList();
+				} else {
+					openList();
+				}
+				return;
+			}
+			if ( key === 'Escape' && open ) {
+				event.preventDefault();
+				closeList();
+			}
+		};
+
+		const activeId =
+			open && activeIndex >= 0 && banks[ activeIndex ]
+				? 'vexpay-bank-option-' + banks[ activeIndex ].code
+				: undefined;
 
 		return createElement(
 			'div',
@@ -79,7 +164,16 @@
 					className: 'vexpay-bank-trigger',
 					'aria-haspopup': 'listbox',
 					'aria-expanded': open ? 'true' : 'false',
-					onClick: () => setOpen( ( prev ) => ! prev ),
+					'aria-controls': 'vexpay-bank-listbox',
+					'aria-activedescendant': activeId,
+					onClick: () => {
+						if ( open ) {
+							closeList();
+						} else {
+							openList();
+						}
+					},
+					onKeyDown: onTriggerKeyDown,
 				},
 				createElement(
 					'span',
@@ -108,21 +202,28 @@
 			open
 				? createElement(
 						'ul',
-						{ className: 'vexpay-bank-list', role: 'listbox' },
-						banks.map( ( bank ) =>
+						{
+							id: 'vexpay-bank-listbox',
+							className: 'vexpay-bank-list',
+							role: 'listbox',
+							tabIndex: -1,
+							ref: listRef,
+						},
+						banks.map( ( bank, index ) =>
 							createElement(
 								'li',
 								{
+									id: 'vexpay-bank-option-' + bank.code,
 									key: bank.code,
 									role: 'option',
+									'data-bank-index': index,
 									className:
 										'vexpay-bank-option' +
-										( String( value ) === String( bank.code ) ? ' is-selected' : '' ),
+										( String( value ) === String( bank.code ) ? ' is-selected' : '' ) +
+										( index === activeIndex ? ' is-active' : '' ),
 									'aria-selected': String( value ) === String( bank.code ) ? 'true' : 'false',
-									onClick: () => {
-										onChange( bank.code );
-										setOpen( false );
-									},
+									onMouseEnter: () => setActiveIndex( index ),
+									onClick: () => selectIndex( index ),
 								},
 								createElement( BankLogo, { bank } ),
 								createElement(
@@ -243,7 +344,7 @@
 					createElement(
 						'span',
 						{ className: 'vexpay-step-label' },
-						__( 'C2P code', 'woo-vexpay-gateway' )
+						__( 'OTP code', 'woo-vexpay-gateway' )
 					)
 				)
 			),
@@ -271,7 +372,7 @@
 					'p',
 					{ className: 'vexpay-step-copy' },
 					__(
-						'Tell us who is paying. Place the order to request the C2P from your bank — then enter the code in step 2.',
+						'Tell us who is paying. Place the order to request the C2P from your bank — then enter the OTP in step 2.',
 						'woo-vexpay-gateway'
 					)
 				),

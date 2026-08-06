@@ -12,14 +12,15 @@ defined( 'ABSPATH' ) || exit;
  */
 class VEXPay_Helpers {
 
-	public const META_PAYMENT_ID   = '_vexpay_payment_id';
-	public const META_INTENT_ID    = '_vexpay_intent_id';
-	public const META_EXTERNAL_REF = '_vexpay_external_ref';
-	public const META_DEBTOR_ID    = '_vexpay_debtor_id';
-	public const META_DEBTOR_PHONE = '_vexpay_debtor_phone';
-	public const META_DEBTOR_BANK  = '_vexpay_debtor_bank';
-	public const META_USD_AMOUNT   = '_vexpay_usd_amount';
-	public const META_STATUS       = '_vexpay_status';
+	public const META_PAYMENT_ID    = '_vexpay_payment_id';
+	public const META_INTENT_ID     = '_vexpay_intent_id';
+	public const META_EXTERNAL_REF  = '_vexpay_external_ref';
+	public const META_DEBTOR_ID     = '_vexpay_debtor_id';
+	public const META_DEBTOR_PHONE  = '_vexpay_debtor_phone';
+	public const META_DEBTOR_BANK   = '_vexpay_debtor_bank';
+	public const META_USD_AMOUNT    = '_vexpay_usd_amount';
+	public const META_STATUS        = '_vexpay_status';
+	public const META_OTP_REQUESTED = '_vexpay_otp_requested';
 
 	/**
 	 * Normalize GET /v1/banks payload into [{code,name,logoUrl}, …].
