@@ -16,8 +16,16 @@ class VEXPay_Blocks {
 
 	/**
 	 * Register.
+	 *
+	 * Plugin boot is on plugins_loaded priority 20; WooCommerce may have already
+	 * fired woocommerce_blocks_loaded by then — call immediately if so.
 	 */
 	public static function init(): void {
+		if ( did_action( 'woocommerce_blocks_loaded' ) ) {
+			self::on_blocks_loaded();
+			return;
+		}
+
 		add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'on_blocks_loaded' ) );
 	}
 

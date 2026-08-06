@@ -38,11 +38,12 @@ You configure your own API keys from the VEXPay dashboard. This plugin does not 
 1. Install and activate WooCommerce.
 2. Install and activate this plugin.
 3. Go to **WooCommerce → Settings → Payments → VEXPay**.
-4. Enter your API base URL, Live and/or Test API keys, click **Test connection**, then enable the gateway.
-5. Save settings (the plugin registers a webhook endpoint automatically when possible).
-6. Place a test order with your Test API key.
+4. Turn on **Test mode** and paste your **Test** API key from the VEXPay dashboard.
+5. Click **Test connection** (banks + BCV rate), enable the gateway, then save.
+6. Place a test order. In Test mode, use the sandbox OTP from the VEXPay Portal — not a real bank app.
+7. For webhooks, your store must be reachable by VEXPay (`…/wc-api/vexpay_webhook`). Local sites need a public URL or tunnel.
 
-Documentation: VEXPay tenant docs (C2P, webhooks, quote). Plugin source: https://github.com/chuventures/woo-vexpay-gateway
+Developer docs and E2E checklist: https://github.com/chuventures/woo-vexpay-gateway
 
 == Installation ==
 

@@ -1,19 +1,26 @@
-# Local E2E checklist (wp-env + VEXPay)
+# E2E checklist (wp-env + hosted VEXPay)
 
-Prerequisites: `npx wp-env start` in this repo; `pnpm dev` in `ve-banking` (API on `:3010`).
+This plugin is tested against the **hosted** VEXPay API. You do not need a local copy of the API codebase.
+
+## Prerequisites
+
+- [ ] `composer install` (optional: `composer test` for unit suite)
+- [ ] `npx wp-env start` — site at `http://localhost:8888`
+- [ ] VEXPay merchant account with a **Test** API key from the dashboard
+- [ ] (Webhooks only) Public tunnel to the store, e.g. ngrok → wp-env
 
 ## Setup
 
 - [ ] Activate WooCommerce + VEXPay Gateway
-- [ ] WooCommerce → Settings → Payments → VEXPay → Enable
-- [ ] API base URL: `http://host.docker.internal:3010` (Docker) or `http://localhost:3010`
-- [ ] Test mode ON; Test API key: `dev-local-api-key-test`
-- [ ] Click **Test connection** → success message with bank count + BCV rate
-- [ ] Wrong key → unauthorized error message
-- [ ] Save settings; confirm WooCommerce log or settings show webhook endpoint ID / secret filled
-- [ ] If webhook URL is not reachable from the API host, register manually in VEXPay dashboard pointing at `http://…/wc-api/vexpay_webhook` (or use a tunnel such as ngrok)
+- [ ] **WooCommerce → Settings → Payments → VEXPay** → Enable
+- [ ] Sandbox toggle **ON**; paste sandbox API key from dashboard
+  (API origin is fixed in the plugin — not a settings field)
+- [ ] **Test connection** → success with bank count + BCV rate
+- [ ] Wrong key → unauthorized / clear error message
+- [ ] Save settings
+- [ ] If the store is publicly reachable (or tunneled), confirm webhook endpoint ID / secret is filled; otherwise register `https://<public-host>/wc-api/vexpay_webhook` in the VEXPay dashboard
 
-## Happy path
+## Happy path (OTP)
 
 - [ ] Add a product priced in USD; checkout with VEXPay
 - [ ] Enter cédula `V12345678`, phone `04121234567`, pick a bank
@@ -28,7 +35,9 @@ Prerequisites: `npx wp-env start` in this repo; `pnpm dev` in `ve-banking` (API 
 
 ## Webhooks
 
-- [ ] With a reachable webhook URL, complete a payment and confirm `payment.completed` updates the order if the browser never submitted OTP success redirect
+Requires a URL VEXPay can reach (tunnel or staging host).
+
+- [ ] Complete a payment and confirm `payment.completed` updates the order if the browser never finishes the OTP success redirect
 - [ ] Tampered `X-Webhook-Signature` → 401
 
 ## Refunds

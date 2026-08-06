@@ -21,6 +21,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$this->method_description = __( 'Accept Venezuela C2P payments via VEXPay (bank OTP).', 'woo-vexpay-gateway' );
 		$this->has_fields         = true;
 		$this->supports           = array( 'products', 'refunds' );
+		$this->icon               = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -36,8 +37,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_api_vexpay_otp', array( $this, 'handle_otp_submit' ) );
 		add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_otp_notice' ) );
 
-		add_action( 'wp_ajax_vexpay_test_connection', array( $this, 'ajax_test_connection' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
 	}
 
 	/**
@@ -64,57 +65,54 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 */
 	public function init_form_fields(): void {
 		$this->form_fields = array(
-			'enabled'          => array(
+			'vexpay_logo'         => array(
+				'type' => 'vexpay_logo',
+			),
+			'enabled'             => array(
 				'title'   => __( 'Enable/Disable', 'woo-vexpay-gateway' ),
 				'type'    => 'checkbox',
 				'label'   => __( 'Enable VEXPay C2P', 'woo-vexpay-gateway' ),
 				'default' => 'no',
 			),
-			'title'            => array(
+			'title'               => array(
 				'title'       => __( 'Title', 'woo-vexpay-gateway' ),
 				'type'        => 'text',
 				'description' => __( 'Payment method title at checkout.', 'woo-vexpay-gateway' ),
 				'default'     => __( 'C2P / Pago móvil (VEXPay)', 'woo-vexpay-gateway' ),
 				'desc_tip'    => true,
 			),
-			'description'      => array(
+			'description'         => array(
 				'title'       => __( 'Description', 'woo-vexpay-gateway' ),
 				'type'        => 'textarea',
 				'description' => __( 'Shown under the payment method at checkout.', 'woo-vexpay-gateway' ),
 				'default'     => __( 'Pay with your bank C2P token (OTP). You will confirm with a code from your banking app.', 'woo-vexpay-gateway' ),
 			),
-			'api_base_url'     => array(
-				'title'       => __( 'API base URL', 'woo-vexpay-gateway' ),
-				'type'        => 'text',
-				'description' => __( 'VEXPay API origin. Production default; use http://localhost:3010 for local API.', 'woo-vexpay-gateway' ),
-				'default'     => 'https://api.banking.chuventures.com',
-				'desc_tip'    => true,
-			),
-			'testmode'         => array(
-				'title'       => __( 'Test mode', 'woo-vexpay-gateway' ),
-				'type'        => 'checkbox',
-				'label'       => __( 'Use Test API key', 'woo-vexpay-gateway' ),
+			'testmode'            => array(
+				'title'       => __( 'Sandbox', 'woo-vexpay-gateway' ),
+				'type'        => 'vexpay_toggle',
 				'default'     => 'yes',
-				'description' => __( 'Uses the Test twin key and sandbox OTP flows when available.', 'woo-vexpay-gateway' ),
+				'description' => __( 'When on, use the sandbox API key and sandbox OTP. Turn off for production payments.', 'woo-vexpay-gateway' ),
 			),
-			'live_api_key'     => array(
-				'title'       => __( 'Live API key', 'woo-vexpay-gateway' ),
+			'live_api_key'        => array(
+				'title'       => __( 'API key', 'woo-vexpay-gateway' ),
 				'type'        => 'password',
-				'description' => __( 'x-api-key for the Live twin. Never share publicly.', 'woo-vexpay-gateway' ),
+				'class'       => 'vexpay-api-key-field vexpay-api-key-production',
+				'description' => __( 'x-api-key from the VEXPay dashboard. Never share publicly.', 'woo-vexpay-gateway' ),
 				'default'     => '',
 			),
-			'test_api_key'     => array(
-				'title'       => __( 'Test API key', 'woo-vexpay-gateway' ),
+			'test_api_key'        => array(
+				'title'       => __( 'API key', 'woo-vexpay-gateway' ),
 				'type'        => 'password',
-				'description' => __( 'x-api-key for the Test twin.', 'woo-vexpay-gateway' ),
+				'class'       => 'vexpay-api-key-field vexpay-api-key-sandbox',
+				'description' => __( 'Sandbox x-api-key from the VEXPay dashboard.', 'woo-vexpay-gateway' ),
 				'default'     => '',
 			),
-			'connection_test'  => array(
+			'connection_test'     => array(
 				'title'       => __( 'Connection', 'woo-vexpay-gateway' ),
 				'type'        => 'vexpay_connection_test',
-				'description' => __( 'Verify that this WordPress site can reach VEXPay with the API key for the mode selected above (Test or Live). Paste the key, then click Test — you can test before saving.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Verify that this WordPress site can reach VEXPay with the API key for the mode selected above. Paste the key, then click Test — you can test before saving.', 'woo-vexpay-gateway' ),
 			),
-			'webhook_secret'   => array(
+			'webhook_secret'      => array(
 				'title'       => __( 'Webhook secret', 'woo-vexpay-gateway' ),
 				'type'        => 'password',
 				'description' => __( 'HMAC secret for X-Webhook-Signature. Filled automatically when the plugin registers a webhook, or paste from the VEXPay dashboard.', 'woo-vexpay-gateway' ),
@@ -126,13 +124,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'description' => __( 'Stored after automatic registration. Leave blank to re-register on save.', 'woo-vexpay-gateway' ),
 				'default'     => '',
 			),
-			'show_ves_quote'   => array(
+			'show_ves_quote'      => array(
 				'title'   => __( 'Show VES estimate', 'woo-vexpay-gateway' ),
 				'type'    => 'checkbox',
 				'label'   => __( 'Display BCV VES amount at checkout (display only)', 'woo-vexpay-gateway' ),
 				'default' => 'yes',
 			),
-			'debug'            => array(
+			'debug'               => array(
 				'title'       => __( 'Debug log', 'woo-vexpay-gateway' ),
 				'type'        => 'checkbox',
 				'label'       => __( 'Enable logging', 'woo-vexpay-gateway' ),
@@ -163,8 +161,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 * @return VEXPay_API_Client
 	 */
 	public function get_api_client(): VEXPay_API_Client {
-		$base = (string) $this->get_option( 'api_base_url', 'https://api.banking.chuventures.com' );
-		return new VEXPay_API_Client( $base, $this->get_active_api_key() );
+		return new VEXPay_API_Client( VEXPAY_GATEWAY_API_BASE_URL, $this->get_active_api_key() );
 	}
 
 	/**
@@ -174,6 +171,71 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 */
 	public function get_webhook_url(): string {
 		return WC()->api_request_url( 'vexpay_webhook' );
+	}
+
+	/**
+	 * Custom settings row: on/off toggle (no Test/Live labels).
+	 *
+	 * @param string $key  Field key.
+	 * @param array  $data Field config.
+	 * @return string
+	 */
+	public function generate_vexpay_toggle_html( $key, $data ) {
+		$field_key = $this->get_field_key( $key );
+		$data      = wp_parse_args(
+			$data,
+			array(
+				'title'       => '',
+				'description' => '',
+				'default'     => 'no',
+				'disabled'    => false,
+			)
+		);
+
+		$checked = 'yes' === $this->get_option( $key, $data['default'] );
+
+		ob_start();
+		?>
+		<tr valign="top" class="vexpay-toggle-row">
+			<th scope="row" class="titledesc">
+				<label for="<?php echo esc_attr( $field_key ); ?>"><?php echo esc_html( $data['title'] ); ?></label>
+			</th>
+			<td class="forminp">
+				<fieldset>
+					<label class="vexpay-toggle">
+						<input
+							name="<?php echo esc_attr( $field_key ); ?>"
+							id="<?php echo esc_attr( $field_key ); ?>"
+							type="checkbox"
+							value="1"
+							class="vexpay-toggle-input"
+							<?php checked( $checked ); ?>
+							<?php disabled( $data['disabled'], true ); ?>
+						/>
+						<span class="vexpay-toggle-track" aria-hidden="true">
+							<span class="vexpay-toggle-thumb"></span>
+						</span>
+						<span class="screen-reader-text"><?php echo esc_html( $data['title'] ); ?></span>
+					</label>
+					<?php if ( ! empty( $data['description'] ) ) : ?>
+						<p class="description"><?php echo esc_html( $data['description'] ); ?></p>
+					<?php endif; ?>
+				</fieldset>
+			</td>
+		</tr>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Persist custom toggle fields as yes/no (WooCommerce checkbox convention).
+	 *
+	 * @param string $key Field key.
+	 * @param mixed  $value Posted value.
+	 * @return string
+	 */
+	public function validate_vexpay_toggle_field( $key, $value ) {
+		return ! empty( $value ) ? 'yes' : 'no';
 	}
 
 	/**
@@ -216,18 +278,66 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
+	 * Custom settings row: VEXPay logo.
+	 *
+	 * @param string $key  Field key.
+	 * @param array  $data Field config.
+	 * @return string
+	 */
+	public function generate_vexpay_logo_html( $key, $data ) {
+		ob_start();
+		?>
+		<tr valign="top">
+			<td colspan="2" class="forminp vexpay-admin-logo-cell">
+				<img src="<?php echo esc_url( VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg' ); ?>" alt="<?php echo esc_attr( __( 'VEXPay', 'woo-vexpay-gateway' ) ); ?>" class="vexpay-admin-logo" />
+			</td>
+		</tr>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Whether the current admin screen is this gateway's settings section.
+	 */
+	private function is_gateway_settings_screen(): bool {
+		if ( ! is_admin() ) {
+			return false;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+
+		return 'wc-settings' === $page && 'checkout' === $tab && $this->id === $section;
+	}
+
+	/**
+	 * Body class so CSS can hide the inactive API key row before JS runs.
+	 *
+	 * @param string $classes Space-separated classes.
+	 * @return string
+	 */
+	public function admin_body_class( $classes ) {
+		if ( ! $this->is_gateway_settings_screen() ) {
+			return $classes;
+		}
+
+		$classes .= 'yes' === $this->get_option( 'testmode', 'yes' )
+			? ' vexpay-sandbox-on'
+			: ' vexpay-sandbox-off';
+
+		return $classes;
+	}
+
+	/**
 	 * Admin assets on the VEXPay gateway settings screen.
 	 *
 	 * @param string $hook Hook suffix.
 	 */
 	public function enqueue_admin_assets( $hook ): void {
-		if ( 'woocommerce_page_wc-settings' !== $hook ) {
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		if ( $this->id !== $section ) {
+		if ( 'woocommerce_page_wc-settings' !== $hook || ! $this->is_gateway_settings_screen() ) {
 			return;
 		}
 
@@ -273,11 +383,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		check_ajax_referer( 'vexpay_test_connection', 'nonce' );
 
-		$base = isset( $_POST['api_base_url'] ) ? esc_url_raw( wp_unslash( $_POST['api_base_url'] ) ) : '';
-		if ( '' === $base ) {
-			$base = (string) $this->get_option( 'api_base_url', 'https://api.banking.chuventures.com' );
-		}
-		$base = untrailingslashit( $base );
+		$base = untrailingslashit( VEXPAY_GATEWAY_API_BASE_URL );
 
 		$testmode = isset( $_POST['testmode'] ) && 'yes' === sanitize_text_field( wp_unslash( $_POST['testmode'] ) );
 
@@ -292,9 +398,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		if ( '' === $api_key ) {
 			wp_send_json_error(
 				array(
-					'message' => $testmode
-						? __( 'Enter a Test API key (or save one first), then try again.', 'woo-vexpay-gateway' )
-						: __( 'Enter a Live API key (or save one first), then try again.', 'woo-vexpay-gateway' ),
+					'message' => __( 'Enter an API key (or save one first), then try again.', 'woo-vexpay-gateway' ),
 				)
 			);
 		}
@@ -303,10 +407,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$result = $client->test_connection();
 
 		if ( is_wp_error( $result ) ) {
-			$status  = $result->get_error_data( 'status' );
-			$message = $result->get_error_message();
-			if ( 401 === (int) $status || 403 === (int) $status ) {
-				$message = __( 'API key rejected (unauthorized). Check Live vs Test mode and that the key is active in the VEXPay dashboard.', 'woo-vexpay-gateway' );
+			$error_data = $result->get_error_data();
+			$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 0;
+			$message    = $result->get_error_message();
+			if ( 401 === $status || 403 === $status ) {
+				$message = __( 'API key rejected (unauthorized). Confirm the key matches Sandbox on/off and is active in the VEXPay dashboard.', 'woo-vexpay-gateway' );
 			}
 			VEXPay_Logger::error( 'Connection test failed: ' . $message );
 			wp_send_json_error(
@@ -395,15 +500,15 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( 'yes' === $this->get_option( 'testmode', 'yes' ) ) {
-			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'TEST MODE', 'woo-vexpay-gateway' ) . '</strong> — ';
-			echo esc_html__( 'Use your VEXPay Test twin key and sandbox OTP.', 'woo-vexpay-gateway' ) . '</p>';
+			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'woo-vexpay-gateway' ) . '</strong> — ';
+			echo esc_html__( 'Use your VEXPay sandbox OTP.', 'woo-vexpay-gateway' ) . '</p>';
 		}
 
 		$banks = $this->fetch_banks_options();
 
 		if ( 'yes' === $this->get_option( 'show_ves_quote', 'yes' ) && WC()->cart ) {
-			$usd    = round( (float) WC()->cart->get_total( 'edit' ), 2 );
-			$quote  = $this->get_api_client()->get_quote( $usd );
+			$usd   = round( (float) WC()->cart->get_total( 'edit' ), 2 );
+			$quote = $this->get_api_client()->get_quote( $usd );
 			if ( ! is_wp_error( $quote ) && isset( $quote['vesAmount'], $quote['bcvRate'] ) ) {
 				echo '<p class="vexpay-ves-quote">';
 				echo esc_html(
@@ -486,8 +591,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			if ( ! is_array( $bank ) || empty( $bank['code'] ) ) {
 				continue;
 			}
-			$code = (string) $bank['code'];
-			$name = isset( $bank['name'] ) ? (string) $bank['name'] : $code;
+			$code             = (string) $bank['code'];
+			$name             = isset( $bank['name'] ) ? (string) $bank['name'] : $code;
 			$options[ $code ] = $code . ' — ' . $name;
 		}
 

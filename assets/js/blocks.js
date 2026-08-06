@@ -129,7 +129,19 @@
 	};
 
 	const Label = () =>
-		createElement( 'span', { className: 'vexpay-blocks-label' }, label );
+		createElement(
+			'span',
+			{ className: 'vexpay-blocks-label' },
+			settings.icon
+				? createElement( 'img', {
+						src: settings.icon,
+						alt: label,
+						className: 'vexpay-blocks-icon',
+						style: { height: '24px', width: 'auto', marginRight: '0.5em', verticalAlign: 'middle' },
+				  } )
+				: null,
+			label
+		);
 
 	registerPaymentMethod( {
 		name: 'vexpay',

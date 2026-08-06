@@ -42,3 +42,15 @@
 	width: 100%;
 	padding: 0.5rem;
 }
+
+.payment_method_vexpay > label > img,
+.payment_method_vexpay img.vexpay-blocks-icon {
+	height: 24px;
+	width: auto;
+	margin-right: 0.5em;
+	vertical-align: middle;
+}
+
+.vexpay-blocks-icon {
+	display: inline-block;
+}

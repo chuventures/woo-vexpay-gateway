@@ -1,13 +1,14 @@
 # Publishing to WordPress.org
 
-Serviceware is allowed: the plugin is free GPL; merchants need a VEXPay account (guideline 6). No trial locks.
+Serviceware is allowed: the plugin is free GPL; merchants need a VEXPay account (guideline 6). No trial locks. Integration testing uses the hosted VEXPay API and dashboard keys — not a local API checkout.
 
 ## Pre-submit
 
 1. Run `composer test` and Plugin Check ([wordpress.org/plugins/plugin-check](https://wordpress.org/plugins/plugin-check/)).
-2. Confirm sanitize / escape / nonces on all forms (OTP uses `wp_nonce_field`).
-3. Validate `readme.txt` in the [readme validator](https://wordpress.org/plugins/developers/readme-validator/).
-4. Prepare `.wordpress-org/` assets (banner 1544×500, icon 256×256, screenshots) — not shipped in the runtime zip.
+2. Smoke-test with a Test API key against the fixed hosted API ([E2E checklist](E2E-CHECKLIST.md)).
+3. Confirm sanitize / escape / nonces on all forms (OTP uses `wp_nonce_field`).
+4. Validate `readme.txt` in the [readme validator](https://wordpress.org/plugins/developers/readme-validator/).
+5. Prepare `.wordpress-org/` assets (banner 1544×500, icon 256×256, screenshots) — not shipped in the runtime zip.
 
 ## Submit
 

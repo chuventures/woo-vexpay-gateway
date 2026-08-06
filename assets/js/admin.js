@@ -1,5 +1,5 @@
 /**
- * VEXPay gateway admin — Test connection.
+ * VEXPay gateway admin — Sandbox toggle + Test connection.
  */
 (function ($) {
 	'use strict';
@@ -23,7 +23,26 @@
 			.text(message || '');
 	}
 
+	/**
+	 * Sandbox checked → show test key, hide live key.
+	 * Sandbox unchecked → show live key, hide test key.
+	 */
+	function syncApiKeyVisibility() {
+		var sandboxOn = $('#woocommerce_vexpay_testmode').is(':checked');
+		var $body = $(document.body);
+
+		$body.toggleClass('vexpay-sandbox-on', sandboxOn);
+		$body.toggleClass('vexpay-sandbox-off', !sandboxOn);
+	}
+
 	$(function () {
+		if (!$('#woocommerce_vexpay_testmode').length) {
+			return;
+		}
+
+		syncApiKeyVisibility();
+		$('#woocommerce_vexpay_testmode').on('change', syncApiKeyVisibility);
+
 		$('#vexpay-test-connection').on('click', function (e) {
 			e.preventDefault();
 			if (typeof vexpayAdmin === 'undefined') {
@@ -40,7 +59,6 @@
 			$.post(vexpayAdmin.ajaxUrl, {
 				action: 'vexpay_test_connection',
 				nonce: vexpayAdmin.nonce,
-				api_base_url: fieldVal('api_base_url'),
 				testmode: fieldVal('testmode'),
 				live_api_key: fieldVal('live_api_key'),
 				test_api_key: fieldVal('test_api_key')

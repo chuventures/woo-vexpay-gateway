@@ -39,6 +39,9 @@ final class VEXPay_Plugin {
 
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_assets' ) );
+		// Register on the plugin, not the gateway constructor — WC may not instantiate
+		// payment gateways during admin-ajax.php, which would leave the action unregistered (HTTP 400 / "0").
+		add_action( 'wp_ajax_vexpay_test_connection', array( $this, 'ajax_test_connection' ) );
 
 		VEXPay_Webhook::init();
 		VEXPay_Blocks::init();
@@ -53,6 +56,20 @@ final class VEXPay_Plugin {
 	public function register_gateway( array $gateways ): array {
 		$gateways[] = 'VEXPay_Gateway';
 		return $gateways;
+	}
+
+	/**
+	 * AJAX: Test connection — load the gateway then delegate.
+	 */
+	public function ajax_test_connection(): void {
+		$gateways = WC()->payment_gateways()->payment_gateways();
+		if ( empty( $gateways['vexpay'] ) || ! $gateways['vexpay'] instanceof VEXPay_Gateway ) {
+			wp_send_json_error(
+				array( 'message' => __( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ) )
+			);
+		}
+
+		$gateways['vexpay']->ajax_test_connection();
 	}
 
 	/**

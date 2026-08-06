@@ -91,7 +91,11 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 
 		$gateways = WC()->payment_gateways()->payment_gateways();
 		if ( ! empty( $gateways['vexpay'] ) && $gateways['vexpay'] instanceof VEXPay_Gateway ) {
-			/** @var VEXPay_Gateway $gw */
+			/**
+			 * VEXPay gateway instance.
+			 *
+			 * @var VEXPay_Gateway $gw
+			 */
 			$gw     = $gateways['vexpay'];
 			$result = $gw->get_api_client()->get_banks();
 			if ( ! is_wp_error( $result ) ) {
@@ -116,6 +120,7 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			'supports'    => array( 'products' ),
 			'testmode'    => isset( $this->gateway_settings['testmode'] ) && 'yes' === $this->gateway_settings['testmode'],
 			'banks'       => $banks,
+			'icon'        => VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg',
 		);
 	}
 }

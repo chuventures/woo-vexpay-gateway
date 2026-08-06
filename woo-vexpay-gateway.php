@@ -24,6 +24,8 @@ define( 'VEXPAY_GATEWAY_VERSION', '1.0.0' );
 define( 'VEXPAY_GATEWAY_FILE', __FILE__ );
 define( 'VEXPAY_GATEWAY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
+/** Hosted VEXPay API origin — not merchant-configurable. */
+define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.banking.chuventures.com' );
 
 /**
  * Declare WooCommerce feature compatibility.

@@ -1,36 +1,45 @@
 # VEXPay Gateway for WooCommerce
 
-WooCommerce payment gateway plugin for **VEXPay** (Venezuela C2P). This plugin speaks HTTP only (`x-api-key`).
+WooCommerce payment gateway for **VEXPay** (Venezuela C2P). The plugin talks HTTP only (`x-api-key`) to the hosted VEXPay API — it does not embed bank SDKs and does not depend on the VEXPay API source repo.
 
 ## Requirements
 
 - WordPress 6.0+
 - WooCommerce 8.0+
 - PHP 8.1+
-- VEXPay API (local `:3010` or `https://api.banking.chuventures.com`)
+- A VEXPay merchant account with a **Test** (and later Live) API key from the [VEXPay dashboard](https://banking.chuventures.com)
 
-## Install (dev)
+## Install (development)
 
 ```bash
-# From this repo
 composer install
 npm i -g @wordpress/env   # once
 npx wp-env start
-
-# In a second terminal, run VEXPay API
-cd ../ve-banking && pnpm setup && pnpm dev
 ```
 
-In WooCommerce → Settings → Payments → VEXPay:
+Default site: [http://localhost:8888](http://localhost:8888)
 
+## Configure the gateway
 
-| Setting      | Local value                                                            |
-| ------------ | ---------------------------------------------------------------------- |
-| API base URL | `http://host.docker.internal:3010` (wp-env) or `http://localhost:3010` |
-| Test mode    | Yes                                                                    |
-| Test API key | `dev-local-api-key-test`                                               |
+**WooCommerce → Settings → Payments → VEXPay**
 
-Click **Test connection** — expect a success message with bank count and BCV rate. Then save settings.
+| Setting | Value |
+| ------- | ----- |
+| Enable | Yes |
+| Sandbox | On (toggle) |
+| API key | Sandbox key from VEXPay dashboard |
+
+The API origin is fixed to `https://api.banking.chuventures.com` (not editable in settings). Sandbox on/off switches which stored API key is active; the UI shows a single **API key** field (no Test/Live labels).
+
+1. Click **Test connection** — expect bank count and BCV rate.
+2. Save settings (webhook registration runs when the store URL is reachable from VEXPay).
+
+### Webhooks on local wp-env
+
+The hosted API must POST to `…/wc-api/vexpay_webhook`. Localhost is not reachable from VEXPay, so either:
+
+- Expose wp-env with a tunnel (e.g. ngrok) and register that public URL in the VEXPay dashboard, or
+- Skip webhook checks at first and verify the OTP happy path (browser redirect), then add webhooks once a public URL exists.
 
 ## C2P flow
 
@@ -39,18 +48,24 @@ Click **Test connection** — expect a success message with bank count and BCV r
 3. OTP → `POST /v1/payments/c2p`
 4. Webhooks reconcile via `POST …/wc-api/vexpay_webhook` (HMAC `X-Webhook-Signature`)
 
-
+In Test mode, use the sandbox OTP from the VEXPay Portal (Test twin), not a real bank app.
 
 ## Tests
+
+### Unit
 
 ```bash
 composer install
 composer test
 ```
 
-Manual E2E checklist: [docs/E2E-CHECKLIST.md](docs/E2E-CHECKLIST.md)
+### Manual E2E
 
-## [wordpress.org](http://wordpress.org)
+With wp-env running and a Test API key configured, follow [docs/E2E-CHECKLIST.md](docs/E2E-CHECKLIST.md).
+
+Suggested order: **Test connection** → C2P + OTP → failures → webhooks (tunnel) → refunds → Blocks checkout.
+
+## wordpress.org
 
 See [docs/WORDPRESS-ORG.md](docs/WORDPRESS-ORG.md). Build a release zip:
 
@@ -60,8 +75,6 @@ git tag v1.0.0 && git push origin v1.0.0
 rsync -a --exclude-from=.distignore ./ /tmp/woo-vexpay-gateway/
 cd /tmp && zip -r woo-vexpay-gateway.zip woo-vexpay-gateway
 ```
-
-
 
 ## License
 
