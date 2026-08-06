@@ -501,7 +501,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		if ( 'yes' === $this->get_option( 'testmode', 'yes' ) ) {
 			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'woo-vexpay-gateway' ) . '</strong> — ';
-			echo esc_html__( 'Use your VEXPay sandbox OTP.', 'woo-vexpay-gateway' ) . '</p>';
+			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'woo-vexpay-gateway' );
+			echo '</p>';
 		}
 
 		$banks = $this->fetch_banks_list();
@@ -605,8 +606,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				echo '<span class="vexpay-bank-logo vexpay-bank-logo--fallback" aria-hidden="true">' . esc_html( substr( $bank['code'], -2 ) ) . '</span>';
 			}
 			echo '<span class="vexpay-bank-meta">';
-			echo '<span class="vexpay-bank-code">' . esc_html( $bank['code'] ) . '</span>';
-			echo '<span class="vexpay-bank-name">' . esc_html( $bank['name'] ) . '</span>';
+			echo '<span class="vexpay-bank-name">' . esc_html( $bank['name'] ) . '</span> ';
+			echo '<span class="vexpay-bank-code">(' . esc_html( $bank['code'] ) . ')</span>';
 			echo '</span></li>';
 		}
 		echo '</ul></div></p>';
@@ -626,19 +627,6 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			return array();
 		}
 		return VEXPay_Helpers::normalize_banks_list( $result );
-	}
-
-	/**
-	 * Bank select options (classic fallback labels).
-	 *
-	 * @return array
-	 */
-	private function fetch_banks_options(): array {
-		$options = array( '' => __( 'Select your bank', 'woo-vexpay-gateway' ) );
-		foreach ( $this->fetch_banks_list() as $bank ) {
-			$options[ $bank['code'] ] = $bank['code'] . ' — ' . $bank['name'];
-		}
-		return $options;
 	}
 
 	/**

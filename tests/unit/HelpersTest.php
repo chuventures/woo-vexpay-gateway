@@ -44,6 +44,30 @@ final class HelpersTest extends TestCase {
 		$this->assertNull( VEXPay_Helpers::compose_phone( '0400', '1234567' ) );
 	}
 
+	public function test_normalize_banks_list(): void {
+		$banks = VEXPay_Helpers::normalize_banks_list(
+			array(
+				array(
+					'code'    => '0102',
+					'name'    => 'Banco de Venezuela',
+					'logoUrl' => 'https://cdn.example.com/0102.png',
+				),
+				array(
+					'code'    => '0104',
+					'name'    => 'BVC',
+					'logoUrl' => null,
+				),
+				array( 'name' => 'missing-code' ),
+			)
+		);
+
+		$this->assertCount( 2, $banks );
+		$this->assertSame( '0102', $banks[0]['code'] );
+		$this->assertSame( 'https://cdn.example.com/0102.png', $banks[0]['logoUrl'] );
+		$this->assertSame( '0104', $banks[1]['code'] );
+		$this->assertNull( $banks[1]['logoUrl'] );
+	}
+
 	public function test_normalize_bank_code(): void {
 		$this->assertSame( 102, VEXPay_Helpers::normalize_bank_code( '0102' ) );
 		$this->assertSame( 102, VEXPay_Helpers::normalize_bank_code( 102 ) );

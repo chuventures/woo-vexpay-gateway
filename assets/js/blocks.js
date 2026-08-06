@@ -92,8 +92,9 @@
 								createElement(
 									'span',
 									{ className: 'vexpay-bank-meta' },
-									createElement( 'span', { className: 'vexpay-bank-code' }, selected.code ),
-									createElement( 'span', { className: 'vexpay-bank-name' }, selected.name )
+									createElement( 'span', { className: 'vexpay-bank-name' }, selected.name ),
+									' ',
+									createElement( 'span', { className: 'vexpay-bank-code' }, '(' + selected.code + ')' )
 								)
 						  )
 						: createElement(
@@ -127,8 +128,9 @@
 								createElement(
 									'span',
 									{ className: 'vexpay-bank-meta' },
-									createElement( 'span', { className: 'vexpay-bank-code' }, bank.code ),
-									createElement( 'span', { className: 'vexpay-bank-name' }, bank.name )
+									createElement( 'span', { className: 'vexpay-bank-name' }, bank.name ),
+									' ',
+									createElement( 'span', { className: 'vexpay-bank-code' }, '(' + bank.code + ')' )
 								)
 							)
 						)
@@ -225,7 +227,12 @@
 				? createElement(
 						'p',
 						{ className: 'vexpay-test-mode' },
-						createElement( 'strong', null, __( 'SANDBOX', 'woo-vexpay-gateway' ) )
+						createElement( 'strong', null, __( 'SANDBOX', 'woo-vexpay-gateway' ) ),
+						' — ',
+						__(
+							"it's giving demo energy. No real money moves here — practice all you want.",
+							'woo-vexpay-gateway'
+						)
 				  )
 				: null,
 			settings.description
