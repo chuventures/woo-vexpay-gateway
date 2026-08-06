@@ -118,6 +118,32 @@ final class HelpersTest extends TestCase {
 		$this->assertFalse( VEXPay_Helpers::debtor_profile_has_values( VEXPay_Helpers::empty_debtor_profile() ) );
 	}
 
+	public function test_debtor_accounts_upsert_and_label(): void {
+		$a = VEXPay_Helpers::profile_from_normalized( 'V12345678', '584121234567', '0102' );
+		$b = VEXPay_Helpers::profile_from_normalized( 'V87654321', '584149333844', '0108' );
+
+		$this->assertTrue( VEXPay_Helpers::debtor_profile_is_complete( $a ) );
+		$list = VEXPay_Helpers::upsert_debtor_account( array(), $a );
+		$this->assertCount( 1, $list );
+
+		$list = VEXPay_Helpers::upsert_debtor_account( $list, $b );
+		$this->assertCount( 2, $list );
+		$this->assertSame( 'V', $list[0]['id_type'] );
+		$this->assertSame( '87654321', $list[0]['id_number'] );
+
+		// Re-saving A moves it to front and dedupes.
+		$list = VEXPay_Helpers::upsert_debtor_account( $list, $a );
+		$this->assertCount( 2, $list );
+		$this->assertSame( '12345678', $list[0]['id_number'] );
+
+		$label = VEXPay_Helpers::debtor_account_label( $a, 'Banco de Venezuela' );
+		$this->assertStringContainsString( 'V-12.345.678', $label );
+		$this->assertStringContainsString( '0412•••4567', $label );
+		$this->assertStringContainsString( 'Banco de Venezuela', $label );
+		$this->assertSame( 'V-18.819.897', VEXPay_Helpers::format_debtor_id_display( 'V', '18819897' ) );
+		$this->assertSame( 'J-1.234.567', VEXPay_Helpers::format_debtor_id_display( 'J', '1234567' ) );
+	}
+
 	public function test_is_valid_token(): void {
 		$this->assertTrue( VEXPay_Helpers::is_valid_token( '123456' ) );
 		$this->assertTrue( VEXPay_Helpers::is_valid_token( '12345678' ) );
@@ -137,11 +163,29 @@ final class HelpersTest extends TestCase {
 
 	public function test_map_payment_status(): void {
 		$this->assertSame( 'complete', VEXPay_Helpers::map_payment_status( 'COMPLETED' ) );
+		$this->assertSame( 'complete', VEXPay_Helpers::map_payment_status( 'ACCP' ) );
 		$this->assertSame( 'fail', VEXPay_Helpers::map_payment_status( 'FAILED' ) );
 		$this->assertSame( 'fail', VEXPay_Helpers::map_payment_status( 'CANCELED' ) );
 		$this->assertSame( 'refund', VEXPay_Helpers::map_payment_status( 'REVERSED' ) );
 		$this->assertSame( 'hold', VEXPay_Helpers::map_payment_status( 'PENDING' ) );
+		$this->assertSame( 'hold', VEXPay_Helpers::map_payment_status( 'AC00' ) );
 		$this->assertSame( 'ignore', VEXPay_Helpers::map_payment_status( 'UNKNOWN' ) );
+	}
+
+	public function test_normalize_debit_execute_result(): void {
+		$accp = VEXPay_Helpers::normalize_debit_execute_result(
+			array(
+				'code'      => 'ACCP',
+				'paymentId' => 'pay-1',
+				'reference' => 'ref-9',
+			)
+		);
+		$this->assertSame( 'COMPLETED', $accp['status'] );
+		$this->assertSame( 'ref-9', $accp['bankReference'] );
+
+		$pending = VEXPay_Helpers::normalize_debit_execute_result( array( 'code' => 'AC00', 'id' => 'op-1' ) );
+		$this->assertSame( 'PENDING', $pending['status'] );
+		$this->assertSame( 'op-1', $pending['bankReference'] );
 	}
 
 	public function test_external_ref(): void {

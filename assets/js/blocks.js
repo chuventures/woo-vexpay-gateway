@@ -1,5 +1,5 @@
 /**
- * WooCommerce Blocks payment method for VEXPay C2P.
+ * WooCommerce Blocks payment method for VEXPay Débito inmediato.
  *
  * Vanilla ES compatible with WC Blocks registry (no build step required).
  */
@@ -21,6 +21,25 @@
 
 	const ID_TYPES = [ 'V', 'J', 'E' ];
 	const PHONE_PREFIXES = [ '0412', '0422', '0414', '0424', '0416', '0426' ];
+
+	const formatDebtorIdDisplay = ( type, number ) => {
+		const t = String( type || '' ).toUpperCase();
+		const digits = String( number || '' ).replace( /\D+/g, '' );
+		if ( ! t && ! digits ) {
+			return '';
+		}
+		if ( ! digits ) {
+			return t;
+		}
+		let grouped = '';
+		let rest = digits;
+		while ( rest.length > 3 ) {
+			grouped = '.' + rest.slice( -3 ) + grouped;
+			rest = rest.slice( 0, -3 );
+		}
+		grouped = rest + grouped;
+		return t + '-' + grouped;
+	};
 
 	const BankLogo = ( { bank, className } ) => {
 		if ( bank && bank.logoUrl ) {
@@ -47,7 +66,13 @@
 		const [ activeIndex, setActiveIndex ] = useState( -1 );
 		const rootRef = useRef( null );
 		const listRef = useRef( null );
-		const selected = banks.find( ( b ) => String( b.code ) === String( value ) ) || null;
+		const normBank = ( code ) =>
+			String( code || '' )
+				.replace( /\D+/g, '' )
+				.padStart( 4, '0' )
+				.slice( -4 );
+		const selected =
+			banks.find( ( b ) => normBank( b.code ) === normBank( value ) ) || null;
 
 		const openList = ( startIndex ) => {
 			const idx =
@@ -55,7 +80,7 @@
 					? startIndex
 					: Math.max(
 							0,
-							banks.findIndex( ( b ) => String( b.code ) === String( value ) )
+							banks.findIndex( ( b ) => normBank( b.code ) === normBank( value ) )
 					  );
 			setActiveIndex( idx >= 0 ? idx : 0 );
 			setOpen( true );
@@ -244,26 +269,95 @@
 		const { eventRegistration, emitResponse } = props;
 		const { onPaymentSetup } = eventRegistration;
 		const saved = settings.savedProfile || {};
+		const savedAccounts = Array.isArray( settings.savedAccounts ) ? settings.savedAccounts : [];
+		const fingerprint = ( profile ) =>
+			(
+				String( profile.id_type || '' ).toUpperCase() +
+				String( profile.id_number || '' ) +
+				'|' +
+				String( profile.phone_prefix || '' ) +
+				String( profile.phone_number || '' ) +
+				'|' +
+				String( profile.bank || '' )
+			).toLowerCase();
+
+		const hasSavedAccounts = savedAccounts.length > 0;
 		const [ idType, setIdType ] = useState(
-			ID_TYPES.includes( String( saved.id_type || '' ).toUpperCase() )
+			! hasSavedAccounts && ID_TYPES.includes( String( saved.id_type || '' ).toUpperCase() )
 				? String( saved.id_type ).toUpperCase()
 				: 'V'
 		);
 		const [ idNumber, setIdNumber ] = useState(
-			String( saved.id_number || '' ).replace( /\D+/g, '' ).slice( 0, 9 )
+			! hasSavedAccounts
+				? String( saved.id_number || '' ).replace( /\D+/g, '' ).slice( 0, 9 )
+				: ''
 		);
 		const [ phonePrefix, setPhonePrefix ] = useState(
-			PHONE_PREFIXES.includes( String( saved.phone_prefix || '' ) )
+			! hasSavedAccounts && PHONE_PREFIXES.includes( String( saved.phone_prefix || '' ) )
 				? String( saved.phone_prefix )
 				: '0412'
 		);
 		const [ phoneNumber, setPhoneNumber ] = useState(
-			String( saved.phone_number || '' ).replace( /\D+/g, '' ).slice( 0, 7 )
+			! hasSavedAccounts
+				? String( saved.phone_number || '' ).replace( /\D+/g, '' ).slice( 0, 7 )
+				: ''
 		);
-		const [ debtorBank, setDebtorBank ] = useState( String( saved.bank || '' ) );
+		const [ debtorBank, setDebtorBank ] = useState(
+			! hasSavedAccounts ? String( saved.bank || '' ) : ''
+		);
+		// Pick a chip (or “Use another”) before the detail fields appear.
+		const [ activeAccount, setActiveAccount ] = useState( hasSavedAccounts ? null : 'new' );
+		const [ showDetails, setShowDetails ] = useState( ! hasSavedAccounts );
+
+		const applyAccount = ( account ) => {
+			if ( ! account ) {
+				setIdType( 'V' );
+				setIdNumber( '' );
+				setPhonePrefix( '0412' );
+				setPhoneNumber( '' );
+				setDebtorBank( '' );
+				setActiveAccount( 'new' );
+				setShowDetails( true );
+				return;
+			}
+			const id = fingerprint( account );
+			setIdType(
+				ID_TYPES.includes( String( account.id_type || '' ).toUpperCase() )
+					? String( account.id_type ).toUpperCase()
+					: 'V'
+			);
+			setIdNumber( String( account.id_number || '' ).replace( /\D+/g, '' ).slice( 0, 9 ) );
+			setPhonePrefix(
+				PHONE_PREFIXES.includes( String( account.phone_prefix || '' ) )
+					? String( account.phone_prefix )
+					: '0412'
+			);
+			setPhoneNumber( String( account.phone_number || '' ).replace( /\D+/g, '' ).slice( 0, 7 ) );
+			setDebtorBank( String( account.bank || '' ) );
+			setActiveAccount( id );
+			// Saved chip selected → collapse the form (Use another expands it again).
+			setShowDetails( false );
+		};
+
+		const markCustom = () => {
+			if ( activeAccount !== 'new' ) {
+				setActiveAccount( 'new' );
+			}
+			setShowDetails( true );
+		};
 
 		useEffect( () => {
 			const unsubscribe = onPaymentSetup( () => {
+				if ( hasSavedAccounts && ! activeAccount ) {
+					return {
+						type: emitResponse.responseTypes.ERROR,
+						message: __(
+							'Pick a saved account or tap + Use another.',
+							'woo-vexpay-gateway'
+						),
+					};
+				}
+
 				const digits = String( idNumber || '' ).replace( /\D+/g, '' );
 				const id = String( idType || '' ).toUpperCase() + digits;
 				const phone = String( phonePrefix || '' ) + String( phoneNumber || '' ).replace( /\D+/g, '' );
@@ -273,7 +367,7 @@
 					return {
 						type: emitResponse.responseTypes.ERROR,
 						message: __(
-							'Enter cédula/RIF, phone, and bank for VEXPay C2P.',
+							'Enter cédula/RIF, phone, and bank for VEXPay.',
 							'woo-vexpay-gateway'
 						),
 					};
@@ -319,6 +413,9 @@
 			onPaymentSetup,
 			emitResponse.responseTypes.ERROR,
 			emitResponse.responseTypes.SUCCESS,
+			hasSavedAccounts,
+			showDetails,
+			activeAccount,
 			idType,
 			idNumber,
 			phonePrefix,
@@ -336,7 +433,26 @@
 
 		return createElement(
 			'div',
-			{ className: 'vexpay-blocks-fields vexpay-flow' },
+			{ className: 'vexpay-blocks-fields vexpay-flow vexpay-checkout-panel' },
+			createElement(
+				'div',
+				{ className: 'vexpay-checkout-brand' },
+				settings.icon
+					? createElement( 'img', {
+							className: 'vexpay-checkout-brand__logo',
+							src: settings.icon,
+							alt: 'VEXPay',
+							width: 72,
+							height: 38,
+							decoding: 'async',
+					  } )
+					: null,
+				createElement(
+					'span',
+					{ className: 'vexpay-checkout-brand__tag' },
+					__( 'Débito inmediato', 'woo-vexpay-gateway' )
+				)
+			),
 			createElement(
 				'ol',
 				{ className: 'vexpay-steps', 'aria-label': __( 'Payment steps', 'woo-vexpay-gateway' ) },
@@ -379,101 +495,265 @@
 				createElement(
 					'h3',
 					{ className: 'vexpay-step-title' },
-					__( 'Step 1 — Your details', 'woo-vexpay-gateway' )
+					__( 'Your details', 'woo-vexpay-gateway' )
 				),
 				createElement(
 					'p',
 					{ className: 'vexpay-step-copy' },
-					__(
-						'Tell us who is paying. Place the order to request the C2P from your bank — then enter the OTP in step 2.',
-						'woo-vexpay-gateway'
-					)
+					hasSavedAccounts && ! showDetails && ! activeAccount
+						? __(
+								'Pick a saved account to pay — or tap + Use another to enter new details.',
+								'woo-vexpay-gateway'
+						  )
+						: hasSavedAccounts && ! showDetails
+						  ? __(
+									'Paying with this account. Tap + Use another if you need different details.',
+									'woo-vexpay-gateway'
+						    )
+						  : __(
+									'Who’s paying? Drop your cédula, phone, and bank — next you’ll send the OTP from your bank.',
+									'woo-vexpay-gateway'
+						    )
 				),
-				settings.description
-					? createElement( 'p', null, decodeEntities( settings.description ) )
+				settings.quote && settings.quote.vesAmount
+					? createElement(
+							'div',
+							{ className: 'vexpay-fx-strip' },
+							createElement(
+								'span',
+								{ className: 'vexpay-fx-strip__ves' },
+								__( 'Bs.', 'woo-vexpay-gateway' ) +
+									' ' +
+									Number( settings.quote.vesAmount ).toLocaleString( undefined, {
+										minimumFractionDigits: 2,
+										maximumFractionDigits: 2,
+									} )
+							),
+							createElement(
+								'span',
+								{ className: 'vexpay-fx-strip__rate' },
+								__( 'BCV', 'woo-vexpay-gateway' ) +
+									' ' +
+									Number( settings.quote.bcvRate ).toLocaleString( undefined, {
+										minimumFractionDigits: 4,
+										maximumFractionDigits: 4,
+									} )
+							)
+					  )
 					: null,
-			createElement(
-				'div',
-				{ className: 'vexpay-field-group' },
+				savedAccounts.length
+					? createElement(
+							'div',
+							{ className: 'vexpay-accounts' },
+							createElement(
+								'div',
+								{ className: 'vexpay-accounts__head' },
+								createElement(
+									'span',
+									{ className: 'vexpay-accounts__label' },
+									__( 'Saved accounts', 'woo-vexpay-gateway' )
+								),
+								createElement(
+									'button',
+									{
+										type: 'button',
+										className:
+											'vexpay-accounts__new' +
+											( activeAccount === 'new' ? ' is-active' : '' ),
+										onClick: () => applyAccount( null ),
+									},
+									__( '+ Use another', 'woo-vexpay-gateway' )
+								)
+							),
+							createElement(
+								'div',
+								{
+									className: 'vexpay-accounts__list',
+									role: 'listbox',
+									'aria-label': __( 'Saved payer accounts', 'woo-vexpay-gateway' ),
+								},
+								savedAccounts.map( ( account ) => {
+									const id = fingerprint( account );
+									const isActive = activeAccount === id;
+									const digits = String( account.phone_number || '' );
+									const phoneBit =
+										String( account.phone_prefix || '' ) +
+										( digits.length >= 4
+											? '•••' + digits.slice( -4 )
+											: digits );
+									const meta = [ phoneBit, account.bankName || account.bank ]
+										.filter( Boolean )
+										.join( ' · ' );
+									return createElement(
+										'button',
+										{
+											key: id,
+											type: 'button',
+											role: 'option',
+											'aria-selected': isActive ? 'true' : 'false',
+											className:
+												'vexpay-account-chip' + ( isActive ? ' is-active' : '' ),
+											onClick: () => applyAccount( account ),
+										},
+										account.bankLogo
+											? createElement( 'img', {
+													className: 'vexpay-account-chip__logo',
+													src: account.bankLogo,
+													alt: '',
+													width: 28,
+													height: 28,
+													loading: 'lazy',
+													decoding: 'async',
+											  } )
+											: createElement(
+													'span',
+													{
+														className:
+															'vexpay-account-chip__logo vexpay-account-chip__logo--fallback',
+														'aria-hidden': 'true',
+													},
+													String( account.bank || '??' ).slice( -2 )
+											  ),
+										createElement(
+											'span',
+											{ className: 'vexpay-account-chip__text' },
+											createElement(
+												'span',
+												{ className: 'vexpay-account-chip__title' },
+												formatDebtorIdDisplay(
+													account.id_type,
+													account.id_number
+												)
+											),
+											createElement(
+												'span',
+												{ className: 'vexpay-account-chip__meta' },
+												meta
+											)
+										)
+									);
+								} )
+							)
+					  )
+					: null,
+				showDetails
+					? createElement(
+							'div',
+							{ className: 'vexpay-account-details' },
+							createElement(
+								'div',
+								{ className: 'vexpay-field-group' },
+								createElement(
+									'span',
+									{ className: 'vexpay-field-label' },
+									__( 'Cédula / RIF', 'woo-vexpay-gateway' )
+								),
+								createElement(
+									'div',
+									{ className: 'vexpay-split-field' },
+									createElement(
+										'select',
+										{
+											className: 'vexpay-split-prefix',
+											value: idType,
+											onChange: ( e ) => {
+												setIdType( e.target.value );
+												markCustom();
+											},
+											'aria-label': __( 'Document type', 'woo-vexpay-gateway' ),
+										},
+										idTypeOptions
+									),
+									createElement( 'input', {
+										type: 'text',
+										className: 'vexpay-split-input',
+										inputMode: 'numeric',
+										value: idNumber,
+										onChange: ( e ) => {
+											setIdNumber(
+												String( e.target.value || '' )
+													.replace( /\D+/g, '' )
+													.slice( 0, 9 )
+											);
+											markCustom();
+										},
+										placeholder: '12345678',
+										autoComplete: 'off',
+										'aria-label': __( 'Document number', 'woo-vexpay-gateway' ),
+									} )
+								)
+							),
+							createElement(
+								'div',
+								{ className: 'vexpay-field-group' },
+								createElement(
+									'span',
+									{ className: 'vexpay-field-label' },
+									__( 'Phone', 'woo-vexpay-gateway' )
+								),
+								createElement(
+									'div',
+									{ className: 'vexpay-split-field' },
+									createElement(
+										'select',
+										{
+											className: 'vexpay-split-prefix',
+											value: phonePrefix,
+											onChange: ( e ) => {
+												setPhonePrefix( e.target.value );
+												markCustom();
+											},
+											'aria-label': __( 'Phone prefix', 'woo-vexpay-gateway' ),
+										},
+										phonePrefixOptions
+									),
+									createElement( 'input', {
+										type: 'tel',
+										className: 'vexpay-split-input',
+										inputMode: 'numeric',
+										value: phoneNumber,
+										onChange: ( e ) => {
+											setPhoneNumber(
+												String( e.target.value || '' )
+													.replace( /\D+/g, '' )
+													.slice( 0, 7 )
+											);
+											markCustom();
+										},
+										placeholder: '1234567',
+										maxLength: 7,
+										autoComplete: 'tel-national',
+										'aria-label': __( 'Phone number', 'woo-vexpay-gateway' ),
+									} )
+								)
+							),
+							createElement(
+								'div',
+								{ className: 'vexpay-field-group' },
+								createElement(
+									'span',
+									{ className: 'vexpay-field-label' },
+									__( 'Bank', 'woo-vexpay-gateway' )
+								),
+								createElement( BankPicker, {
+									value: debtorBank,
+									onChange: ( code ) => {
+										setDebtorBank( code );
+										markCustom();
+									},
+								} )
+							)
+					  )
+					: null,
 				createElement(
-					'span',
-					{ className: 'vexpay-field-label' },
-					__( 'Cédula / RIF', 'woo-vexpay-gateway' )
-				),
-				createElement(
-					'div',
-					{ className: 'vexpay-split-field' },
-					createElement(
-						'select',
-						{
-							className: 'vexpay-split-prefix',
-							value: idType,
-							onChange: ( e ) => setIdType( e.target.value ),
-							'aria-label': __( 'Document type', 'woo-vexpay-gateway' ),
-						},
-						idTypeOptions
-					),
-					createElement( 'input', {
-						type: 'text',
-						className: 'vexpay-split-input',
-						inputMode: 'numeric',
-						value: idNumber,
-						onChange: ( e ) =>
-							setIdNumber( String( e.target.value || '' ).replace( /\D+/g, '' ).slice( 0, 9 ) ),
-						placeholder: '12345678',
-						autoComplete: 'off',
-						'aria-label': __( 'Document number', 'woo-vexpay-gateway' ),
-					} )
+					'p',
+					{ className: 'vexpay-checkout-secure' },
+					createElement( 'span', {
+						className: 'vexpay-checkout-secure__lock',
+						'aria-hidden': 'true',
+					} ),
+					__( 'Secured by VEXPay', 'woo-vexpay-gateway' )
 				)
-			),
-			createElement(
-				'div',
-				{ className: 'vexpay-field-group' },
-				createElement(
-					'span',
-					{ className: 'vexpay-field-label' },
-					__( 'Phone', 'woo-vexpay-gateway' )
-				),
-				createElement(
-					'div',
-					{ className: 'vexpay-split-field' },
-					createElement(
-						'select',
-						{
-							className: 'vexpay-split-prefix',
-							value: phonePrefix,
-							onChange: ( e ) => setPhonePrefix( e.target.value ),
-							'aria-label': __( 'Phone prefix', 'woo-vexpay-gateway' ),
-						},
-						phonePrefixOptions
-					),
-					createElement( 'input', {
-						type: 'tel',
-						className: 'vexpay-split-input',
-						inputMode: 'numeric',
-						value: phoneNumber,
-						onChange: ( e ) =>
-							setPhoneNumber( String( e.target.value || '' ).replace( /\D+/g, '' ).slice( 0, 7 ) ),
-						placeholder: '1234567',
-						maxLength: 7,
-						autoComplete: 'tel-national',
-						'aria-label': __( 'Phone number', 'woo-vexpay-gateway' ),
-					} )
-				)
-			),
-			createElement(
-				'div',
-				{ className: 'vexpay-field-group' },
-				createElement(
-					'span',
-					{ className: 'vexpay-field-label' },
-					__( 'Bank', 'woo-vexpay-gateway' )
-				),
-				createElement( BankPicker, {
-					value: debtorBank,
-					onChange: setDebtorBank,
-				} )
-			)
 			)
 		);
 	};
@@ -485,12 +765,20 @@
 			settings.icon
 				? createElement( 'img', {
 						src: settings.icon,
-						alt: label,
+						alt: '',
 						className: 'vexpay-blocks-icon',
-						style: { height: '24px', width: 'auto', marginRight: '0.5em', verticalAlign: 'middle' },
 				  } )
 				: null,
-			label
+			createElement(
+				'span',
+				{ className: 'vexpay-blocks-label__text' },
+				createElement( 'span', { className: 'vexpay-blocks-label__title' }, label ),
+				createElement(
+					'span',
+					{ className: 'vexpay-blocks-label__hint' },
+					__( 'VEXPay · Débito inmediato', 'woo-vexpay-gateway' )
+				)
+			)
 		);
 
 	registerPaymentMethod( {

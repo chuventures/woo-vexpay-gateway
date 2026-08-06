@@ -28,11 +28,20 @@ class VEXPay_Helpers {
 	/** Minimum seconds between OTP re-requests. */
 	public const OTP_RESEND_COOLDOWN = 45;
 
-	/** User meta / WC session key for remembered C2P payer details. */
+	/** User meta / WC session key for remembered payer details. */
 	public const PROFILE_META_KEY = '_vexpay_debtor_profile';
 
 	/** WC session key (without underscore prefix). */
 	public const PROFILE_SESSION_KEY = 'vexpay_debtor_profile';
+
+	/** User meta for multiple remembered payer accounts. */
+	public const ACCOUNTS_META_KEY = '_vexpay_debtor_accounts';
+
+	/** WC session key for multiple remembered payer accounts. */
+	public const ACCOUNTS_SESSION_KEY = 'vexpay_debtor_accounts';
+
+	/** Max remembered payer accounts per customer/session. */
+	public const MAX_DEBTOR_ACCOUNTS = 5;
 
 	/**
 	 * Normalize GET /v1/banks payload into [{code,name,logoUrl}, …].
@@ -385,6 +394,155 @@ class VEXPay_Helpers {
 		return '' !== $profile['id_number']
 			|| '' !== $profile['phone_number']
 			|| '' !== $profile['bank'];
+	}
+
+	/**
+	 * Stable fingerprint for a payer account (dedupe key).
+	 *
+	 * @param array $profile Profile.
+	 * @return string
+	 */
+	public static function debtor_profile_fingerprint( array $profile ): string {
+		$profile = self::sanitize_debtor_profile( $profile );
+		return strtolower(
+			$profile['id_type'] . $profile['id_number'] . '|' .
+			$profile['phone_prefix'] . $profile['phone_number'] . '|' .
+			$profile['bank']
+		);
+	}
+
+	/**
+	 * Whether a profile is complete enough to save as a reusable account.
+	 *
+	 * @param array $profile Profile.
+	 * @return bool
+	 */
+	public static function debtor_profile_is_complete( array $profile ): bool {
+		$profile = self::sanitize_debtor_profile( $profile );
+		$id      = self::normalize_debtor_id( $profile['id_type'] . $profile['id_number'] );
+		$phone   = self::normalize_phone( $profile['phone_prefix'] . $profile['phone_number'] );
+		$bank    = self::normalize_bank_code( $profile['bank'] );
+		return (bool) $id && (bool) $phone && null !== $bank;
+	}
+
+	/**
+	 * Sanitize a list of remembered payer accounts.
+	 *
+	 * @param mixed $raw Raw list.
+	 * @return array<int, array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}>
+	 */
+	public static function sanitize_debtor_accounts( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$out  = array();
+		$seen = array();
+		foreach ( $raw as $item ) {
+			$profile = self::sanitize_debtor_profile( $item );
+			if ( ! self::debtor_profile_is_complete( $profile ) ) {
+				continue;
+			}
+			$fp = self::debtor_profile_fingerprint( $profile );
+			if ( isset( $seen[ $fp ] ) ) {
+				continue;
+			}
+			$seen[ $fp ] = true;
+			$out[]       = $profile;
+			if ( count( $out ) >= self::MAX_DEBTOR_ACCOUNTS ) {
+				break;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Upsert a profile into the accounts list (most recent first).
+	 *
+	 * @param array $accounts Existing accounts.
+	 * @param array $profile  Profile to upsert.
+	 * @return array<int, array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}>
+	 */
+	public static function upsert_debtor_account( array $accounts, array $profile ): array {
+		$profile = self::sanitize_debtor_profile( $profile );
+		if ( ! self::debtor_profile_is_complete( $profile ) ) {
+			return self::sanitize_debtor_accounts( $accounts );
+		}
+
+		$fp  = self::debtor_profile_fingerprint( $profile );
+		$out = array( $profile );
+		foreach ( self::sanitize_debtor_accounts( $accounts ) as $existing ) {
+			if ( self::debtor_profile_fingerprint( $existing ) === $fp ) {
+				continue;
+			}
+			$out[] = $existing;
+			if ( count( $out ) >= self::MAX_DEBTOR_ACCOUNTS ) {
+				break;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Display format for cédula/RIF: V-18.819.897
+	 *
+	 * @param string $type   Document type letter.
+	 * @param string $number Digits only.
+	 * @return string
+	 */
+	public static function format_debtor_id_display( string $type, string $number ): string {
+		$type   = strtoupper( sanitize_text_field( $type ) );
+		$number = preg_replace( '/\D+/', '', $number );
+		$number = is_string( $number ) ? $number : '';
+
+		if ( '' === $type && '' === $number ) {
+			return '';
+		}
+		if ( '' === $number ) {
+			return $type;
+		}
+
+		// Group thousands from the right: 18819897 → 18.819.897
+		$grouped = '';
+		$digits  = $number;
+		while ( strlen( $digits ) > 3 ) {
+			$grouped = '.' . substr( $digits, -3 ) . $grouped;
+			$digits  = substr( $digits, 0, -3 );
+		}
+		$grouped = $digits . $grouped;
+
+		return $type . '-' . $grouped;
+	}
+
+	/**
+	 * Human label for a saved payer account.
+	 *
+	 * @param array       $profile   Profile.
+	 * @param string|null $bank_name Optional bank display name.
+	 * @return string
+	 */
+	public static function debtor_account_label( array $profile, ?string $bank_name = null ): string {
+		$profile = self::sanitize_debtor_profile( $profile );
+		$id      = self::format_debtor_id_display( $profile['id_type'], $profile['id_number'] );
+		$phone   = $profile['phone_prefix'];
+		$digits  = $profile['phone_number'];
+		if ( strlen( $digits ) >= 4 ) {
+			$phone .= '•••' . substr( $digits, -4 );
+		} elseif ( '' !== $digits ) {
+			$phone .= $digits;
+		}
+
+		$parts = array_filter(
+			array(
+				$id,
+				$phone,
+				$bank_name ? $bank_name : $profile['bank'],
+			)
+		);
+
+		return implode( ' · ', $parts );
 	}
 
 	/**

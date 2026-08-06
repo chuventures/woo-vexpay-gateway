@@ -48,6 +48,22 @@
 		);
 	}
 
+	function bankAttr($el, key) {
+		// Prefer attr() so SIMF codes like "0102" are not coerced to numbers by jQuery.data().
+		var raw = $el.attr('data-' + key);
+		if (typeof raw === 'undefined' || raw === null) {
+			raw = $el.data(key);
+		}
+		return raw == null ? '' : String(raw);
+	}
+
+	function normBankCode(c) {
+		return String(c || '')
+			.replace(/\D+/g, '')
+			.padStart(4, '0')
+			.slice(-4);
+	}
+
 	function bindBankPicker($root) {
 		$root.find('[data-vexpay-bank-picker]').each(function () {
 			var $picker = $(this);
@@ -106,7 +122,7 @@
 					idx = startIndex;
 				} else if (current) {
 					$opts.each(function (i) {
-						if (String($(this).data('code')) === current) {
+						if (normBankCode(bankAttr($(this), 'code')) === normBankCode(current)) {
 							idx = i;
 							return false;
 						}
@@ -120,9 +136,9 @@
 					return;
 				}
 				var bank = {
-					code: String($opt.data('code') || ''),
-					name: String($opt.data('name') || ''),
-					logo: String($opt.data('logo') || ''),
+					code: bankAttr($opt, 'code'),
+					name: bankAttr($opt, 'name'),
+					logo: bankAttr($opt, 'logo'),
 				};
 				$input.val(bank.code).trigger('change');
 				options().attr('aria-selected', 'false').removeClass('is-selected');
@@ -136,7 +152,7 @@
 			options().each(function () {
 				var $opt = $(this);
 				if (!$opt.attr('id')) {
-					$opt.attr('id', 'vexpay-bank-option-' + String($opt.data('code') || ''));
+					$opt.attr('id', 'vexpay-bank-option-' + bankAttr($opt, 'code'));
 				}
 			});
 
@@ -144,7 +160,7 @@
 			if (current) {
 				var $selected = options()
 					.filter(function () {
-						return String($(this).data('code')) === current;
+						return normBankCode(bankAttr($(this), 'code')) === normBankCode(current);
 					})
 					.first();
 				if ($selected.length) {
@@ -229,6 +245,109 @@
 		digitsOnly($('#vexpay_debtor_id_number'), 9);
 		digitsOnly($('#vexpay_debtor_phone_number'), 7);
 		bindBankPicker($(document.body));
+		bindAccountSwitcher($(document.body));
+	}
+
+	function setBankByCode(code) {
+		var $input = $('#vexpay_debtor_bank');
+		var $picker = $('[data-vexpay-bank-picker]').first();
+		if (!$input.length || !$picker.length) {
+			return;
+		}
+		var want = String(code || '');
+		$input.val(want);
+		var $opt = $picker.find('.vexpay-bank-option').filter(function () {
+			return normBankCode(bankAttr($(this), 'code')) === normBankCode(want);
+		}).first();
+		if ($opt.length) {
+			var bank = {
+				code: bankAttr($opt, 'code'),
+				name: bankAttr($opt, 'name'),
+				logo: bankAttr($opt, 'logo'),
+			};
+			$input.val(bank.code);
+			$picker.find('.vexpay-bank-option').attr('aria-selected', 'false').removeClass('is-selected');
+			$opt.attr('aria-selected', 'true').addClass('is-selected');
+			renderTrigger($picker, bank);
+		} else {
+			renderTrigger($picker, want ? { code: want, name: want, logo: '' } : null);
+		}
+	}
+
+	function bindAccountSwitcher($root) {
+		var $wrap = $root.find('[data-vexpay-accounts]');
+		if (!$wrap.length || $wrap.data('vexpayBound')) {
+			return;
+		}
+		$wrap.data('vexpayBound', true);
+
+		var $details = $root.find('.vexpay-account-details').first();
+		if (!$details.length) {
+			$details = $('#wc-vexpay-cc-form');
+		}
+		// On change-account page the form itself is the details panel.
+		if (!$details.length) {
+			$details = $root.find('.vexpay-change-account-form').first();
+		}
+
+		function hideDetailsPanel() {
+			// Change-account editor keeps fields visible (data-vexpay-keep-details).
+			if ($wrap.attr('data-vexpay-keep-details') === '1') {
+				return;
+			}
+			if ($details.length) {
+				$details.prop('hidden', true).attr('hidden', 'hidden');
+			}
+		}
+
+		function showDetailsPanel() {
+			if ($details.length) {
+				$details.prop('hidden', false).removeAttr('hidden');
+			}
+		}
+
+		function markActive($chip) {
+			$wrap.find('[data-vexpay-account]').removeClass('is-active').attr('aria-selected', 'false');
+			$wrap.find('[data-vexpay-account-new]').removeClass('is-active');
+			if ($chip && $chip.length) {
+				$chip.addClass('is-active').attr('aria-selected', 'true');
+			} else {
+				$wrap.find('[data-vexpay-account-new]').addClass('is-active');
+			}
+		}
+
+		$wrap.on('click', '[data-vexpay-account]', function (e) {
+			e.preventDefault();
+			var $chip = $(this);
+			$('#vexpay_debtor_id_type').val(String($chip.data('id-type') || 'V'));
+			$('#vexpay_debtor_id_number').val(String($chip.data('id-number') || ''));
+			$('#vexpay_debtor_phone_prefix').val(String($chip.data('phone-prefix') || '0412'));
+			$('#vexpay_debtor_phone_number').val(String($chip.data('phone-number') || ''));
+			setBankByCode(String($chip.data('bank') || ''));
+			markActive($chip);
+			// Selecting a saved account collapses the form again.
+			hideDetailsPanel();
+		});
+
+		$wrap.on('click', '[data-vexpay-account-new]', function (e) {
+			e.preventDefault();
+			$('#vexpay_debtor_id_type').val('V');
+			$('#vexpay_debtor_id_number').val('');
+			$('#vexpay_debtor_phone_prefix').val('0412');
+			$('#vexpay_debtor_phone_number').val('');
+			setBankByCode('');
+			markActive(null);
+			showDetailsPanel();
+		});
+
+		$('#vexpay_debtor_id_type, #vexpay_debtor_id_number, #vexpay_debtor_phone_prefix, #vexpay_debtor_phone_number, #vexpay_debtor_bank')
+			.off('change.vexpayAccounts input.vexpayAccounts')
+			.on('change.vexpayAccounts input.vexpayAccounts', function () {
+				if ($details.is('[hidden]') || $details.prop('hidden')) {
+					return;
+				}
+				markActive(null);
+			});
 	}
 
 	function bindOtpPin(root) {
@@ -376,9 +495,63 @@
 		focusAt(0);
 	}
 
+	function bindOtpResendCooldown(root) {
+		var scope = root || document;
+		var wait = scope.querySelector('[data-vexpay-otp-cooldown]');
+		if (!wait || wait.getAttribute('data-vexpay-bound') === '1') {
+			return;
+		}
+		wait.setAttribute('data-vexpay-bound', '1');
+
+		var form = wait.closest('form');
+		var button =
+			(form && form.querySelector('[data-vexpay-otp-resend]')) ||
+			scope.querySelector('[data-vexpay-otp-resend]');
+		var left = parseInt(wait.getAttribute('data-vexpay-otp-cooldown'), 10);
+		var template = wait.getAttribute('data-vexpay-otp-cooldown-template') || '';
+		var idle = wait.getAttribute('data-vexpay-otp-cooldown-idle') || '';
+
+		if (!left || left < 1 || !template) {
+			return;
+		}
+
+		function render(seconds) {
+			if (template.indexOf('%d') !== -1) {
+				wait.textContent = template.replace('%d', String(seconds));
+			} else {
+				wait.textContent = template.replace(/\d+/, String(seconds));
+			}
+		}
+
+		function finish() {
+			if (button) {
+				button.disabled = false;
+				button.removeAttribute('disabled');
+			}
+			wait.classList.add('vexpay-otp-resend-wait--idle');
+			wait.removeAttribute('data-vexpay-otp-cooldown');
+			if (idle) {
+				wait.textContent = idle;
+			}
+		}
+
+		render(left);
+
+		var timer = window.setInterval(function () {
+			left -= 1;
+			if (left <= 0) {
+				window.clearInterval(timer);
+				finish();
+				return;
+			}
+			render(left);
+		}, 1000);
+	}
+
 	$(function () {
 		bindSplitFields();
 		bindOtpPin(document);
+		bindOtpResendCooldown(document);
 		$(document.body).on('updated_checkout', bindSplitFields);
 	});
 })(jQuery);

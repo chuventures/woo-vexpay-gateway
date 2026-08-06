@@ -81,9 +81,16 @@ final class VEXPay_Plugin {
 		}
 
 		wp_enqueue_style(
+			'vexpay-fonts',
+			'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap',
+			array(),
+			null
+		);
+
+		wp_enqueue_style(
 			'vexpay-gateway',
 			VEXPAY_GATEWAY_URL . 'assets/css/checkout.css',
-			array(),
+			array( 'vexpay-fonts' ),
 			VEXPAY_GATEWAY_VERSION
 		);
 

@@ -85,10 +85,16 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 	 * @return array
 	 */
 	public function get_payment_method_data(): array {
-		$banks         = array();
-		$saved_profile = VEXPay_Helpers::empty_debtor_profile();
-		$title         = $this->gateway_settings['title'] ?? __( 'VEXPay', 'woo-vexpay-gateway' );
+		$banks          = array();
+		$saved_profile  = VEXPay_Helpers::empty_debtor_profile();
+		$saved_accounts = array();
+		$quote          = null;
+		$title         = $this->gateway_settings['title'] ?? __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' );
 		$desc          = $this->gateway_settings['description'] ?? '';
+
+		if ( is_string( $title ) && false !== stripos( $title, 'C2P' ) ) {
+			$title = __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' );
+		}
 
 		$gateways = WC()->payment_gateways()->payment_gateways();
 		if ( ! empty( $gateways['vexpay'] ) && $gateways['vexpay'] instanceof VEXPay_Gateway ) {
@@ -100,16 +106,38 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			$gw            = $gateways['vexpay'];
 			$banks         = $gw->fetch_banks_list();
 			$saved_profile = $gw->get_debtor_profile();
+			$saved_accounts = $gw->get_debtor_accounts( true );
+			$title         = $gw->get_title();
+			$desc          = (string) $gw->get_description();
+
+			if ( is_string( $title ) && false !== stripos( $title, 'C2P' ) ) {
+				$title = __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' );
+			}
+
+			$show_quote = 'yes' === ( $this->gateway_settings['show_ves_quote'] ?? 'yes' );
+			if ( $show_quote && function_exists( 'WC' ) && WC()->cart ) {
+				$usd    = round( (float) WC()->cart->get_total( 'edit' ), 2 );
+				$result = $gw->get_api_client()->get_quote( $usd );
+				if ( ! is_wp_error( $result ) && isset( $result['vesAmount'], $result['bcvRate'] ) ) {
+					$quote = array(
+						'usd'       => $usd,
+						'vesAmount' => (float) $result['vesAmount'],
+						'bcvRate'   => (float) $result['bcvRate'],
+					);
+				}
+			}
 		}
 
 		return array(
-			'title'        => $title,
-			'description'  => $desc,
-			'supports'     => array( 'products' ),
-			'testmode'     => isset( $this->gateway_settings['testmode'] ) && 'yes' === $this->gateway_settings['testmode'],
-			'banks'        => $banks,
-			'icon'         => VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg',
-			'savedProfile' => $saved_profile,
+			'title'          => $title,
+			'description'    => $desc,
+			'supports'       => array( 'products' ),
+			'testmode'       => isset( $this->gateway_settings['testmode'] ) && 'yes' === $this->gateway_settings['testmode'],
+			'banks'          => $banks,
+			'icon'           => VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg',
+			'savedProfile'   => $saved_profile,
+			'savedAccounts'  => $saved_accounts,
+			'quote'          => $quote,
 		);
 	}
 }

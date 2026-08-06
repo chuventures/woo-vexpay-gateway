@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VEXPay Gateway for WooCommerce
  * Plugin URI:        https://github.com/chuventures/woo-vexpay-gateway
- * Description:       Accept Venezuela C2P (Pago Móvil C2P) payments via VEXPay.
+ * Description:       Accept Venezuela Débito inmediato payments via VEXPay.
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
