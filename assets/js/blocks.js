@@ -1,7 +1,7 @@
 /**
  * WooCommerce Blocks payment method for VEXPay C2P.
  *
- * Vanilla ES module compatible with WC Blocks registry (no build step required).
+ * Vanilla ES compatible with WC Blocks registry (no build step required).
  */
 ( function () {
 	'use strict';
@@ -9,10 +9,13 @@
 	const { registerPaymentMethod } = wc.wcBlocksRegistry;
 	const { createElement, useState, useEffect } = wp.element;
 	const { decodeEntities } = wp.htmlEntities;
-	const { getSetting } = wc.wcSettings;
 	const { __ } = wp.i18n;
 
-	const settings = getSetting( 'vexpay_data', {} );
+	// WC 8.9+ exposes getPaymentMethodData; fall back for older installs.
+	const settings =
+		typeof wc.wcSettings.getPaymentMethodData === 'function'
+			? wc.wcSettings.getPaymentMethodData( 'vexpay', {} )
+			: wc.wcSettings.getSetting( 'vexpay_data', {} );
 	const label = decodeEntities( settings.title || 'VEXPay' );
 	const banks = Array.isArray( settings.banks ) ? settings.banks : [];
 
@@ -82,7 +85,7 @@
 				? createElement(
 						'p',
 						{ className: 'vexpay-test-mode' },
-						createElement( 'strong', null, __( 'TEST MODE', 'woo-vexpay-gateway' ) )
+						createElement( 'strong', null, __( 'SANDBOX', 'woo-vexpay-gateway' ) )
 				  )
 				: null,
 			settings.description
