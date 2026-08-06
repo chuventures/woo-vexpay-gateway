@@ -41,7 +41,7 @@ You configure your own API keys from the VEXPay dashboard. This plugin does not 
 5. Save settings (the plugin registers a webhook endpoint automatically when possible).
 6. Place a test order with your Test API key.
 
-Documentation: VEXPay tenant docs (C2P, webhooks, quote). Plugin source: https://github.com/tinhochu/woo-vexpay-gateway
+Documentation: VEXPay tenant docs (C2P, webhooks, quote). Plugin source: https://github.com/chuventures/woo-vexpay-gateway
 
 == Installation ==
 

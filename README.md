@@ -1,6 +1,6 @@
 # VEXPay Gateway for WooCommerce
 
-WooCommerce payment gateway plugin for **VEXPay** (Venezuela C2P). Separate from the [`ve-banking`](https://github.com/tinhochu/ve-banking) NestJS monorepo — this plugin speaks HTTP only (`x-api-key`).
+WooCommerce payment gateway plugin for **VEXPay** (Venezuela C2P). Separate from the [`ve-banking`](https://github.com/chuventures/ve-banking) NestJS monorepo — this plugin speaks HTTP only (`x-api-key`).
 
 ## Requirements
 
