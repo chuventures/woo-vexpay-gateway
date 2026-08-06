@@ -96,22 +96,8 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			 *
 			 * @var VEXPay_Gateway $gw
 			 */
-			$gw     = $gateways['vexpay'];
-			$result = $gw->get_api_client()->get_banks();
-			if ( ! is_wp_error( $result ) ) {
-				$list = isset( $result['banks'] ) && is_array( $result['banks'] ) ? $result['banks'] : $result;
-				if ( is_array( $list ) ) {
-					foreach ( $list as $bank ) {
-						if ( ! is_array( $bank ) || empty( $bank['code'] ) ) {
-							continue;
-						}
-						$banks[] = array(
-							'code' => (string) $bank['code'],
-							'name' => isset( $bank['name'] ) ? (string) $bank['name'] : (string) $bank['code'],
-						);
-					}
-				}
-			}
+			$gw    = $gateways['vexpay'];
+			$banks = $gw->fetch_banks_list();
 		}
 
 		return array(

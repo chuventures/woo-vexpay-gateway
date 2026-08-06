@@ -28,6 +28,22 @@ final class HelpersTest extends TestCase {
 		$this->assertNull( VEXPay_Helpers::normalize_phone( '123' ) );
 	}
 
+	public function test_compose_debtor_id(): void {
+		$this->assertSame( 'V12345678', VEXPay_Helpers::compose_debtor_id( 'V', '12345678' ) );
+		$this->assertSame( 'J123456789', VEXPay_Helpers::compose_debtor_id( 'j', '123456789' ) );
+		$this->assertSame( 'E1234567', VEXPay_Helpers::compose_debtor_id( 'E', '1.234.567' ) );
+		$this->assertNull( VEXPay_Helpers::compose_debtor_id( 'V', '12' ) );
+		$this->assertNull( VEXPay_Helpers::compose_debtor_id( 'X', '12345678' ) );
+	}
+
+	public function test_compose_phone(): void {
+		$this->assertSame( '584121234567', VEXPay_Helpers::compose_phone( '0412', '1234567' ) );
+		$this->assertSame( '584241234567', VEXPay_Helpers::compose_phone( '0424', '1234567' ) );
+		$this->assertNull( VEXPay_Helpers::compose_phone( '0412', '123456' ) );
+		$this->assertNull( VEXPay_Helpers::compose_phone( '0412', '12345678' ) );
+		$this->assertNull( VEXPay_Helpers::compose_phone( '0400', '1234567' ) );
+	}
+
 	public function test_normalize_bank_code(): void {
 		$this->assertSame( 102, VEXPay_Helpers::normalize_bank_code( '0102' ) );
 		$this->assertSame( 102, VEXPay_Helpers::normalize_bank_code( 102 ) );

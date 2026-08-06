@@ -504,7 +504,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo esc_html__( 'Use your VEXPay sandbox OTP.', 'woo-vexpay-gateway' ) . '</p>';
 		}
 
-		$banks = $this->fetch_banks_options();
+		$banks = $this->fetch_banks_list();
 
 		if ( 'yes' === $this->get_option( 'show_ves_quote', 'yes' ) && WC()->cart ) {
 			$usd   = round( (float) WC()->cart->get_total( 'edit' ), 2 );
@@ -523,79 +523,121 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			}
 		}
 
-		$debtor_id    = isset( $_POST['vexpay_debtor_id'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$debtor_phone = isset( $_POST['vexpay_debtor_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_phone'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$debtor_bank  = isset( $_POST['vexpay_debtor_bank'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_bank'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$debtor_id_type   = isset( $_POST['vexpay_debtor_id_type'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_id_type'] ) ) : 'V'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$debtor_id_number = isset( $_POST['vexpay_debtor_id_number'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_id_number'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$phone_prefix     = isset( $_POST['vexpay_debtor_phone_prefix'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_phone_prefix'] ) ) : '0412'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$phone_number     = isset( $_POST['vexpay_debtor_phone_number'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_phone_number'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$debtor_bank      = isset( $_POST['vexpay_debtor_bank'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_debtor_bank'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+		if ( ! in_array( strtoupper( $debtor_id_type ), VEXPay_Helpers::debtor_id_types(), true ) ) {
+			$debtor_id_type = 'V';
+		}
+		if ( ! in_array( $phone_prefix, VEXPay_Helpers::phone_prefixes(), true ) ) {
+			$phone_prefix = '0412';
+		}
 
 		echo '<fieldset id="wc-' . esc_attr( $this->id ) . '-cc-form" class="wc-payment-form vexpay-fields">';
 
-		woocommerce_form_field(
-			'vexpay_debtor_id',
-			array(
-				'type'        => 'text',
-				'label'       => __( 'Cédula / RIF', 'woo-vexpay-gateway' ),
-				'required'    => true,
-				'placeholder' => 'V12345678',
-				'class'       => array( 'form-row-wide' ),
-			),
-			$debtor_id
+		echo '<p class="form-row form-row-wide vexpay-field-group">';
+		echo '<label for="vexpay_debtor_id_number">' . esc_html__( 'Cédula / RIF', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<span class="vexpay-split-field">';
+		echo '<select name="vexpay_debtor_id_type" id="vexpay_debtor_id_type" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Document type', 'woo-vexpay-gateway' ) . '">';
+		foreach ( VEXPay_Helpers::debtor_id_types() as $type ) {
+			printf(
+				'<option value="%1$s" %2$s>%1$s</option>',
+				esc_attr( $type ),
+				selected( strtoupper( $debtor_id_type ), $type, false )
+			);
+		}
+		echo '</select>';
+		printf(
+			'<input type="text" class="input-text vexpay-split-input" name="vexpay_debtor_id_number" id="vexpay_debtor_id_number" inputmode="numeric" autocomplete="off" placeholder="12345678" maxlength="9" value="%s" aria-label="%s" />',
+			esc_attr( preg_replace( '/\D+/', '', $debtor_id_number ) ?? '' ),
+			esc_attr__( 'Document number', 'woo-vexpay-gateway' )
 		);
+		echo '</span></p>';
 
-		woocommerce_form_field(
-			'vexpay_debtor_phone',
-			array(
-				'type'        => 'tel',
-				'label'       => __( 'Phone (Pago Móvil)', 'woo-vexpay-gateway' ),
-				'required'    => true,
-				'placeholder' => '04121234567',
-				'class'       => array( 'form-row-wide' ),
-			),
-			$debtor_phone
+		echo '<p class="form-row form-row-wide vexpay-field-group">';
+		echo '<label for="vexpay_debtor_phone_number">' . esc_html__( 'Phone (Pago Móvil)', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<span class="vexpay-split-field">';
+		echo '<select name="vexpay_debtor_phone_prefix" id="vexpay_debtor_phone_prefix" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Phone prefix', 'woo-vexpay-gateway' ) . '">';
+		foreach ( VEXPay_Helpers::phone_prefixes() as $prefix ) {
+			printf(
+				'<option value="%1$s" %2$s>%1$s</option>',
+				esc_attr( $prefix ),
+				selected( $phone_prefix, $prefix, false )
+			);
+		}
+		echo '</select>';
+		printf(
+			'<input type="tel" class="input-text vexpay-split-input" name="vexpay_debtor_phone_number" id="vexpay_debtor_phone_number" inputmode="numeric" autocomplete="tel-national" placeholder="1234567" maxlength="7" value="%s" aria-label="%s" />',
+			esc_attr( preg_replace( '/\D+/', '', $phone_number ) ?? '' ),
+			esc_attr__( 'Phone number', 'woo-vexpay-gateway' )
 		);
+		echo '</span></p>';
 
-		woocommerce_form_field(
-			'vexpay_debtor_bank',
-			array(
-				'type'     => 'select',
-				'label'    => __( 'Bank', 'woo-vexpay-gateway' ),
-				'required' => true,
-				'options'  => $banks,
-				'class'    => array( 'form-row-wide' ),
-			),
-			$debtor_bank
-		);
+		echo '<p class="form-row form-row-wide vexpay-field-group vexpay-bank-field">';
+		echo '<label id="vexpay_debtor_bank_label">' . esc_html__( 'Bank', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<input type="hidden" name="vexpay_debtor_bank" id="vexpay_debtor_bank" value="' . esc_attr( $debtor_bank ) . '" />';
+		echo '<div class="vexpay-bank-picker" data-vexpay-bank-picker>';
+		echo '<button type="button" class="vexpay-bank-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="vexpay_debtor_bank_label">';
+		echo '<span class="vexpay-bank-trigger-content">';
+		echo '<span class="vexpay-bank-placeholder">' . esc_html__( 'Select your bank', 'woo-vexpay-gateway' ) . '</span>';
+		echo '</span>';
+		echo '<span class="vexpay-bank-chevron" aria-hidden="true"></span>';
+		echo '</button>';
+		echo '<ul class="vexpay-bank-list" role="listbox" hidden>';
+		foreach ( $banks as $bank ) {
+			$selected = (string) $debtor_bank === (string) $bank['code'];
+			printf(
+				'<li role="option" class="vexpay-bank-option" data-code="%1$s" data-name="%2$s" data-logo="%3$s" aria-selected="%4$s" tabindex="-1">',
+				esc_attr( $bank['code'] ),
+				esc_attr( $bank['name'] ),
+				esc_attr( $bank['logoUrl'] ? (string) $bank['logoUrl'] : '' ),
+				$selected ? 'true' : 'false'
+			);
+			if ( ! empty( $bank['logoUrl'] ) ) {
+				printf(
+					'<img class="vexpay-bank-logo" src="%1$s" alt="" width="32" height="32" loading="lazy" decoding="async" />',
+					esc_url( (string) $bank['logoUrl'] )
+				);
+			} else {
+				echo '<span class="vexpay-bank-logo vexpay-bank-logo--fallback" aria-hidden="true">' . esc_html( substr( $bank['code'], -2 ) ) . '</span>';
+			}
+			echo '<span class="vexpay-bank-meta">';
+			echo '<span class="vexpay-bank-code">' . esc_html( $bank['code'] ) . '</span>';
+			echo '<span class="vexpay-bank-name">' . esc_html( $bank['name'] ) . '</span>';
+			echo '</span></li>';
+		}
+		echo '</ul></div></p>';
 
 		echo '</fieldset>';
 	}
 
 	/**
-	 * Bank select options.
+	 * Fetch banks for checkout UI (code, name, logoUrl).
+	 *
+	 * @return array<int, array{code:string,name:string,logoUrl:?string}>
+	 */
+	public function fetch_banks_list(): array {
+		$result = $this->get_api_client()->get_banks();
+		if ( is_wp_error( $result ) ) {
+			VEXPay_Logger::error( 'Banks fetch failed: ' . $result->get_error_message() );
+			return array();
+		}
+		return VEXPay_Helpers::normalize_banks_list( $result );
+	}
+
+	/**
+	 * Bank select options (classic fallback labels).
 	 *
 	 * @return array
 	 */
 	private function fetch_banks_options(): array {
 		$options = array( '' => __( 'Select your bank', 'woo-vexpay-gateway' ) );
-		$result  = $this->get_api_client()->get_banks();
-
-		if ( is_wp_error( $result ) ) {
-			VEXPay_Logger::error( 'Banks fetch failed: ' . $result->get_error_message() );
-			return $options;
+		foreach ( $this->fetch_banks_list() as $bank ) {
+			$options[ $bank['code'] ] = $bank['code'] . ' — ' . $bank['name'];
 		}
-
-		$list = isset( $result['banks'] ) && is_array( $result['banks'] ) ? $result['banks'] : $result;
-		if ( ! is_array( $list ) ) {
-			return $options;
-		}
-
-		foreach ( $list as $bank ) {
-			if ( ! is_array( $bank ) || empty( $bank['code'] ) ) {
-				continue;
-			}
-			$code             = (string) $bank['code'];
-			$name             = isset( $bank['name'] ) ? (string) $bank['name'] : $code;
-			$options[ $code ] = $code . ' — ' . $name;
-		}
-
 		return $options;
 	}
 
@@ -605,8 +647,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function validate_fields(): bool {
-		$raw_id    = VEXPay_Helpers::get_request_field( 'vexpay_debtor_id' );
-		$raw_phone = VEXPay_Helpers::get_request_field( 'vexpay_debtor_phone' );
+		$raw_id    = VEXPay_Helpers::resolve_debtor_id_from_request();
+		$raw_phone = VEXPay_Helpers::resolve_phone_from_request();
 		$raw_bank  = VEXPay_Helpers::get_request_field( 'vexpay_debtor_bank' );
 
 		if ( ! VEXPay_Helpers::normalize_debtor_id( $raw_id ) ) {
@@ -638,8 +680,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			return array( 'result' => 'failure' );
 		}
 
-		$debtor_id    = VEXPay_Helpers::normalize_debtor_id( VEXPay_Helpers::get_request_field( 'vexpay_debtor_id' ) );
-		$debtor_phone = VEXPay_Helpers::normalize_phone( VEXPay_Helpers::get_request_field( 'vexpay_debtor_phone' ) );
+		$debtor_id    = VEXPay_Helpers::normalize_debtor_id( VEXPay_Helpers::resolve_debtor_id_from_request() );
+		$debtor_phone = VEXPay_Helpers::normalize_phone( VEXPay_Helpers::resolve_phone_from_request() );
 		$debtor_bank  = VEXPay_Helpers::normalize_bank_code( VEXPay_Helpers::get_request_field( 'vexpay_debtor_bank' ) );
 
 		if ( ! $debtor_id || ! $debtor_phone || ! $debtor_bank ) {

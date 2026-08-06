@@ -4,23 +4,26 @@
 (function ($) {
 	'use strict';
 
-	function normalizePhoneHint() {
-		var $phone = $('#vexpay_debtor_phone');
-		if (!$phone.length) {
+	function digitsOnly($el, max) {
+		if (!$el.length) {
 			return;
 		}
-		$phone.on('blur', function () {
-			var v = String($phone.val() || '').replace(/\D+/g, '');
-			if (/^0(4\d{9})$/.test(v)) {
-				$phone.val('58' + v.slice(1));
-			} else if (/^4\d{9}$/.test(v)) {
-				$phone.val('58' + v);
+		$el.on('input', function () {
+			var v = String($el.val() || '').replace(/\D+/g, '');
+			if (max) {
+				v = v.slice(0, max);
 			}
+			$el.val(v);
 		});
 	}
 
+	function bindSplitFields() {
+		digitsOnly($('#vexpay_debtor_id_number'), 9);
+		digitsOnly($('#vexpay_debtor_phone_number'), 7);
+	}
+
 	$(function () {
-		normalizePhoneHint();
-		$(document.body).on('updated_checkout', normalizePhoneHint);
+		bindSplitFields();
+		$(document.body).on('updated_checkout', bindSplitFields);
 	});
 })(jQuery);

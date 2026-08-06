@@ -22,6 +22,49 @@ class VEXPay_Helpers {
 	public const META_STATUS       = '_vexpay_status';
 
 	/**
+	 * Normalize GET /v1/banks payload into [{code,name,logoUrl}, …].
+	 *
+	 * @param mixed $result API response body.
+	 * @return array<int, array{code:string,name:string,logoUrl:?string}>
+	 */
+	public static function normalize_banks_list( $result ): array {
+		if ( ! is_array( $result ) ) {
+			return array();
+		}
+
+		$list = isset( $result['banks'] ) && is_array( $result['banks'] ) ? $result['banks'] : $result;
+		if ( ! is_array( $list ) ) {
+			return array();
+		}
+
+		$banks = array();
+		foreach ( $list as $bank ) {
+			if ( ! is_array( $bank ) || empty( $bank['code'] ) ) {
+				continue;
+			}
+			$code = (string) $bank['code'];
+			$name = isset( $bank['name'] ) ? (string) $bank['name'] : $code;
+			$logo = null;
+			if ( ! empty( $bank['logoUrl'] ) && is_string( $bank['logoUrl'] ) ) {
+				$raw = trim( $bank['logoUrl'] );
+				if ( function_exists( 'esc_url_raw' ) ) {
+					$logo = esc_url_raw( $raw );
+					$logo = '' !== $logo ? $logo : null;
+				} elseif ( filter_var( $raw, FILTER_VALIDATE_URL ) ) {
+					$logo = $raw;
+				}
+			}
+			$banks[] = array(
+				'code'    => $code,
+				'name'    => $name,
+				'logoUrl' => $logo,
+			);
+		}
+
+		return $banks;
+	}
+
+	/**
 	 * Build externalRef for an order (max 64 chars).
 	 *
 	 * @param int $order_id Order ID.
@@ -43,6 +86,96 @@ class VEXPay_Helpers {
 			return null;
 		}
 		return $value;
+	}
+
+	/**
+	 * Allowed cédula/RIF type letters for the checkout selector.
+	 *
+	 * @return string[]
+	 */
+	public static function debtor_id_types(): array {
+		return array( 'V', 'J', 'E' );
+	}
+
+	/**
+	 * Allowed local mobile prefixes (04XX).
+	 *
+	 * @return string[]
+	 */
+	public static function phone_prefixes(): array {
+		return array( '0412', '0422', '0414', '0424', '0416', '0426' );
+	}
+
+	/**
+	 * Build debtor ID from type letter + number (digits only).
+	 *
+	 * @param string $type   V|J|E (also accepts P|G for API compatibility).
+	 * @param string $number Document number.
+	 * @return string|null
+	 */
+	public static function compose_debtor_id( string $type, string $number ): ?string {
+		$type   = strtoupper( trim( $type ) );
+		$digits = preg_replace( '/\D+/', '', $number ) ?? '';
+		if ( '' === $type || '' === $digits ) {
+			return null;
+		}
+		return self::normalize_debtor_id( $type . $digits );
+	}
+
+	/**
+	 * Build phone from 04XX prefix + 7-digit subscriber number.
+	 *
+	 * @param string $prefix Local prefix (0412…).
+	 * @param string $number Seven-digit local number.
+	 * @return string|null Normalized 58… phone or null.
+	 */
+	public static function compose_phone( string $prefix, string $number ): ?string {
+		$prefix = preg_replace( '/\D+/', '', $prefix ) ?? '';
+		$digits = preg_replace( '/\D+/', '', $number ) ?? '';
+
+		if ( ! in_array( $prefix, self::phone_prefixes(), true ) ) {
+			return null;
+		}
+		if ( ! preg_match( '/^\d{7}$/', $digits ) ) {
+			return null;
+		}
+
+		return self::normalize_phone( $prefix . $digits );
+	}
+
+	/**
+	 * Resolve debtor ID from combined field or type+number parts.
+	 *
+	 * @return string Raw combined value (may still be invalid).
+	 */
+	public static function resolve_debtor_id_from_request(): string {
+		$type   = self::get_request_field( 'vexpay_debtor_id_type' );
+		$number = self::get_request_field( 'vexpay_debtor_id_number' );
+		if ( '' !== $type || '' !== $number ) {
+			$composed = self::compose_debtor_id( $type, $number );
+			return $composed ? $composed : ( strtoupper( trim( $type ) ) . preg_replace( '/\D+/', '', $number ) );
+		}
+		return self::get_request_field( 'vexpay_debtor_id' );
+	}
+
+	/**
+	 * Resolve phone from combined field or prefix+number parts.
+	 *
+	 * @return string Raw local/combined value (may still be invalid).
+	 */
+	public static function resolve_phone_from_request(): string {
+		$prefix = self::get_request_field( 'vexpay_debtor_phone_prefix' );
+		$number = self::get_request_field( 'vexpay_debtor_phone_number' );
+		if ( '' !== $prefix || '' !== $number ) {
+			$composed = self::compose_phone( $prefix, $number );
+			if ( $composed ) {
+				return $composed;
+			}
+			$p = preg_replace( '/\D+/', '', $prefix ) ?? '';
+			$n = preg_replace( '/\D+/', '', $number ) ?? '';
+			return $p . $n;
+		}
+		return self::get_request_field( 'vexpay_debtor_phone' );
 	}
 
 	/**

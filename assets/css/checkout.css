@@ -29,18 +29,46 @@
 	display: grid;
 	gap: 0.75rem;
 	margin-top: 0.75rem;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
 }
 
-.vexpay-blocks-fields label {
+.vexpay-blocks-fields label,
+.vexpay-field-group {
 	display: grid;
 	gap: 0.25rem;
 	font-size: 0.9rem;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.vexpay-field-label {
+	font-size: 0.9rem;
+}
+
+.vexpay-split-field {
+	display: grid;
+	grid-template-columns: 5.5rem minmax(0, 1fr);
+	gap: 0.5rem;
+	align-items: stretch;
+	min-width: 0;
+	max-width: 100%;
 }
 
 .vexpay-blocks-fields input,
-.vexpay-blocks-fields select {
+.vexpay-blocks-fields select,
+.vexpay-fields .vexpay-split-prefix,
+.vexpay-fields .vexpay-split-input {
 	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 	padding: 0.5rem;
+	box-sizing: border-box;
+}
+
+.vexpay-split-prefix {
+	font-variant-numeric: tabular-nums;
 }
 
 .payment_method_vexpay > label > img,

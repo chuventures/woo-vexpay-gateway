@@ -23,7 +23,7 @@ This plugin is tested against the **hosted** VEXPay API. You do not need a local
 ## Happy path (OTP)
 
 - [ ] Add a product priced in USD; checkout with VEXPay
-- [ ] Enter cédula `V12345678`, phone `04121234567`, pick a bank
+- [ ] Enter cédula type `V` + number `12345678`, phone prefix `0412` + `1234567`, pick a bank
 - [ ] Order becomes `on-hold`; redirect to OTP / order-pay
 - [ ] Enter sandbox OTP from VEXPay Portal Sandbox (Test twin)
 - [ ] Order becomes paid (`processing` / `completed`); meta `_vexpay_payment_id` set
