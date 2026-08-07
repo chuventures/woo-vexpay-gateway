@@ -10,7 +10,7 @@
  * Author URI:        https://banking.chuventures.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       woo-vexpay-gateway
+ * Text Domain:       vexpay-gateway-for-woocommerce
  * Domain Path:       /languages
  * WC requires at least: 8.0
  * WC tested up to:   9.8
@@ -75,7 +75,7 @@ add_action(
 				'admin_notices',
 				static function () {
 					echo '<div class="notice notice-error"><p>';
-					echo esc_html__( 'VEXPay Gateway requires WooCommerce to be installed and active.', 'woo-vexpay-gateway' );
+					echo esc_html__( 'VEXPay Gateway requires WooCommerce to be installed and active.', 'vexpay-gateway-for-woocommerce' );
 					echo '</p></div>';
 				}
 			);

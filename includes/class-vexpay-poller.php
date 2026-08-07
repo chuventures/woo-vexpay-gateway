@@ -39,7 +39,7 @@ class VEXPay_Poller {
 		if ( ! isset( $schedules[ VEXPay_Helpers::CRON_SCHEDULE ] ) ) {
 			$schedules[ VEXPay_Helpers::CRON_SCHEDULE ] = array(
 				'interval' => VEXPay_Helpers::POLL_INTERVAL,
-				'display'  => __( 'Every minute (VEXPay settlement poll)', 'woo-vexpay-gateway' ),
+				'display'  => __( 'Every minute (VEXPay settlement poll)', 'vexpay-gateway-for-woocommerce' ),
 			);
 		}
 		return $schedules;
@@ -356,6 +356,6 @@ class VEXPay_Poller {
 			return $client->get_payment( $payment_id );
 		}
 
-		return new WP_Error( 'vexpay_poll_missing_ids', __( 'Missing payment id and external ref for settlement poll.', 'woo-vexpay-gateway' ) );
+		return new WP_Error( 'vexpay_poll_missing_ids', __( 'Missing payment id and external ref for settlement poll.', 'vexpay-gateway-for-woocommerce' ) );
 	}
 }

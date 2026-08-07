@@ -82,8 +82,8 @@ See [docs/WORDPRESS-ORG.md](docs/WORDPRESS-ORG.md). Build a release zip:
 ```bash
 git tag v1.0.0 && git push origin v1.0.0
 # or
-rsync -a --exclude-from=.distignore ./ /tmp/woo-vexpay-gateway/
-cd /tmp && zip -r woo-vexpay-gateway.zip woo-vexpay-gateway
+rsync -a --exclude-from=.distignore ./ /tmp/vexpay-gateway-for-woocommerce/
+cd /tmp && zip -r vexpay-gateway-for-woocommerce.zip vexpay-gateway-for-woocommerce
 ```
 
 ## License

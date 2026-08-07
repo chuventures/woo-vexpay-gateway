@@ -3,22 +3,22 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: VEXPay Gateway for WooCommerce 1.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woo-vexpay-gateway\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/vexpay-gateway-for-woocommerce\n"
 "Last-Translator: VEXPay <support@chuventures.com>\n"
-"Language-Team: Español <support@chuventures.com>\n"
-"Language: es_ES\n"
+"Language-Team: English <support@chuventures.com>\n"
+"Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-08-07T15:52:00+00:00\n"
 "PO-Revision-Date: 2026-08-07 15:52+0000\n"
 "X-Generator: WP-CLI 2.4.0\n"
-"X-Domain: woo-vexpay-gateway\n"
+"X-Domain: vexpay-gateway-for-woocommerce\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. Plugin Name of the plugin
 msgid "VEXPay Gateway for WooCommerce"
-msgstr "Pasarela VEXPay para WooCommerce"
+msgstr "VEXPay Gateway for WooCommerce"
 
 #. Plugin URI of the plugin
 msgid "https://github.com/chuventures/woo-vexpay-gateway"
@@ -26,7 +26,7 @@ msgstr "https://github.com/chuventures/woo-vexpay-gateway"
 
 #. Description of the plugin
 msgid "Accept Venezuela Débito inmediato payments via VEXPay."
-msgstr "Acepta pagos de Débito inmediato de Venezuela a través de VEXPay."
+msgstr "Accept Venezuela Débito inmediato payments via VEXPay."
 
 #. Author of the plugin
 #: includes/class-vexpay-gateway.php:20
@@ -42,11 +42,11 @@ msgstr "https://banking.chuventures.com"
 
 #: includes/class-vexpay-api-client.php:217
 msgid "VEXPay API key is not configured."
-msgstr "La clave API de VEXPay no está configurada."
+msgstr "VEXPay API key is not configured."
 
 #: includes/class-vexpay-api-client.php:252
 msgid "VEXPay API request failed."
-msgstr "La solicitud a la API de VEXPay falló."
+msgstr "VEXPay API request failed."
 
 #: includes/class-vexpay-blocks-payment-method.php:92
 #: includes/class-vexpay-blocks-payment-method.php:96
@@ -59,44 +59,44 @@ msgstr "Débito inmediato (VEXPay)"
 
 #: includes/class-vexpay-gateway.php:21
 msgid "Accept Venezuela Débito inmediato payments via VEXPay (bank OTP)."
-msgstr "Acepta pagos de Débito inmediato de Venezuela a través de VEXPay (OTP bancario)."
+msgstr "Accept Venezuela Débito inmediato payments via VEXPay (bank OTP)."
 
 #: includes/class-vexpay-gateway.php:31
 msgid "Pay from your bank account with an SMS OTP."
-msgstr "Paga desde tu cuenta bancaria con un OTP por SMS."
+msgstr "Pay from your bank account with an SMS OTP."
 
 #: includes/class-vexpay-gateway.php:69
 msgid "VEXPay: Sandbox is off, but the Live API key looks like a Test twin (vk_test_…). Débito OTP will stay simulated with no bank SMS. Paste your Live twin key (vk_live_…) into Live API key, save, then retry."
-msgstr "VEXPay: el Sandbox está desactivado, pero la clave API Live parece una clave de prueba (vk_test_…). El OTP de Débito seguirá simulado sin SMS bancario. Pega tu clave Live (vk_live_…) en Clave API Live, guarda y vuelve a intentarlo."
+msgstr "VEXPay: Sandbox is off, but the Live API key looks like a Test twin (vk_test_…). Débito OTP will stay simulated with no bank SMS. Paste your Live twin key (vk_live_…) into Live API key, save, then retry."
 
 #: includes/class-vexpay-gateway.php:87
 #: includes/class-vexpay-gateway.php:160
 msgid "Pay from your bank account with an SMS OTP from your bank."
-msgstr "Paga desde tu cuenta bancaria con un OTP por SMS de tu banco."
+msgstr "Pay from your bank account with an SMS OTP from your bank."
 
 #: includes/class-vexpay-gateway.php:144
 msgid "Enable/Disable"
-msgstr "Activar/Desactivar"
+msgstr "Enable/Disable"
 
 #: includes/class-vexpay-gateway.php:146
 msgid "Enable VEXPay Débito inmediato"
-msgstr "Activar VEXPay Débito inmediato"
+msgstr "Enable VEXPay Débito inmediato"
 
 #: includes/class-vexpay-gateway.php:150
 msgid "Title"
-msgstr "Título"
+msgstr "Title"
 
 #: includes/class-vexpay-gateway.php:152
 msgid "Payment method title at checkout."
-msgstr "Título del método de pago en el checkout."
+msgstr "Payment method title at checkout."
 
 #: includes/class-vexpay-gateway.php:157
 msgid "Description"
-msgstr "Descripción"
+msgstr "Description"
 
 #: includes/class-vexpay-gateway.php:159
 msgid "Shown under the payment method at checkout."
-msgstr "Se muestra debajo del método de pago en el checkout."
+msgstr "Shown under the payment method at checkout."
 
 #: includes/class-vexpay-gateway.php:163
 msgid "Sandbox"
@@ -104,92 +104,92 @@ msgstr "Sandbox"
 
 #: includes/class-vexpay-gateway.php:166
 msgid "When on, use the Sandbox (Test twin) API key. Débito OTP is simulated — no bank SMS; use Portal → Sandbox. Turn off and paste a Live twin key for real bank SMS."
-msgstr "Cuando está activo, usa la clave API de Sandbox (prueba). El OTP de Débito se simula — sin SMS bancario; usa Portal → Sandbox. Desactívalo y pega una clave Live para SMS bancarios reales."
+msgstr "When on, use the Sandbox (Test twin) API key. Débito OTP is simulated — no bank SMS; use Portal → Sandbox. Turn off and paste a Live twin key for real bank SMS."
 
 #: includes/class-vexpay-gateway.php:169
 msgid "Live API key"
-msgstr "Clave API Live"
+msgstr "Live API key"
 
 #: includes/class-vexpay-gateway.php:172
 msgid "Live twin x-api-key from the VEXPay dashboard (usually starts with vk_live_). Required for real bank OTP SMS."
-msgstr "Clave x-api-key Live del panel de VEXPay (suele empezar con vk_live_). Necesaria para SMS OTP bancarios reales."
+msgstr "Live twin x-api-key from the VEXPay dashboard (usually starts with vk_live_). Required for real bank OTP SMS."
 
 #: includes/class-vexpay-gateway.php:176
 msgid "Sandbox API key"
-msgstr "Clave API Sandbox"
+msgstr "Sandbox API key"
 
 #: includes/class-vexpay-gateway.php:179
 msgid "Test twin x-api-key from the VEXPay dashboard (usually starts with vk_test_). Débito OTP is simulated — no SMS."
-msgstr "Clave x-api-key de prueba del panel de VEXPay (suele empezar con vk_test_). El OTP de Débito se simula — sin SMS."
+msgstr "Test twin x-api-key from the VEXPay dashboard (usually starts with vk_test_). Débito OTP is simulated — no SMS."
 
 #: includes/class-vexpay-gateway.php:183
 msgid "Connection"
-msgstr "Conexión"
+msgstr "Connection"
 
 #: includes/class-vexpay-gateway.php:185
 msgid "Verify that this WordPress site can reach VEXPay with the API key for the mode selected above. Paste the key, then click Test — you can test before saving."
-msgstr "Verifica que este sitio de WordPress pueda conectar con VEXPay usando la clave API del modo seleccionado arriba. Pega la clave y haz clic en Probar — puedes probar antes de guardar."
+msgstr "Verify that this WordPress site can reach VEXPay with the API key for the mode selected above. Paste the key, then click Test — you can test before saving."
 
 #: includes/class-vexpay-gateway.php:188
 msgid "Webhook secret"
-msgstr "Secreto del webhook"
+msgstr "Webhook secret"
 
 #: includes/class-vexpay-gateway.php:190
 msgid "HMAC secret for X-Webhook-Signature. Filled automatically when the plugin registers a webhook on a public URL, or paste from the VEXPay dashboard. Localhost is skipped (use a tunnel)."
-msgstr "Secreto HMAC para X-Webhook-Signature. Se completa automáticamente cuando el plugin registra un webhook en una URL pública, o pégalo desde el panel de VEXPay. Localhost se omite (usa un túnel)."
+msgstr "HMAC secret for X-Webhook-Signature. Filled automatically when the plugin registers a webhook on a public URL, or paste from the VEXPay dashboard. Localhost is skipped (use a tunnel)."
 
 #: includes/class-vexpay-gateway.php:194
 msgid "Webhook endpoint ID"
-msgstr "ID del endpoint del webhook"
+msgstr "Webhook endpoint ID"
 
 #: includes/class-vexpay-gateway.php:196
 msgid "Stored after automatic registration. Leave blank to re-register on save."
-msgstr "Se guarda tras el registro automático. Déjalo en blanco para volver a registrar al guardar."
+msgstr "Stored after automatic registration. Leave blank to re-register on save."
 
 #: includes/class-vexpay-gateway.php:200
 msgid "Show VES estimate"
-msgstr "Mostrar estimado en VES"
+msgstr "Show VES estimate"
 
 #: includes/class-vexpay-gateway.php:202
 msgid "Display BCV VES amount at checkout (display only)"
-msgstr "Mostrar el monto en VES (BCV) en el checkout (solo informativo)"
+msgstr "Display BCV VES amount at checkout (display only)"
 
 #: includes/class-vexpay-gateway.php:206
 msgid "Debug log"
-msgstr "Registro de depuración"
+msgstr "Debug log"
 
 #: includes/class-vexpay-gateway.php:208
 msgid "Enable logging"
-msgstr "Activar registro"
+msgstr "Enable logging"
 
 #. translators: %s: WooCommerce logs URL path hint
 #: includes/class-vexpay-gateway.php:212
 msgid "Logs appear under WooCommerce → Status → Logs (source: vexpay). Never log API keys."
-msgstr "Los registros aparecen en WooCommerce → Estado → Registros (origen: vexpay). Nunca registres claves API."
+msgstr "Logs appear under WooCommerce → Status → Logs (source: vexpay). Never log API keys."
 
 #: includes/class-vexpay-gateway.php:356
 msgid "Test connection"
-msgstr "Probar conexión"
+msgstr "Test connection"
 
 #: includes/class-vexpay-gateway.php:455
 msgid "Testing…"
-msgstr "Probando…"
+msgstr "Testing…"
 
 #: includes/class-vexpay-gateway.php:456
 msgid "Connection failed."
-msgstr "La conexión falló."
+msgstr "Connection failed."
 
 #: includes/class-vexpay-gateway.php:468
 msgid "You do not have permission to test the connection."
-msgstr "No tienes permiso para probar la conexión."
+msgstr "You do not have permission to test the connection."
 
 #: includes/class-vexpay-gateway.php:490
 msgid "Enter an API key (or save one first), then try again."
-msgstr "Introduce una clave API (o guarda una primero) e inténtalo de nuevo."
+msgstr "Enter an API key (or save one first), then try again."
 
 #: includes/class-vexpay-gateway.php:503
 msgid "API key rejected (unauthorized). Confirm the key matches Sandbox on/off and is active in the VEXPay dashboard."
-msgstr "Clave API rechazada (no autorizada). Confirma que la clave coincida con Sandbox activado/desactivado y esté activa en el panel de VEXPay."
+msgstr "API key rejected (unauthorized). Confirm the key matches Sandbox on/off and is active in the VEXPay dashboard."
 
 #: includes/class-vexpay-gateway.php:598
 #: includes/class-vexpay-gateway.php:2524
@@ -209,7 +209,7 @@ msgstr "SANDBOX"
 #: includes/class-vexpay-gateway.php:2248
 #: assets/js/blocks.js:556
 msgid "it's giving demo energy. No real money moves here — practice all you want."
-msgstr "modo demo. Aquí no se mueve dinero real — practica cuanto quieras."
+msgstr "it's giving demo energy. No real money moves here — practice all you want."
 
 #: includes/class-vexpay-gateway.php:610
 #: includes/class-vexpay-gateway.php:1936
@@ -217,12 +217,12 @@ msgstr "modo demo. Aquí no se mueve dinero real — practica cuanto quieras."
 #: assets/js/blocks.js:536
 #: assets/js/blocks.js:568
 msgid "Your details"
-msgstr "Tus datos"
+msgstr "Your details"
 
 #: includes/class-vexpay-gateway.php:611
 #: assets/js/blocks.js:583
 msgid "Who’s paying? Drop your cédula, phone, and bank — next you’ll send the OTP from your bank."
-msgstr "¿Quién paga? Ingresa tu cédula, teléfono y banco — luego enviarás el OTP de tu banco."
+msgstr "Who’s paying? Drop your cédula, phone, and bank — next you’ll send the OTP from your bank."
 
 #. translators: %s: VES amount
 #: includes/class-vexpay-gateway.php:620
@@ -240,19 +240,19 @@ msgstr "BCV %s"
 #: includes/class-vexpay-gateway.php:2259
 #: assets/js/blocks.js:624
 msgid "Saved accounts"
-msgstr "Cuentas guardadas"
+msgstr "Saved accounts"
 
 #: includes/class-vexpay-gateway.php:640
 #: includes/class-vexpay-gateway.php:2261
 #: assets/js/blocks.js:635
 msgid "+ Use another"
-msgstr "+ Usar otra"
+msgstr "+ Use another"
 
 #: includes/class-vexpay-gateway.php:643
 #: includes/class-vexpay-gateway.php:2264
 #: assets/js/blocks.js:643
 msgid "Saved payer accounts"
-msgstr "Cuentas del pagador guardadas"
+msgstr "Saved payer accounts"
 
 #: includes/class-vexpay-gateway.php:657
 #: includes/class-vexpay-gateway.php:2278
@@ -264,78 +264,78 @@ msgstr "Cédula / RIF"
 #: includes/class-vexpay-gateway.php:2280
 #: assets/js/blocks.js:756
 msgid "Document type"
-msgstr "Tipo de documento"
+msgstr "Document type"
 
 #: includes/class-vexpay-gateway.php:671
 #: includes/class-vexpay-gateway.php:2292
 #: assets/js/blocks.js:775
 msgid "Document number"
-msgstr "Número de documento"
+msgstr "Document number"
 
 #: includes/class-vexpay-gateway.php:676
 #: includes/class-vexpay-gateway.php:2093
 #: includes/class-vexpay-gateway.php:2297
 #: assets/js/blocks.js:785
 msgid "Phone"
-msgstr "Teléfono"
+msgstr "Phone"
 
 #: includes/class-vexpay-gateway.php:678
 #: includes/class-vexpay-gateway.php:2299
 #: assets/js/blocks.js:799
 msgid "Phone prefix"
-msgstr "Prefijo telefónico"
+msgstr "Phone prefix"
 
 #: includes/class-vexpay-gateway.php:690
 #: includes/class-vexpay-gateway.php:2311
 #: assets/js/blocks.js:819
 msgid "Phone number"
-msgstr "Número de teléfono"
+msgstr "Phone number"
 
 #: includes/class-vexpay-gateway.php:695
 #: includes/class-vexpay-gateway.php:2077
 #: includes/class-vexpay-gateway.php:2316
 #: assets/js/blocks.js:829
 msgid "Bank"
-msgstr "Banco"
+msgstr "Bank"
 
 #: includes/class-vexpay-gateway.php:700
 #: includes/class-vexpay-gateway.php:2321
 #: includes/class-vexpay-plugin.php:182
 #: assets/js/blocks.js:222
 msgid "Select your bank"
-msgstr "Selecciona tu banco"
+msgstr "Select your bank"
 
 #: includes/class-vexpay-gateway.php:732
 #: includes/class-vexpay-gateway.php:1917
 #: assets/js/blocks.js:848
 msgid "Secured by VEXPay"
-msgstr "Protegido por VEXPay"
+msgstr "Secured by VEXPay"
 
 #: includes/class-vexpay-gateway.php:783
 msgid "Enter a valid cédula/RIF (e.g. V12345678)."
-msgstr "Introduce una cédula/RIF válida (p. ej. V12345678)."
+msgstr "Enter a valid cédula/RIF (e.g. V12345678)."
 
 #: includes/class-vexpay-gateway.php:787
 msgid "Enter a valid Venezuelan mobile phone."
-msgstr "Introduce un teléfono móvil venezolano válido."
+msgstr "Enter a valid Venezuelan mobile phone."
 
 #: includes/class-vexpay-gateway.php:791
 msgid "Select your bank."
-msgstr "Selecciona tu banco."
+msgstr "Select your bank."
 
 #: includes/class-vexpay-gateway.php:1027
 #: includes/class-vexpay-plugin.php:180
 #: assets/js/blocks.js:717
 msgid "Remove saved account"
-msgstr "Eliminar cuenta guardada"
+msgstr "Remove saved account"
 
 #: includes/class-vexpay-gateway.php:1146
 msgid "Invalid account."
-msgstr "Cuenta no válida."
+msgstr "Invalid account."
 
 #: includes/class-vexpay-gateway.php:1153
 msgid "Account not found."
-msgstr "Cuenta no encontrada."
+msgstr "Account not found."
 
 #: includes/class-vexpay-gateway.php:1291
 #: includes/class-vexpay-gateway.php:2374
@@ -343,57 +343,57 @@ msgstr "Cuenta no encontrada."
 #: includes/class-vexpay-gateway.php:2693
 #: includes/class-vexpay-gateway.php:2697
 msgid "Order not found."
-msgstr "Pedido no encontrado."
+msgstr "Order not found."
 
 #: includes/class-vexpay-gateway.php:1300
 msgid "Invalid payment details."
-msgstr "Datos de pago no válidos."
+msgstr "Invalid payment details."
 
 #: includes/class-vexpay-gateway.php:1320
 msgid "Could not get a VES amount from VEXPay FX quote."
-msgstr "No se pudo obtener un monto en VES desde la cotización FX de VEXPay."
+msgstr "Could not get a VES amount from VEXPay FX quote."
 
 #: includes/class-vexpay-gateway.php:1335
 msgid "VEXPay débito ready — waiting for customer to request bank OTP."
-msgstr "Débito VEXPay listo — esperando que el cliente solicite el OTP bancario."
+msgstr "VEXPay débito ready — waiting for customer to request bank OTP."
 
 #: includes/class-vexpay-gateway.php:1531
 #: includes/class-vexpay-gateway.php:1646
 msgid "Invalid order."
-msgstr "Pedido no válido."
+msgstr "Invalid order."
 
 #: includes/class-vexpay-gateway.php:1535
 #: includes/class-vexpay-gateway.php:1650
 msgid "This order is not a VEXPay payment."
-msgstr "Este pedido no es un pago de VEXPay."
+msgstr "This order is not a VEXPay payment."
 
 #: includes/class-vexpay-gateway.php:1544
 #: includes/class-vexpay-gateway.php:1660
 msgid "You are not allowed to pay for this order."
-msgstr "No tienes permiso para pagar este pedido."
+msgstr "You are not allowed to pay for this order."
 
 #: includes/class-vexpay-gateway.php:1588
 msgid "Customer returned to checkout from the VEXPay OTP page."
-msgstr "El cliente volvió al checkout desde la página OTP de VEXPay."
+msgstr "Customer returned to checkout from the VEXPay OTP page."
 
 #. translators: %s: site name
 #: includes/class-vexpay-gateway.php:1708
 msgid "Confirm payment — %s"
-msgstr "Confirmar pago — %s"
+msgstr "Confirm payment — %s"
 
 #: includes/class-vexpay-gateway.php:1791
 msgid "Back to checkout"
-msgstr "Volver al checkout"
+msgstr "Back to checkout"
 
 #. translators: %s: order number
 #: includes/class-vexpay-gateway.php:1808
 #: includes/class-vexpay-helpers.php:1056
 msgid "Order #%s"
-msgstr "Pedido #%s"
+msgstr "Order #%s"
 
 #: includes/class-vexpay-gateway.php:1855
 msgid "View breakdown"
-msgstr "Ver desglose"
+msgstr "View breakdown"
 
 #. translators: 1: product name, 2: quantity
 #: includes/class-vexpay-gateway.php:1864
@@ -403,59 +403,59 @@ msgstr "%1$s × %2$d"
 #. translators: %s: BCV FX rate with full precision
 #: includes/class-vexpay-gateway.php:1888
 msgid "Exact BCV %s"
-msgstr "BCV exacto %s"
+msgstr "Exact BCV %s"
 
 #: includes/class-vexpay-gateway.php:1937
 #: assets/js/blocks.js:546
 msgid "OTP code"
-msgstr "Código OTP"
+msgstr "OTP code"
 
 #: includes/class-vexpay-gateway.php:1939
 #: assets/js/blocks.js:528
 msgid "Payment steps"
-msgstr "Pasos del pago"
+msgstr "Payment steps"
 
 #: includes/class-vexpay-gateway.php:1990
 msgid "This order is already paid."
-msgstr "Este pedido ya está pagado."
+msgstr "This order is already paid."
 
 #: includes/class-vexpay-gateway.php:2029
 msgid "Send your OTP code"
-msgstr "Envía tu código OTP"
+msgstr "Send your OTP code"
 
 #: includes/class-vexpay-gateway.php:2031
 msgid "Tap send — sandbox drops a rotating code in the VEXPay Portal for you to paste here next."
-msgstr "Toca enviar — en sandbox aparece un código rotativo en el Portal de VEXPay para pegarlo aquí después."
+msgstr "Tap send — sandbox drops a rotating code in the VEXPay Portal for you to paste here next."
 
 #: includes/class-vexpay-gateway.php:2033
 msgid "Tap send and your bank texts the OTP to the phone below."
-msgstr "Toca enviar y tu banco enviará el OTP por SMS al teléfono de abajo."
+msgstr "Tap send and your bank texts the OTP to the phone below."
 
 #: includes/class-vexpay-gateway.php:2036
 msgid "Enter your OTP code"
-msgstr "Introduce tu código OTP"
+msgstr "Enter your OTP code"
 
 #: includes/class-vexpay-gateway.php:2038
 msgid "Sandbox mode — snag the rotating code from the VEXPay Portal and paste it here."
-msgstr "Modo sandbox — toma el código rotativo del Portal de VEXPay y pégalo aquí."
+msgstr "Sandbox mode — snag the rotating code from the VEXPay Portal and paste it here."
 
 #: includes/class-vexpay-gateway.php:2040
 msgid "Your bank just texted a code — drop it in below and you’re good."
-msgstr "Tu banco acaba de enviarte un código — introdúcelo abajo y listo."
+msgstr "Your bank just texted a code — drop it in below and you’re good."
 
 #: includes/class-vexpay-gateway.php:2060
 msgid "Hide"
-msgstr "Ocultar"
+msgstr "Hide"
 
 #: includes/class-vexpay-gateway.php:2061
 msgid "Edit"
-msgstr "Editar"
+msgstr "Edit"
 
 #: includes/class-vexpay-gateway.php:2068
 #: includes/class-vexpay-gateway.php:2101
 #: includes/class-vexpay-gateway.php:2253
 msgid "Change account"
-msgstr "Cambiar cuenta"
+msgstr "Change account"
 
 #: includes/class-vexpay-gateway.php:2073
 msgid "Cédula"
@@ -463,231 +463,231 @@ msgstr "Cédula"
 
 #: includes/class-vexpay-gateway.php:2115
 msgid "Send OTP code"
-msgstr "Enviar código OTP"
+msgstr "Send OTP code"
 
 #: includes/class-vexpay-gateway.php:2118
 msgid "Sandbox: no bank SMS — copy the rotating code from VEXPay Portal → Sandbox."
-msgstr "Sandbox: sin SMS bancario — copia el código rotativo de Portal VEXPay → Sandbox."
+msgstr "Sandbox: no bank SMS — copy the rotating code from VEXPay Portal → Sandbox."
 
 #: includes/class-vexpay-gateway.php:2120
 msgid "We’ll text the code, then you can enter it on the next step."
-msgstr "Enviaremos el código por SMS y luego podrás introducirlo en el siguiente paso."
+msgstr "We’ll text the code, then you can enter it on the next step."
 
 #: includes/class-vexpay-gateway.php:2137
 msgid "Your code"
-msgstr "Tu código"
+msgstr "Your code"
 
 #. translators: %d: digit position 1–8
 #: includes/class-vexpay-gateway.php:2147
 msgid "Digit %d"
-msgstr "Dígito %d"
+msgstr "Digit %d"
 
 #: includes/class-vexpay-gateway.php:2170
 msgid "6–8 digits · paste works too"
-msgstr "6–8 dígitos · también puedes pegar"
+msgstr "6–8 digits · paste works too"
 
 #: includes/class-vexpay-gateway.php:2170
 msgid "Code may arrive by SMS or notification — check your bank app if needed."
-msgstr "El código puede llegar por SMS o notificación — revísalo en la app del banco."
+msgstr "Code may arrive by SMS or notification — check your bank app if needed."
 
 #: includes/class-vexpay-gateway.php:2185
 msgid "Didn’t get it? Resend code"
-msgstr "¿No te llegó? Reenviar código"
+msgstr "Didn’t get it? Resend code"
 
 #. translators: %d: seconds remaining
 #: includes/class-vexpay-gateway.php:2179
 #: includes/class-vexpay-gateway.php:2185
 msgid "Hang tight — you can resend in %d sec."
-msgstr "Espera un momento — puedes reenviar en %d seg."
+msgstr "Hang tight — you can resend in %d sec."
 
 #: includes/class-vexpay-gateway.php:2197
 msgid "Encrypted"
-msgstr "Cifrado"
+msgstr "Encrypted"
 
 #: includes/class-vexpay-gateway.php:2201
 msgid "Confirm payment"
-msgstr "Confirmar pago"
+msgstr "Confirm payment"
 
 #: includes/class-vexpay-gateway.php:2254
 msgid "Update who is paying. We’ll reset the OTP step so you can send a fresh code."
-msgstr "Actualiza quién paga. Reiniciaremos el paso OTP para que puedas enviar un código nuevo."
+msgstr "Update who is paying. We’ll reset the OTP step so you can send a fresh code."
 
 #: includes/class-vexpay-gateway.php:2351
 msgid "Save & continue"
-msgstr "Guardar y continuar"
+msgstr "Save & continue"
 
 #: includes/class-vexpay-gateway.php:2354
 msgid "Back to OTP"
-msgstr "Volver al OTP"
+msgstr "Back to OTP"
 
 #: includes/class-vexpay-gateway.php:2369
 msgid "Invalid change request."
-msgstr "Solicitud de cambio no válida."
+msgstr "Invalid change request."
 
 #: includes/class-vexpay-gateway.php:2378
 msgid "This order can no longer change the paying account."
-msgstr "Este pedido ya no puede cambiar la cuenta de pago."
+msgstr "This order can no longer change the paying account."
 
 #: includes/class-vexpay-gateway.php:2389
 msgid "Enter a valid cédula/RIF, phone, and bank."
-msgstr "Introduce una cédula/RIF, teléfono y banco válidos."
+msgstr "Enter a valid cédula/RIF, phone, and bank."
 
 #. translators: 1: debtor id, 2: phone, 3: bank code
 #: includes/class-vexpay-gateway.php:2402
 msgid "Customer changed the VEXPay paying account to %1$s / %2$s / bank %3$s. OTP step reset."
-msgstr "El cliente cambió la cuenta de pago de VEXPay a %1$s / %2$s / banco %3$s. Paso OTP reiniciado."
+msgstr "Customer changed the VEXPay paying account to %1$s / %2$s / bank %3$s. OTP step reset."
 
 #: includes/class-vexpay-gateway.php:2420
 msgid "Account updated — send a new OTP when you’re ready."
-msgstr "Cuenta actualizada — envía un nuevo OTP cuando estés listo."
+msgstr "Account updated — send a new OTP when you’re ready."
 
 #: includes/class-vexpay-gateway.php:2493
 #: includes/class-vexpay-gateway.php:2514
 msgid "Paid via VEXPay"
-msgstr "Pagado con VEXPay"
+msgstr "Paid via VEXPay"
 
 #: includes/class-vexpay-gateway.php:2494
 msgid "Your Débito inmediato payment was successful."
-msgstr "Tu pago de Débito inmediato se realizó correctamente."
+msgstr "Your Débito inmediato payment was successful."
 
 #: includes/class-vexpay-gateway.php:2497
 msgid "Payment processing"
-msgstr "Procesando el pago"
+msgstr "Payment processing"
 
 #: includes/class-vexpay-gateway.php:2498
 msgid "VEXPay is waiting for the bank to confirm your Débito inmediato. This page will stay up to date once settlement finishes."
-msgstr "VEXPay está esperando que el banco confirme tu Débito inmediato. Esta página se actualizará cuando termine la liquidación."
+msgstr "VEXPay is waiting for the bank to confirm your Débito inmediato. This page will stay up to date once settlement finishes."
 
 #: includes/class-vexpay-gateway.php:2501
 msgid "Finish paying with VEXPay"
-msgstr "Termina de pagar con VEXPay"
+msgstr "Finish paying with VEXPay"
 
 #: includes/class-vexpay-gateway.php:2502
 msgid "Your order is ready — enter the bank OTP to complete Débito inmediato."
-msgstr "Tu pedido está listo — introduce el OTP del banco para completar el Débito inmediato."
+msgstr "Your order is ready — enter the bank OTP to complete Débito inmediato."
 
 #: includes/class-vexpay-gateway.php:2506
 msgid "Payment failed"
-msgstr "Pago fallido"
+msgstr "Payment failed"
 
 #: includes/class-vexpay-gateway.php:2507
 msgid "The VEXPay Débito inmediato payment did not go through. You can try again from the order or contact the store."
-msgstr "El pago de Débito inmediato de VEXPay no se completó. Puedes intentarlo de nuevo desde el pedido o contactar a la tienda."
+msgstr "The VEXPay Débito inmediato payment did not go through. You can try again from the order or contact the store."
 
 #: includes/class-vexpay-gateway.php:2510
 msgid "Payment reversed"
-msgstr "Pago revertido"
+msgstr "Payment reversed"
 
 #: includes/class-vexpay-gateway.php:2511
 msgid "This VEXPay payment was reversed."
-msgstr "Este pago de VEXPay fue revertido."
+msgstr "This VEXPay payment was reversed."
 
 #: includes/class-vexpay-gateway.php:2515
 msgid "Débito inmediato through VEXPay."
-msgstr "Débito inmediato a través de VEXPay."
+msgstr "Débito inmediato through VEXPay."
 
 #: includes/class-vexpay-gateway.php:2521
 msgid "VEXPay payment"
-msgstr "Pago VEXPay"
+msgstr "VEXPay payment"
 
 #: includes/class-vexpay-gateway.php:2532
 msgid "Enter OTP code"
-msgstr "Introducir código OTP"
+msgstr "Enter OTP code"
 
 #: includes/class-vexpay-gateway.php:2541
 msgid "Transaction ID"
-msgstr "ID de transacción"
+msgstr "Transaction ID"
 
 #: includes/class-vexpay-gateway.php:2547
 msgid "Reference"
-msgstr "Referencia"
+msgstr "Reference"
 
 #: includes/class-vexpay-gateway.php:2565
 msgid "Invalid OTP request."
-msgstr "Solicitud OTP no válida."
+msgstr "Invalid OTP request."
 
 #: includes/class-vexpay-gateway.php:2578
 #: includes/class-vexpay-gateway.php:2619
 #: includes/class-vexpay-gateway.php:2657
 msgid "That code didn’t work. Try again or resend."
-msgstr "Ese código no funcionó. Inténtalo de nuevo o reenvía."
+msgstr "That code didn’t work. Try again or resend."
 
 #: includes/class-vexpay-gateway.php:2596
 #: includes/class-vexpay-gateway.php:2748
 msgid "Missing payment details — start checkout again."
-msgstr "Faltan datos de pago — vuelve a iniciar el checkout."
+msgstr "Missing payment details — start checkout again."
 
 #: includes/class-vexpay-gateway.php:2649
 msgid "Payment is processing — hang tight while the bank confirms."
-msgstr "El pago se está procesando — espera mientras el banco confirma."
+msgstr "Payment is processing — hang tight while the bank confirms."
 
 #: includes/class-vexpay-gateway.php:2688
 msgid "Invalid resend request."
-msgstr "Solicitud de reenvío no válida."
+msgstr "Invalid resend request."
 
 #: includes/class-vexpay-gateway.php:2701
 msgid "This order is not waiting for an OTP."
-msgstr "Este pedido no está esperando un OTP."
+msgstr "This order is not waiting for an OTP."
 
 #. translators: %d: seconds remaining
 #: includes/class-vexpay-gateway.php:2714
 msgid "Easy — wait %d seconds before requesting another code."
-msgstr "Tranquilo — espera %d segundos antes de pedir otro código."
+msgstr "Easy — wait %d seconds before requesting another code."
 
 #: includes/class-vexpay-gateway.php:2828
 msgid "Customer requested VEXPay débito OTP."
-msgstr "El cliente solicitó el OTP de débito VEXPay."
+msgstr "Customer requested VEXPay débito OTP."
 
 #: includes/class-vexpay-gateway.php:2829
 msgid "Customer requested a new VEXPay débito OTP."
-msgstr "El cliente solicitó un nuevo OTP de débito VEXPay."
+msgstr "Customer requested a new VEXPay débito OTP."
 
 #: includes/class-vexpay-gateway.php:2835
 msgid "Sandbox OTP ready — copy the rotating code from VEXPay Portal → Sandbox (no SMS on Test twin keys)."
-msgstr "OTP de sandbox listo — copia el código rotativo de Portal VEXPay → Sandbox (sin SMS en claves de prueba)."
+msgstr "Sandbox OTP ready — copy the rotating code from VEXPay Portal → Sandbox (no SMS on Test twin keys)."
 
 #: includes/class-vexpay-gateway.php:2836
 msgid "Fresh sandbox OTP ready — copy the current code from VEXPay Portal → Sandbox."
-msgstr "Nuevo OTP de sandbox listo — copia el código actual de Portal VEXPay → Sandbox."
+msgstr "Fresh sandbox OTP ready — copy the current code from VEXPay Portal → Sandbox."
 
 #: includes/class-vexpay-gateway.php:2839
 msgid "Code sent — check your texts."
-msgstr "Código enviado — revisa tus mensajes."
+msgstr "Code sent — check your texts."
 
 #: includes/class-vexpay-gateway.php:2840
 msgid "Fresh code sent — check your texts."
-msgstr "Nuevo código enviado — revisa tus mensajes."
+msgstr "Fresh code sent — check your texts."
 
 #. translators: %s: payment id
 #: includes/class-vexpay-gateway.php:2940
 msgid "VEXPay débito completed (%s)."
-msgstr "Débito VEXPay completado (%s)."
+msgstr "VEXPay débito completed (%s)."
 
 #: includes/class-vexpay-gateway.php:2950
 msgid "VEXPay payment reversed."
-msgstr "Pago de VEXPay revertido."
+msgstr "VEXPay payment reversed."
 
 #: includes/class-vexpay-gateway.php:2953
 msgid "VEXPay payment pending."
-msgstr "Pago de VEXPay pendiente."
+msgstr "VEXPay payment pending."
 
 #: includes/class-vexpay-gateway.php:2971
 msgid "Automatic refunds are not available for Débito inmediato yet. Handle the reversal in VEXPay / bank ops."
-msgstr "Los reembolsos automáticos aún no están disponibles para Débito inmediato. Gestiona la reversión en VEXPay / operaciones bancarias."
+msgstr "Automatic refunds are not available for Débito inmediato yet. Handle the reversal in VEXPay / bank ops."
 
 #. translators: %s: API/business code
 #: includes/class-vexpay-helpers.php:982
 msgid "OTP request was not accepted (code %s)."
-msgstr "La solicitud OTP no fue aceptada (código %s)."
+msgstr "OTP request was not accepted (code %s)."
 
 #: includes/class-vexpay-helpers.php:986
 msgid "OTP request was not accepted."
-msgstr "La solicitud OTP no fue aceptada."
+msgstr "OTP request was not accepted."
 
 #. translators: 1: bank count 2: BCV rate
 #: includes/class-vexpay-helpers.php:1085
 msgid "Connected to VEXPay. API key is valid. %1$d banks available; BCV rate %2$s."
-msgstr "Conectado a VEXPay. La clave API es válida. %1$d bancos disponibles; tasa BCV %2$s."
+msgstr "Connected to VEXPay. API key is valid. %1$d banks available; BCV rate %2$s."
 
 #: includes/class-vexpay-plugin.php:79
 #: includes/class-vexpay-plugin.php:90
@@ -697,56 +697,56 @@ msgstr "Conectado a VEXPay. La clave API es válida. %1$d bancos disponibles; ta
 #: includes/class-vexpay-plugin.php:146
 #: includes/class-vexpay-plugin.php:160
 msgid "VEXPay gateway is not available."
-msgstr "La pasarela VEXPay no está disponible."
+msgstr "VEXPay gateway is not available."
 
 #: includes/class-vexpay-plugin.php:181
 #: assets/js/blocks.js:403
 msgid "Could not remove saved account."
-msgstr "No se pudo eliminar la cuenta guardada."
+msgstr "Could not remove saved account."
 
 #: includes/class-vexpay-poller.php:42
 msgid "Every minute (VEXPay settlement poll)"
-msgstr "Cada minuto (sondeo de liquidación VEXPay)"
+msgstr "Every minute (VEXPay settlement poll)"
 
 #: includes/class-vexpay-poller.php:359
 msgid "Missing payment id and external ref for settlement poll."
-msgstr "Faltan el id de pago y la referencia externa para el sondeo de liquidación."
+msgstr "Missing payment id and external ref for settlement poll."
 
 #: includes/class-vexpay-webhook.php:42
 msgid "Invalid signature"
-msgstr "Firma no válida"
+msgstr "Invalid signature"
 
 #: includes/class-vexpay-webhook.php:49
 msgid "Invalid JSON"
-msgstr "JSON no válido"
+msgstr "Invalid JSON"
 
-#: woo-vexpay-gateway.php:78
+#: vexpay-gateway-for-woocommerce.php:78
 msgid "VEXPay Gateway requires WooCommerce to be installed and active."
-msgstr "VEXPay Gateway requiere que WooCommerce esté instalado y activo."
+msgstr "VEXPay Gateway requires WooCommerce to be installed and active."
 
 #: assets/js/blocks.js:424
 msgid "Pick a saved account or tap + Use another."
-msgstr "Elige una cuenta guardada o toca + Usar otra."
+msgstr "Pick a saved account or tap + Use another."
 
 #: assets/js/blocks.js:439
 msgid "Enter cédula/RIF, phone, and bank for VEXPay."
-msgstr "Introduce cédula/RIF, teléfono y banco para VEXPay."
+msgstr "Enter cédula/RIF, phone, and bank for VEXPay."
 
 #: assets/js/blocks.js:449
 msgid "Enter a valid cédula/RIF number (6–9 digits)."
-msgstr "Introduce un número de cédula/RIF válido (6–9 dígitos)."
+msgstr "Enter a valid cédula/RIF number (6–9 digits)."
 
 #: assets/js/blocks.js:459
 msgid "Enter a valid mobile number (7 digits after the prefix)."
-msgstr "Introduce un número móvil válido (7 dígitos después del prefijo)."
+msgstr "Enter a valid mobile number (7 digits after the prefix)."
 
 #: assets/js/blocks.js:574
 msgid "Pick a saved account to pay — or tap + Use another to enter new details."
-msgstr "Elige una cuenta guardada para pagar — o toca + Usar otra para ingresar nuevos datos."
+msgstr "Pick a saved account to pay — or tap + Use another to enter new details."
 
 #: assets/js/blocks.js:579
 msgid "Paying with this account. Tap + Use another if you need different details."
-msgstr "Pagando con esta cuenta. Toca + Usar otra si necesitas otros datos."
+msgstr "Paying with this account. Tap + Use another if you need different details."
 
 #: assets/js/blocks.js:595
 msgid "Bs."

@@ -47,7 +47,7 @@ Developer docs and E2E checklist: https://github.com/chuventures/woo-vexpay-gate
 
 == Installation ==
 
-1. Upload the `woo-vexpay-gateway` folder to `/wp-content/plugins/`, or install the zip via **Plugins → Add New**.
+1. Upload the `vexpay-gateway-for-woocommerce` folder to `/wp-content/plugins/`, or install the zip via **Plugins → Add New**.
 2. Activate the plugin.
 3. Configure under **WooCommerce → Settings → Payments → VEXPay**.
 

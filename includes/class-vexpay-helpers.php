@@ -979,11 +979,11 @@ class VEXPay_Helpers {
 		if ( '' !== $code ) {
 			return sprintf(
 				/* translators: %s: API/business code */
-				__( 'OTP request was not accepted (code %s).', 'woo-vexpay-gateway' ),
+				__( 'OTP request was not accepted (code %s).', 'vexpay-gateway-for-woocommerce' ),
 				$code
 			);
 		}
-		return __( 'OTP request was not accepted.', 'woo-vexpay-gateway' );
+		return __( 'OTP request was not accepted.', 'vexpay-gateway-for-woocommerce' );
 	}
 
 	/**
@@ -1053,7 +1053,7 @@ class VEXPay_Helpers {
 	public static function debit_concepto_for_order( WC_Order $order ): string {
 		$concepto = sprintf(
 			/* translators: %s: order number */
-			__( 'Order #%s', 'woo-vexpay-gateway' ),
+			__( 'Order #%s', 'vexpay-gateway-for-woocommerce' ),
 			$order->get_order_number()
 		);
 		if ( function_exists( 'mb_substr' ) ) {
@@ -1082,7 +1082,7 @@ class VEXPay_Helpers {
 	public static function format_connection_success( int $bank_count, float $bcv_rate ): string {
 		return sprintf(
 			/* translators: 1: bank count 2: BCV rate */
-			__( 'Connected to VEXPay. API key is valid. %1$d banks available; BCV rate %2$s.', 'woo-vexpay-gateway' ),
+			__( 'Connected to VEXPay. API key is valid. %1$d banks available; BCV rate %2$s.', 'vexpay-gateway-for-woocommerce' ),
 			$bank_count,
 			number_format( $bcv_rate, 4, '.', '' )
 		);

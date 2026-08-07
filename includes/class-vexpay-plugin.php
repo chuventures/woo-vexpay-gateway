@@ -35,7 +35,7 @@ final class VEXPay_Plugin {
 	 * Hook registrations.
 	 */
 	public function init(): void {
-		load_plugin_textdomain( 'woo-vexpay-gateway', false, dirname( plugin_basename( VEXPAY_GATEWAY_FILE ) ) . '/languages' );
+		load_plugin_textdomain( 'vexpay-gateway-for-woocommerce', false, dirname( plugin_basename( VEXPAY_GATEWAY_FILE ) ) . '/languages' );
 
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_assets' ) );
@@ -76,7 +76,7 @@ final class VEXPay_Plugin {
 	public function api_otp_submit(): void {
 		$gateway = $this->gateway();
 		if ( ! $gateway ) {
-			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ), 503 );
 		}
 		$gateway->handle_otp_submit();
 	}
@@ -87,7 +87,7 @@ final class VEXPay_Plugin {
 	public function api_otp_resend(): void {
 		$gateway = $this->gateway();
 		if ( ! $gateway ) {
-			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ), 503 );
 		}
 		$gateway->handle_otp_resend();
 	}
@@ -98,7 +98,7 @@ final class VEXPay_Plugin {
 	public function api_otp_change_account(): void {
 		$gateway = $this->gateway();
 		if ( ! $gateway ) {
-			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ), 503 );
 		}
 		$gateway->handle_otp_change_account();
 	}
@@ -109,7 +109,7 @@ final class VEXPay_Plugin {
 	public function api_otp_form(): void {
 		$gateway = $this->gateway();
 		if ( ! $gateway ) {
-			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ), 503 );
 		}
 		$gateway->render_otp_form_page();
 	}
@@ -120,7 +120,7 @@ final class VEXPay_Plugin {
 	public function api_otp_back_checkout(): void {
 		$gateway = $this->gateway();
 		if ( ! $gateway ) {
-			wp_die( esc_html__( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ), 503 );
+			wp_die( esc_html__( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ), 503 );
 		}
 		$gateway->handle_otp_back_checkout();
 	}
@@ -143,7 +143,7 @@ final class VEXPay_Plugin {
 		$gateways = WC()->payment_gateways()->payment_gateways();
 		if ( empty( $gateways['vexpay'] ) || ! $gateways['vexpay'] instanceof VEXPay_Gateway ) {
 			wp_send_json_error(
-				array( 'message' => __( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ) )
+				array( 'message' => __( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ) )
 			);
 		}
 
@@ -157,7 +157,7 @@ final class VEXPay_Plugin {
 		$gateway = $this->gateway();
 		if ( ! $gateway ) {
 			wp_send_json_error(
-				array( 'message' => __( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ) )
+				array( 'message' => __( 'VEXPay gateway is not available.', 'vexpay-gateway-for-woocommerce' ) )
 			);
 		}
 
@@ -177,9 +177,9 @@ final class VEXPay_Plugin {
 				'nonce'  => wp_create_nonce( 'vexpay_delete_debtor_account' ),
 			),
 			'i18n'    => array(
-				'removeAccount' => __( 'Remove saved account', 'woo-vexpay-gateway' ),
-				'removeFailed'  => __( 'Could not remove saved account.', 'woo-vexpay-gateway' ),
-				'selectBank'    => __( 'Select your bank', 'woo-vexpay-gateway' ),
+				'removeAccount' => __( 'Remove saved account', 'vexpay-gateway-for-woocommerce' ),
+				'removeFailed'  => __( 'Could not remove saved account.', 'vexpay-gateway-for-woocommerce' ),
+				'selectBank'    => __( 'Select your bank', 'vexpay-gateway-for-woocommerce' ),
 			),
 		);
 	}

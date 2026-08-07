@@ -219,7 +219,7 @@
 						: createElement(
 								'span',
 								{ className: 'vexpay-bank-placeholder' },
-								__( 'Select your bank', 'woo-vexpay-gateway' )
+								__( 'Select your bank', 'vexpay-gateway-for-woocommerce' )
 						  )
 				),
 				createElement( 'span', { className: 'vexpay-bank-chevron', 'aria-hidden': 'true' } )
@@ -400,7 +400,7 @@
 				.catch( () => {
 					window.alert(
 						( settings.i18n && settings.i18n.removeFailed ) ||
-							__( 'Could not remove saved account.', 'woo-vexpay-gateway' )
+							__( 'Could not remove saved account.', 'vexpay-gateway-for-woocommerce' )
 					);
 				} )
 				.finally( () => {
@@ -423,7 +423,7 @@
 						type: emitResponse.responseTypes.ERROR,
 						message: __(
 							'Pick a saved account or tap + Use another.',
-							'woo-vexpay-gateway'
+							'vexpay-gateway-for-woocommerce'
 						),
 					};
 				}
@@ -438,7 +438,7 @@
 						type: emitResponse.responseTypes.ERROR,
 						message: __(
 							'Enter cédula/RIF, phone, and bank for VEXPay.',
-							'woo-vexpay-gateway'
+							'vexpay-gateway-for-woocommerce'
 						),
 					};
 				}
@@ -448,7 +448,7 @@
 						type: emitResponse.responseTypes.ERROR,
 						message: __(
 							'Enter a valid cédula/RIF number (6–9 digits).',
-							'woo-vexpay-gateway'
+							'vexpay-gateway-for-woocommerce'
 						),
 					};
 				}
@@ -458,7 +458,7 @@
 						type: emitResponse.responseTypes.ERROR,
 						message: __(
 							'Enter a valid mobile number (7 digits after the prefix).',
-							'woo-vexpay-gateway'
+							'vexpay-gateway-for-woocommerce'
 						),
 					};
 				}
@@ -520,12 +520,12 @@
 				createElement(
 					'span',
 					{ className: 'vexpay-checkout-brand__tag' },
-					__( 'Débito inmediato', 'woo-vexpay-gateway' )
+					__( 'Débito inmediato', 'vexpay-gateway-for-woocommerce' )
 				)
 			),
 			createElement(
 				'ol',
-				{ className: 'vexpay-steps', 'aria-label': __( 'Payment steps', 'woo-vexpay-gateway' ) },
+				{ className: 'vexpay-steps', 'aria-label': __( 'Payment steps', 'vexpay-gateway-for-woocommerce' ) },
 				createElement(
 					'li',
 					{ className: 'vexpay-step is-active' },
@@ -533,7 +533,7 @@
 					createElement(
 						'span',
 						{ className: 'vexpay-step-label' },
-						__( 'Your details', 'woo-vexpay-gateway' )
+						__( 'Your details', 'vexpay-gateway-for-woocommerce' )
 					)
 				),
 				createElement(
@@ -543,7 +543,7 @@
 					createElement(
 						'span',
 						{ className: 'vexpay-step-label' },
-						__( 'OTP code', 'woo-vexpay-gateway' )
+						__( 'OTP code', 'vexpay-gateway-for-woocommerce' )
 					)
 				)
 			),
@@ -551,11 +551,11 @@
 				? createElement(
 						'p',
 						{ className: 'vexpay-test-mode' },
-						createElement( 'strong', null, __( 'SANDBOX', 'woo-vexpay-gateway' ) ),
+						createElement( 'strong', null, __( 'SANDBOX', 'vexpay-gateway-for-woocommerce' ) ),
 						' — ',
 						__(
 							"it's giving demo energy. No real money moves here — practice all you want.",
-							'woo-vexpay-gateway'
+							'vexpay-gateway-for-woocommerce'
 						)
 				  )
 				: null,
@@ -565,7 +565,7 @@
 				createElement(
 					'h3',
 					{ className: 'vexpay-step-title' },
-					__( 'Your details', 'woo-vexpay-gateway' )
+					__( 'Your details', 'vexpay-gateway-for-woocommerce' )
 				),
 				createElement(
 					'p',
@@ -573,16 +573,16 @@
 					hasSavedAccounts && ! showDetails && ! activeAccount
 						? __(
 								'Pick a saved account to pay — or tap + Use another to enter new details.',
-								'woo-vexpay-gateway'
+								'vexpay-gateway-for-woocommerce'
 						  )
 						: hasSavedAccounts && ! showDetails
 						  ? __(
 									'Paying with this account. Tap + Use another if you need different details.',
-									'woo-vexpay-gateway'
+									'vexpay-gateway-for-woocommerce'
 						    )
 						  : __(
 									'Who’s paying? Drop your cédula, phone, and bank — next you’ll send the OTP from your bank.',
-									'woo-vexpay-gateway'
+									'vexpay-gateway-for-woocommerce'
 						    )
 				),
 				settings.quote && settings.quote.vesAmount
@@ -592,7 +592,7 @@
 							createElement(
 								'span',
 								{ className: 'vexpay-fx-strip__ves' },
-								__( 'Bs.', 'woo-vexpay-gateway' ) +
+								__( 'Bs.', 'vexpay-gateway-for-woocommerce' ) +
 									' ' +
 									Number( settings.quote.vesAmount ).toLocaleString( undefined, {
 										minimumFractionDigits: 2,
@@ -602,7 +602,7 @@
 							createElement(
 								'span',
 								{ className: 'vexpay-fx-strip__rate' },
-								__( 'BCV', 'woo-vexpay-gateway' ) +
+								__( 'BCV', 'vexpay-gateway-for-woocommerce' ) +
 									' ' +
 									Number( settings.quote.bcvRate ).toLocaleString( undefined, {
 										minimumFractionDigits: 4,
@@ -621,7 +621,7 @@
 								createElement(
 									'span',
 									{ className: 'vexpay-accounts__label' },
-									__( 'Saved accounts', 'woo-vexpay-gateway' )
+									__( 'Saved accounts', 'vexpay-gateway-for-woocommerce' )
 								),
 								createElement(
 									'button',
@@ -632,7 +632,7 @@
 											( activeAccount === 'new' ? ' is-active' : '' ),
 										onClick: () => applyAccount( null ),
 									},
-									__( '+ Use another', 'woo-vexpay-gateway' )
+									__( '+ Use another', 'vexpay-gateway-for-woocommerce' )
 								)
 							),
 							createElement(
@@ -640,7 +640,7 @@
 								{
 									className: 'vexpay-accounts__list',
 									role: 'listbox',
-									'aria-label': __( 'Saved payer accounts', 'woo-vexpay-gateway' ),
+									'aria-label': __( 'Saved payer accounts', 'vexpay-gateway-for-woocommerce' ),
 								},
 								accounts.map( ( account ) => {
 									const id = fingerprint( account );
@@ -714,7 +714,7 @@
 												className: 'vexpay-account-chip__remove',
 												'aria-label':
 													( settings.i18n && settings.i18n.removeAccount ) ||
-													__( 'Remove saved account', 'woo-vexpay-gateway' ),
+													__( 'Remove saved account', 'vexpay-gateway-for-woocommerce' ),
 												disabled: removingId === id,
 												onClick: ( event ) => {
 													event.preventDefault();
@@ -739,7 +739,7 @@
 								createElement(
 									'span',
 									{ className: 'vexpay-field-label' },
-									__( 'Cédula / RIF', 'woo-vexpay-gateway' )
+									__( 'Cédula / RIF', 'vexpay-gateway-for-woocommerce' )
 								),
 								createElement(
 									'div',
@@ -753,7 +753,7 @@
 												setIdType( e.target.value );
 												markCustom();
 											},
-											'aria-label': __( 'Document type', 'woo-vexpay-gateway' ),
+											'aria-label': __( 'Document type', 'vexpay-gateway-for-woocommerce' ),
 										},
 										idTypeOptions
 									),
@@ -772,7 +772,7 @@
 										},
 										placeholder: '12345678',
 										autoComplete: 'off',
-										'aria-label': __( 'Document number', 'woo-vexpay-gateway' ),
+										'aria-label': __( 'Document number', 'vexpay-gateway-for-woocommerce' ),
 									} )
 								)
 							),
@@ -782,7 +782,7 @@
 								createElement(
 									'span',
 									{ className: 'vexpay-field-label' },
-									__( 'Phone', 'woo-vexpay-gateway' )
+									__( 'Phone', 'vexpay-gateway-for-woocommerce' )
 								),
 								createElement(
 									'div',
@@ -796,7 +796,7 @@
 												setPhonePrefix( e.target.value );
 												markCustom();
 											},
-											'aria-label': __( 'Phone prefix', 'woo-vexpay-gateway' ),
+											'aria-label': __( 'Phone prefix', 'vexpay-gateway-for-woocommerce' ),
 										},
 										phonePrefixOptions
 									),
@@ -816,7 +816,7 @@
 										placeholder: '1234567',
 										maxLength: 7,
 										autoComplete: 'tel-national',
-										'aria-label': __( 'Phone number', 'woo-vexpay-gateway' ),
+										'aria-label': __( 'Phone number', 'vexpay-gateway-for-woocommerce' ),
 									} )
 								)
 							),
@@ -826,7 +826,7 @@
 								createElement(
 									'span',
 									{ className: 'vexpay-field-label' },
-									__( 'Bank', 'woo-vexpay-gateway' )
+									__( 'Bank', 'vexpay-gateway-for-woocommerce' )
 								),
 								createElement( BankPicker, {
 									value: debtorBank,
@@ -845,7 +845,7 @@
 						className: 'vexpay-checkout-secure__lock',
 						'aria-hidden': 'true',
 					} ),
-					__( 'Secured by VEXPay', 'woo-vexpay-gateway' )
+					__( 'Secured by VEXPay', 'vexpay-gateway-for-woocommerce' )
 				)
 			)
 		);
@@ -869,7 +869,7 @@
 				createElement(
 					'span',
 					{ className: 'vexpay-blocks-label__hint' },
-					__( 'VEXPay · Débito inmediato', 'woo-vexpay-gateway' )
+					__( 'VEXPay · Débito inmediato', 'vexpay-gateway-for-woocommerce' )
 				)
 			)
 		);

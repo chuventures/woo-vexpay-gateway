@@ -73,7 +73,7 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 		);
 
 		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( $handle, 'woo-vexpay-gateway', VEXPAY_GATEWAY_PATH . 'languages' );
+			wp_set_script_translations( $handle, 'vexpay-gateway-for-woocommerce', VEXPAY_GATEWAY_PATH . 'languages' );
 		}
 
 		return array( $handle );
@@ -89,11 +89,11 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 		$saved_profile  = VEXPay_Helpers::empty_debtor_profile();
 		$saved_accounts = array();
 		$quote          = null;
-		$title         = $this->gateway_settings['title'] ?? __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' );
+		$title         = $this->gateway_settings['title'] ?? __( 'Débito inmediato (VEXPay)', 'vexpay-gateway-for-woocommerce' );
 		$desc          = $this->gateway_settings['description'] ?? '';
 
 		if ( is_string( $title ) && false !== stripos( $title, 'C2P' ) ) {
-			$title = __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' );
+			$title = __( 'Débito inmediato (VEXPay)', 'vexpay-gateway-for-woocommerce' );
 		}
 
 		$gateways = WC()->payment_gateways()->payment_gateways();
@@ -111,7 +111,7 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			$desc          = (string) $gw->get_description();
 
 			if ( is_string( $title ) && false !== stripos( $title, 'C2P' ) ) {
-				$title = __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' );
+				$title = __( 'Débito inmediato (VEXPay)', 'vexpay-gateway-for-woocommerce' );
 			}
 
 			$show_quote = 'yes' === ( $this->gateway_settings['show_ves_quote'] ?? 'yes' );

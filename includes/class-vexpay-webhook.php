@@ -39,14 +39,14 @@ class VEXPay_Webhook {
 		if ( ! VEXPay_Helpers::verify_webhook_signature( $raw, $secret, $signature ) ) {
 			VEXPay_Logger::error( 'Webhook signature verification failed.' );
 			status_header( 401 );
-			echo esc_html__( 'Invalid signature', 'woo-vexpay-gateway' );
+			echo esc_html__( 'Invalid signature', 'vexpay-gateway-for-woocommerce' );
 			exit;
 		}
 
 		$payload = json_decode( $raw, true );
 		if ( ! is_array( $payload ) ) {
 			status_header( 400 );
-			echo esc_html__( 'Invalid JSON', 'woo-vexpay-gateway' );
+			echo esc_html__( 'Invalid JSON', 'vexpay-gateway-for-woocommerce' );
 			exit;
 		}
 

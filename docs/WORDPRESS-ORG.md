@@ -13,14 +13,14 @@ Serviceware is allowed: the plugin is free GPL; merchants need a VEXPay account 
 ## Submit
 
 1. Create a wordpress.org account.
-2. Reserve slug (prefer `vexpay-gateway` or `woo-vexpay`) at https://wordpress.org/plugins/developers/add/
-3. Upload the plugin zip for review.
+2. Plugin slug: `vexpay-gateway-for-woocommerce` (Text Domain and zip root folder must match).
+3. Upload a zip whose root folder is `vexpay-gateway-for-woocommerce/` for review.
 4. Address review feedback (typically escaping, sanitizing, nonces).
 
 ## After approval (SVN)
 
 ```bash
-svn co https://plugins.svn.wordpress.org/YOUR-SLUG svn-wp
+svn co https://plugins.svn.wordpress.org/vexpay-gateway-for-woocommerce svn-wp
 # Copy trunk from a clean build (respect .distignore)
 rsync -a --delete --exclude-from=.distignore ./ svn-wp/trunk/
 cd svn-wp

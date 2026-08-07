@@ -17,8 +17,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 */
 	public function __construct() {
 		$this->id                 = 'vexpay';
-		$this->method_title       = __( 'VEXPay', 'woo-vexpay-gateway' );
-		$this->method_description = __( 'Accept Venezuela Débito inmediato payments via VEXPay (bank OTP).', 'woo-vexpay-gateway' );
+		$this->method_title       = __( 'VEXPay', 'vexpay-gateway-for-woocommerce' );
+		$this->method_description = __( 'Accept Venezuela Débito inmediato payments via VEXPay (bank OTP).', 'vexpay-gateway-for-woocommerce' );
 		$this->has_fields         = true;
 		$this->supports           = array( 'products' );
 		$this->icon               = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';
@@ -27,8 +27,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$this->init_settings();
 		$this->maybe_migrate_c2p_copy();
 
-		$this->title       = $this->get_option( 'title', __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' ) );
-		$this->description = $this->get_option( 'description', __( 'Pay from your bank account with an SMS OTP.', 'woo-vexpay-gateway' ) );
+		$this->title       = $this->get_option( 'title', __( 'Débito inmediato (VEXPay)', 'vexpay-gateway-for-woocommerce' ) );
+		$this->description = $this->get_option( 'description', __( 'Pay from your bank account with an SMS OTP.', 'vexpay-gateway-for-woocommerce' ) );
 		$this->enabled     = $this->get_option( 'enabled', 'no' );
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -68,7 +68,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '<div class="notice notice-warning"><p>';
 		echo esc_html__(
 			'VEXPay: Sandbox is off, but the Live API key looks like a Test twin (vk_test_…). Débito OTP will stay simulated with no bank SMS. Paste your Live twin key (vk_live_…) into Live API key, save, then retry.',
-			'woo-vexpay-gateway'
+			'vexpay-gateway-for-woocommerce'
 		);
 		echo '</p></div>';
 	}
@@ -79,12 +79,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	private function maybe_migrate_c2p_copy(): void {
 		$title = (string) $this->get_option( 'title', '' );
 		if ( '' !== $title && false !== stripos( $title, 'C2P' ) ) {
-			$this->update_option( 'title', __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' ) );
+			$this->update_option( 'title', __( 'Débito inmediato (VEXPay)', 'vexpay-gateway-for-woocommerce' ) );
 		}
 
 		$description = (string) $this->get_option( 'description', '' );
 		if ( '' !== $description && false !== stripos( $description, 'C2P' ) ) {
-			$this->update_option( 'description', __( 'Pay from your bank account with an SMS OTP from your bank.', 'woo-vexpay-gateway' ) );
+			$this->update_option( 'description', __( 'Pay from your bank account with an SMS OTP from your bank.', 'vexpay-gateway-for-woocommerce' ) );
 		}
 	}
 
@@ -141,75 +141,75 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'type' => 'vexpay_logo',
 			),
 			'enabled'             => array(
-				'title'   => __( 'Enable/Disable', 'woo-vexpay-gateway' ),
+				'title'   => __( 'Enable/Disable', 'vexpay-gateway-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Enable VEXPay Débito inmediato', 'woo-vexpay-gateway' ),
+				'label'   => __( 'Enable VEXPay Débito inmediato', 'vexpay-gateway-for-woocommerce' ),
 				'default' => 'no',
 			),
 			'title'               => array(
-				'title'       => __( 'Title', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Title', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'Payment method title at checkout.', 'woo-vexpay-gateway' ),
-				'default'     => __( 'Débito inmediato (VEXPay)', 'woo-vexpay-gateway' ),
+				'description' => __( 'Payment method title at checkout.', 'vexpay-gateway-for-woocommerce' ),
+				'default'     => __( 'Débito inmediato (VEXPay)', 'vexpay-gateway-for-woocommerce' ),
 				'desc_tip'    => true,
 			),
 			'description'         => array(
-				'title'       => __( 'Description', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Description', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'textarea',
-				'description' => __( 'Shown under the payment method at checkout.', 'woo-vexpay-gateway' ),
-				'default'     => __( 'Pay from your bank account with an SMS OTP from your bank.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Shown under the payment method at checkout.', 'vexpay-gateway-for-woocommerce' ),
+				'default'     => __( 'Pay from your bank account with an SMS OTP from your bank.', 'vexpay-gateway-for-woocommerce' ),
 			),
 			'testmode'            => array(
-				'title'       => __( 'Sandbox', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Sandbox', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'vexpay_toggle',
 				'default'     => 'yes',
-				'description' => __( 'When on, use the Sandbox (Test twin) API key. Débito OTP is simulated — no bank SMS; use Portal → Sandbox. Turn off and paste a Live twin key for real bank SMS.', 'woo-vexpay-gateway' ),
+				'description' => __( 'When on, use the Sandbox (Test twin) API key. Débito OTP is simulated — no bank SMS; use Portal → Sandbox. Turn off and paste a Live twin key for real bank SMS.', 'vexpay-gateway-for-woocommerce' ),
 			),
 			'live_api_key'        => array(
-				'title'       => __( 'Live API key', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Live API key', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'password',
 				'class'       => 'vexpay-api-key-field vexpay-api-key-production',
-				'description' => __( 'Live twin x-api-key from the VEXPay dashboard (usually starts with vk_live_). Required for real bank OTP SMS.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Live twin x-api-key from the VEXPay dashboard (usually starts with vk_live_). Required for real bank OTP SMS.', 'vexpay-gateway-for-woocommerce' ),
 				'default'     => '',
 			),
 			'test_api_key'        => array(
-				'title'       => __( 'Sandbox API key', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Sandbox API key', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'password',
 				'class'       => 'vexpay-api-key-field vexpay-api-key-sandbox',
-				'description' => __( 'Test twin x-api-key from the VEXPay dashboard (usually starts with vk_test_). Débito OTP is simulated — no SMS.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Test twin x-api-key from the VEXPay dashboard (usually starts with vk_test_). Débito OTP is simulated — no SMS.', 'vexpay-gateway-for-woocommerce' ),
 				'default'     => '',
 			),
 			'connection_test'     => array(
-				'title'       => __( 'Connection', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Connection', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'vexpay_connection_test',
-				'description' => __( 'Verify that this WordPress site can reach VEXPay with the API key for the mode selected above. Paste the key, then click Test — you can test before saving.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Verify that this WordPress site can reach VEXPay with the API key for the mode selected above. Paste the key, then click Test — you can test before saving.', 'vexpay-gateway-for-woocommerce' ),
 			),
 			'webhook_secret'      => array(
-				'title'       => __( 'Webhook secret', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Webhook secret', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'password',
-				'description' => __( 'HMAC secret for X-Webhook-Signature. Filled automatically when the plugin registers a webhook on a public URL, or paste from the VEXPay dashboard. Localhost is skipped (use a tunnel).', 'woo-vexpay-gateway' ),
+				'description' => __( 'HMAC secret for X-Webhook-Signature. Filled automatically when the plugin registers a webhook on a public URL, or paste from the VEXPay dashboard. Localhost is skipped (use a tunnel).', 'vexpay-gateway-for-woocommerce' ),
 				'default'     => '',
 			),
 			'webhook_endpoint_id' => array(
-				'title'       => __( 'Webhook endpoint ID', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Webhook endpoint ID', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'Stored after automatic registration. Leave blank to re-register on save.', 'woo-vexpay-gateway' ),
+				'description' => __( 'Stored after automatic registration. Leave blank to re-register on save.', 'vexpay-gateway-for-woocommerce' ),
 				'default'     => '',
 			),
 			'show_ves_quote'      => array(
-				'title'   => __( 'Show VES estimate', 'woo-vexpay-gateway' ),
+				'title'   => __( 'Show VES estimate', 'vexpay-gateway-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Display BCV VES amount at checkout (display only)', 'woo-vexpay-gateway' ),
+				'label'   => __( 'Display BCV VES amount at checkout (display only)', 'vexpay-gateway-for-woocommerce' ),
 				'default' => 'yes',
 			),
 			'debug'               => array(
-				'title'       => __( 'Debug log', 'woo-vexpay-gateway' ),
+				'title'       => __( 'Debug log', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable logging', 'woo-vexpay-gateway' ),
+				'label'       => __( 'Enable logging', 'vexpay-gateway-for-woocommerce' ),
 				'default'     => 'no',
 				'description' => sprintf(
 					/* translators: %s: WooCommerce logs URL path hint */
-					__( 'Logs appear under WooCommerce → Status → Logs (source: vexpay). Never log API keys.', 'woo-vexpay-gateway' )
+					__( 'Logs appear under WooCommerce → Status → Logs (source: vexpay). Never log API keys.', 'vexpay-gateway-for-woocommerce' )
 				),
 			),
 		);
@@ -353,7 +353,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			<td class="forminp">
 				<fieldset>
 					<button type="button" class="button button-secondary" id="vexpay-test-connection">
-						<?php esc_html_e( 'Test connection', 'woo-vexpay-gateway' ); ?>
+						<?php esc_html_e( 'Test connection', 'vexpay-gateway-for-woocommerce' ); ?>
 					</button>
 					<span class="spinner" id="vexpay-test-connection-spinner" style="float:none;margin:0 8px;visibility:hidden;"></span>
 					<p class="description"><?php echo esc_html( $data['description'] ); ?></p>
@@ -378,7 +378,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		?>
 		<tr valign="top">
 			<td colspan="2" class="forminp vexpay-admin-logo-cell">
-				<img src="<?php echo esc_url( VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg' ); ?>" alt="<?php echo esc_attr( __( 'VEXPay', 'woo-vexpay-gateway' ) ); ?>" class="vexpay-admin-logo" />
+				<img src="<?php echo esc_url( VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg' ); ?>" alt="<?php echo esc_attr( __( 'VEXPay', 'vexpay-gateway-for-woocommerce' ) ); ?>" class="vexpay-admin-logo" />
 			</td>
 		</tr>
 		<?php
@@ -452,8 +452,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'vexpay_test_connection' ),
 				'i18n'    => array(
-					'testing' => __( 'Testing…', 'woo-vexpay-gateway' ),
-					'failed'  => __( 'Connection failed.', 'woo-vexpay-gateway' ),
+					'testing' => __( 'Testing…', 'vexpay-gateway-for-woocommerce' ),
+					'failed'  => __( 'Connection failed.', 'vexpay-gateway-for-woocommerce' ),
 				),
 			)
 		);
@@ -465,7 +465,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	public function ajax_test_connection(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error(
-				array( 'message' => __( 'You do not have permission to test the connection.', 'woo-vexpay-gateway' ) ),
+				array( 'message' => __( 'You do not have permission to test the connection.', 'vexpay-gateway-for-woocommerce' ) ),
 				403
 			);
 		}
@@ -487,7 +487,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		if ( '' === $api_key ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Enter an API key (or save one first), then try again.', 'woo-vexpay-gateway' ),
+					'message' => __( 'Enter an API key (or save one first), then try again.', 'vexpay-gateway-for-woocommerce' ),
 				)
 			);
 		}
@@ -500,7 +500,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 0;
 			$message    = $result->get_error_message();
 			if ( 401 === $status || 403 === $status ) {
-				$message = __( 'API key rejected (unauthorized). Confirm the key matches Sandbox on/off and is active in the VEXPay dashboard.', 'woo-vexpay-gateway' );
+				$message = __( 'API key rejected (unauthorized). Confirm the key matches Sandbox on/off and is active in the VEXPay dashboard.', 'vexpay-gateway-for-woocommerce' );
 			}
 			VEXPay_Logger::error( 'Connection test failed: ' . $message );
 			wp_send_json_error(
@@ -595,20 +595,20 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '<div class="vexpay-flow vexpay-checkout-panel">';
 		echo '<div class="vexpay-checkout-brand">';
 		echo '<img class="vexpay-checkout-brand__logo" src="' . esc_url( VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg' ) . '" alt="VEXPay" width="72" height="38" decoding="async" />';
-		echo '<span class="vexpay-checkout-brand__tag">' . esc_html__( 'Débito inmediato', 'woo-vexpay-gateway' ) . '</span>';
+		echo '<span class="vexpay-checkout-brand__tag">' . esc_html__( 'Débito inmediato', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 		echo '</div>';
 
 		$this->render_checkout_steps( 1 );
 
 		if ( 'yes' === $this->get_option( 'testmode', 'yes' ) ) {
-			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'woo-vexpay-gateway' ) . '</strong> — ';
-			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'woo-vexpay-gateway' );
+			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'vexpay-gateway-for-woocommerce' ) . '</strong> — ';
+			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'vexpay-gateway-for-woocommerce' );
 			echo '</p>';
 		}
 
 		echo '<div class="vexpay-step-panel">';
-		echo '<h3 class="vexpay-step-title">' . esc_html__( 'Your details', 'woo-vexpay-gateway' ) . '</h3>';
-		echo '<p class="vexpay-step-copy">' . esc_html__( 'Who’s paying? Drop your cédula, phone, and bank — next you’ll send the OTP from your bank.', 'woo-vexpay-gateway' ) . '</p>';
+		echo '<h3 class="vexpay-step-title">' . esc_html__( 'Your details', 'vexpay-gateway-for-woocommerce' ) . '</h3>';
+		echo '<p class="vexpay-step-copy">' . esc_html__( 'Who’s paying? Drop your cédula, phone, and bank — next you’ll send the OTP from your bank.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 
 		$banks = $this->fetch_banks_list();
 
@@ -617,8 +617,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$quote = $this->get_api_client()->get_quote( $usd );
 			if ( ! is_wp_error( $quote ) && isset( $quote['vesAmount'], $quote['bcvRate'] ) ) {
 				echo '<div class="vexpay-fx-strip">';
-				echo '<span class="vexpay-fx-strip__ves">' . esc_html( sprintf( /* translators: %s: VES amount */ __( 'Bs. %s', 'woo-vexpay-gateway' ), number_format_i18n( (float) $quote['vesAmount'], 2 ) ) ) . '</span>';
-				echo '<span class="vexpay-fx-strip__rate">' . esc_html( sprintf( /* translators: %s: BCV FX rate */ __( 'BCV %s', 'woo-vexpay-gateway' ), number_format_i18n( (float) $quote['bcvRate'], 4 ) ) ) . '</span>';
+				echo '<span class="vexpay-fx-strip__ves">' . esc_html( sprintf( /* translators: %s: VES amount */ __( 'Bs. %s', 'vexpay-gateway-for-woocommerce' ), number_format_i18n( (float) $quote['vesAmount'], 2 ) ) ) . '</span>';
+				echo '<span class="vexpay-fx-strip__rate">' . esc_html( sprintf( /* translators: %s: BCV FX rate */ __( 'BCV %s', 'vexpay-gateway-for-woocommerce' ), number_format_i18n( (float) $quote['bcvRate'], 4 ) ) ) . '</span>';
 				echo '</div>';
 			}
 		}
@@ -635,12 +635,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		if ( $has_accounts ) {
 			echo '<div class="vexpay-accounts" data-vexpay-accounts data-vexpay-accounts-gate="1">';
 			echo '<div class="vexpay-accounts__head">';
-			echo '<span class="vexpay-accounts__label">' . esc_html__( 'Saved accounts', 'woo-vexpay-gateway' ) . '</span>';
+			echo '<span class="vexpay-accounts__label">' . esc_html__( 'Saved accounts', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 			echo '<button type="button" class="vexpay-accounts__new" data-vexpay-account-new>';
-			echo esc_html__( '+ Use another', 'woo-vexpay-gateway' );
+			echo esc_html__( '+ Use another', 'vexpay-gateway-for-woocommerce' );
 			echo '</button>';
 			echo '</div>';
-			echo '<div class="vexpay-accounts__list" role="listbox" aria-label="' . esc_attr__( 'Saved payer accounts', 'woo-vexpay-gateway' ) . '">';
+			echo '<div class="vexpay-accounts__list" role="listbox" aria-label="' . esc_attr__( 'Saved payer accounts', 'vexpay-gateway-for-woocommerce' ) . '">';
 			foreach ( $accounts as $account ) {
 				$this->render_debtor_account_chip( $account, false );
 			}
@@ -654,9 +654,9 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		);
 
 		echo '<p class="form-row form-row-wide vexpay-field-group">';
-		echo '<label for="vexpay_debtor_id_number">' . esc_html__( 'Cédula / RIF', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<label for="vexpay_debtor_id_number">' . esc_html__( 'Cédula / RIF', 'vexpay-gateway-for-woocommerce' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
 		echo '<span class="vexpay-split-field">';
-		echo '<select name="vexpay_debtor_id_type" id="vexpay_debtor_id_type" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Document type', 'woo-vexpay-gateway' ) . '">';
+		echo '<select name="vexpay_debtor_id_type" id="vexpay_debtor_id_type" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Document type', 'vexpay-gateway-for-woocommerce' ) . '">';
 		foreach ( VEXPay_Helpers::debtor_id_types() as $type ) {
 			printf(
 				'<option value="%1$s" %2$s>%1$s</option>',
@@ -668,14 +668,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		printf(
 			'<input type="text" class="input-text vexpay-split-input" name="vexpay_debtor_id_number" id="vexpay_debtor_id_number" inputmode="numeric" autocomplete="off" placeholder="12345678" maxlength="9" value="%s" aria-label="%s" />',
 			esc_attr( preg_replace( '/\D+/', '', $debtor_id_number ) ?? '' ),
-			esc_attr__( 'Document number', 'woo-vexpay-gateway' )
+			esc_attr__( 'Document number', 'vexpay-gateway-for-woocommerce' )
 		);
 		echo '</span></p>';
 
 		echo '<p class="form-row form-row-wide vexpay-field-group">';
-		echo '<label for="vexpay_debtor_phone_number">' . esc_html__( 'Phone', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<label for="vexpay_debtor_phone_number">' . esc_html__( 'Phone', 'vexpay-gateway-for-woocommerce' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
 		echo '<span class="vexpay-split-field">';
-		echo '<select name="vexpay_debtor_phone_prefix" id="vexpay_debtor_phone_prefix" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Phone prefix', 'woo-vexpay-gateway' ) . '">';
+		echo '<select name="vexpay_debtor_phone_prefix" id="vexpay_debtor_phone_prefix" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Phone prefix', 'vexpay-gateway-for-woocommerce' ) . '">';
 		foreach ( VEXPay_Helpers::phone_prefixes() as $prefix ) {
 			printf(
 				'<option value="%1$s" %2$s>%1$s</option>',
@@ -687,17 +687,17 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		printf(
 			'<input type="tel" class="input-text vexpay-split-input" name="vexpay_debtor_phone_number" id="vexpay_debtor_phone_number" inputmode="numeric" autocomplete="tel-national" placeholder="1234567" maxlength="7" value="%s" aria-label="%s" />',
 			esc_attr( preg_replace( '/\D+/', '', $phone_number ) ?? '' ),
-			esc_attr__( 'Phone number', 'woo-vexpay-gateway' )
+			esc_attr__( 'Phone number', 'vexpay-gateway-for-woocommerce' )
 		);
 		echo '</span></p>';
 
 		echo '<p class="form-row form-row-wide vexpay-field-group vexpay-bank-field">';
-		echo '<label id="vexpay_debtor_bank_label">' . esc_html__( 'Bank', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<label id="vexpay_debtor_bank_label">' . esc_html__( 'Bank', 'vexpay-gateway-for-woocommerce' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
 		echo '<input type="hidden" name="vexpay_debtor_bank" id="vexpay_debtor_bank" value="' . esc_attr( $debtor_bank ) . '" />';
 		echo '<div class="vexpay-bank-picker" data-vexpay-bank-picker>';
 		echo '<button type="button" class="vexpay-bank-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="vexpay_debtor_bank_label">';
 		echo '<span class="vexpay-bank-trigger-content">';
-		echo '<span class="vexpay-bank-placeholder">' . esc_html__( 'Select your bank', 'woo-vexpay-gateway' ) . '</span>';
+		echo '<span class="vexpay-bank-placeholder">' . esc_html__( 'Select your bank', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 		echo '</span>';
 		echo '<span class="vexpay-bank-chevron" aria-hidden="true"></span>';
 		echo '</button>';
@@ -729,7 +729,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '</fieldset>';
 		echo '<p class="vexpay-checkout-secure">';
 		echo '<span class="vexpay-checkout-secure__lock" aria-hidden="true"></span>';
-		echo esc_html__( 'Secured by VEXPay', 'woo-vexpay-gateway' );
+		echo esc_html__( 'Secured by VEXPay', 'vexpay-gateway-for-woocommerce' );
 		echo '</p>';
 		echo '</div></div>'; // .vexpay-step-panel + .vexpay-flow
 	}
@@ -780,15 +780,15 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$raw_bank  = VEXPay_Helpers::get_request_field( 'vexpay_debtor_bank' );
 
 		if ( ! VEXPay_Helpers::normalize_debtor_id( $raw_id ) ) {
-			wc_add_notice( __( 'Enter a valid cédula/RIF (e.g. V12345678).', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'Enter a valid cédula/RIF (e.g. V12345678).', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			return false;
 		}
 		if ( ! VEXPay_Helpers::normalize_phone( $raw_phone ) ) {
-			wc_add_notice( __( 'Enter a valid Venezuelan mobile phone.', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'Enter a valid Venezuelan mobile phone.', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			return false;
 		}
 		if ( ! VEXPay_Helpers::normalize_bank_code( $raw_bank ) ) {
-			wc_add_notice( __( 'Select your bank.', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'Select your bank.', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			return false;
 		}
 
@@ -1024,7 +1024,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		printf(
 			'<button type="button" class="vexpay-account-chip__remove" data-vexpay-account-remove aria-label="%1$s">&times;</button>',
-			esc_attr__( 'Remove saved account', 'woo-vexpay-gateway' )
+			esc_attr__( 'Remove saved account', 'vexpay-gateway-for-woocommerce' )
 		);
 		echo '</div>';
 	}
@@ -1143,14 +1143,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		if ( ! VEXPay_Helpers::debtor_profile_is_complete( $profile ) ) {
 			wp_send_json_error(
-				array( 'message' => __( 'Invalid account.', 'woo-vexpay-gateway' ) ),
+				array( 'message' => __( 'Invalid account.', 'vexpay-gateway-for-woocommerce' ) ),
 				400
 			);
 		}
 
 		if ( ! $this->delete_debtor_account( $profile ) ) {
 			wp_send_json_error(
-				array( 'message' => __( 'Account not found.', 'woo-vexpay-gateway' ) ),
+				array( 'message' => __( 'Account not found.', 'vexpay-gateway-for-woocommerce' ) ),
 				404
 			);
 		}
@@ -1288,7 +1288,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) {
-			wc_add_notice( __( 'Order not found.', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'Order not found.', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
@@ -1297,7 +1297,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$bank_simf    = VEXPay_Helpers::format_simf_bank_code( VEXPay_Helpers::get_request_field( 'vexpay_debtor_bank' ) );
 
 		if ( ! $debtor_id || ! $debtor_phone || '' === $bank_simf ) {
-			wc_add_notice( __( 'Invalid payment details.', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'Invalid payment details.', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
@@ -1317,7 +1317,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 		$ves = VEXPay_Helpers::format_ves_amount( $ves );
 		if ( $ves <= 0 ) {
-			wc_add_notice( __( 'Could not get a VES amount from VEXPay FX quote.', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'Could not get a VES amount from VEXPay FX quote.', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
@@ -1332,7 +1332,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, 'PENDING' );
 		$order->update_meta_data( VEXPay_Helpers::META_OTP_REQUESTED, 'no' );
 		$order->delete_meta_data( VEXPay_Helpers::META_OTP_RESEND_AT );
-		$order->update_status( 'on-hold', __( 'VEXPay débito ready — waiting for customer to request bank OTP.', 'woo-vexpay-gateway' ) );
+		$order->update_status( 'on-hold', __( 'VEXPay débito ready — waiting for customer to request bank OTP.', 'vexpay-gateway-for-woocommerce' ) );
 		$order->save();
 
 		$this->save_debtor_profile( $debtor_id, $debtor_phone, $bank_simf );
@@ -1528,11 +1528,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$order = $order_id ? wc_get_order( $order_id ) : false;
 		if ( ! $order || '' === $key || ! hash_equals( $order->get_order_key(), $key ) ) {
-			wp_die( esc_html__( 'Invalid order.', 'woo-vexpay-gateway' ), 404 );
+			wp_die( esc_html__( 'Invalid order.', 'vexpay-gateway-for-woocommerce' ), 404 );
 		}
 
 		if ( $this->id !== $order->get_payment_method() ) {
-			wp_die( esc_html__( 'This order is not a VEXPay payment.', 'woo-vexpay-gateway' ), 400 );
+			wp_die( esc_html__( 'This order is not a VEXPay payment.', 'vexpay-gateway-for-woocommerce' ), 400 );
 		}
 
 		if ( $order->is_paid() || 'COMPLETED' === strtoupper( (string) $order->get_meta( VEXPay_Helpers::META_STATUS ) ) ) {
@@ -1541,7 +1541,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( is_user_logged_in() && (int) $order->get_user_id() > 0 && (int) $order->get_user_id() !== get_current_user_id() && ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'You are not allowed to pay for this order.', 'woo-vexpay-gateway' ), 403 );
+			wp_die( esc_html__( 'You are not allowed to pay for this order.', 'vexpay-gateway-for-woocommerce' ), 403 );
 		}
 
 		if ( null === WC()->cart && function_exists( 'wc_load_cart' ) ) {
@@ -1585,7 +1585,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		if ( $this->order_awaits_otp( $order ) && ! $order->has_status( array( 'cancelled', 'refunded', 'failed' ) ) ) {
 			$order->update_status(
 				'cancelled',
-				__( 'Customer returned to checkout from the VEXPay OTP page.', 'woo-vexpay-gateway' )
+				__( 'Customer returned to checkout from the VEXPay OTP page.', 'vexpay-gateway-for-woocommerce' )
 			);
 		}
 
@@ -1643,11 +1643,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$order = $order_id ? wc_get_order( $order_id ) : false;
 		if ( ! $order || '' === $key || ! hash_equals( $order->get_order_key(), $key ) ) {
-			wp_die( esc_html__( 'Invalid order.', 'woo-vexpay-gateway' ), 404 );
+			wp_die( esc_html__( 'Invalid order.', 'vexpay-gateway-for-woocommerce' ), 404 );
 		}
 
 		if ( $this->id !== $order->get_payment_method() ) {
-			wp_die( esc_html__( 'This order is not a VEXPay payment.', 'woo-vexpay-gateway' ), 400 );
+			wp_die( esc_html__( 'This order is not a VEXPay payment.', 'vexpay-gateway-for-woocommerce' ), 400 );
 		}
 
 		if ( $order->is_paid() || 'COMPLETED' === strtoupper( (string) $order->get_meta( VEXPay_Helpers::META_STATUS ) ) ) {
@@ -1657,7 +1657,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		// Guests: key is enough. Logged-in users must own the order (or be shop manager).
 		if ( is_user_logged_in() && (int) $order->get_user_id() > 0 && (int) $order->get_user_id() !== get_current_user_id() && ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'You are not allowed to pay for this order.', 'woo-vexpay-gateway' ), 403 );
+			wp_die( esc_html__( 'You are not allowed to pay for this order.', 'vexpay-gateway-for-woocommerce' ), 403 );
 		}
 
 		status_header( 200 );
@@ -1705,7 +1705,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title><?php echo esc_html( sprintf( /* translators: %s: site name */ __( 'Confirm payment — %s', 'woo-vexpay-gateway' ), $site_name ) ); ?></title>
+	<title><?php echo esc_html( sprintf( /* translators: %s: site name */ __( 'Confirm payment — %s', 'vexpay-gateway-for-woocommerce' ), $site_name ) ); ?></title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -1787,7 +1787,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			<header class="vexpay-otp-page__header">
 				<a class="vexpay-otp-page__back-link" href="<?php echo esc_url( $this->get_back_to_checkout_url( $order ) ); ?>">
 					<span class="vexpay-otp-page__back-arrow" aria-hidden="true">←</span>
-					<?php echo esc_html__( 'Back to checkout', 'woo-vexpay-gateway' ); ?>
+					<?php echo esc_html__( 'Back to checkout', 'vexpay-gateway-for-woocommerce' ); ?>
 				</a>
 				<img
 					class="vexpay-otp-page__logo"
@@ -1804,7 +1804,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				<?php
 				$order_label = sprintf(
 					/* translators: %s: order number */
-					__( 'Order #%s', 'woo-vexpay-gateway' ),
+					__( 'Order #%s', 'vexpay-gateway-for-woocommerce' ),
 					$order->get_order_number()
 				);
 				?>
@@ -1826,7 +1826,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 								echo esc_html(
 									sprintf(
 										/* translators: %s: VES amount */
-										__( 'Bs. %s', 'woo-vexpay-gateway' ),
+										__( 'Bs. %s', 'vexpay-gateway-for-woocommerce' ),
 										number_format_i18n( $ves, 2 )
 									)
 								);
@@ -1839,7 +1839,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 								echo esc_html(
 									sprintf(
 										/* translators: %s: BCV FX rate */
-										__( 'BCV %s', 'woo-vexpay-gateway' ),
+										__( 'BCV %s', 'vexpay-gateway-for-woocommerce' ),
 										number_format_i18n( $bcv_rate, 2 )
 									)
 								);
@@ -1851,7 +1851,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				<?php if ( ! empty( $line_items ) ) : ?>
 					<details class="vexpay-otp-page__items-disclosure">
 						<summary class="vexpay-otp-page__items-summary">
-							<span class="vexpay-otp-page__breakdown-link"><?php echo esc_html__( 'View breakdown', 'woo-vexpay-gateway' ); ?></span>
+							<span class="vexpay-otp-page__breakdown-link"><?php echo esc_html__( 'View breakdown', 'vexpay-gateway-for-woocommerce' ); ?></span>
 						</summary>
 						<?php if ( 1 === count( $line_items ) ) : ?>
 							<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--items">
@@ -1860,7 +1860,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 									echo esc_html(
 										sprintf(
 											/* translators: 1: product name, 2: quantity */
-											__( '%1$s × %2$d', 'woo-vexpay-gateway' ),
+											__( '%1$s × %2$d', 'vexpay-gateway-for-woocommerce' ),
 											$line_items[0]['name'],
 											$line_items[0]['qty']
 										)
@@ -1880,13 +1880,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 						<?php endif; ?>
 						<?php if ( $ves > 0 ) : ?>
 							<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--subtotal">
-								<span class="vexpay-otp-page__subtotal-label"><?php echo esc_html__( 'Subtotal', 'woo-vexpay-gateway' ); ?></span>
+								<span class="vexpay-otp-page__subtotal-label"><?php echo esc_html__( 'Subtotal', 'vexpay-gateway-for-woocommerce' ); ?></span>
 								<span class="vexpay-otp-page__subtotal-value">
 									<?php
 									echo esc_html(
 										sprintf(
 											/* translators: %s: VES amount */
-											__( 'Bs. %s', 'woo-vexpay-gateway' ),
+											__( 'Bs. %s', 'vexpay-gateway-for-woocommerce' ),
 											number_format_i18n( $ves, 2 )
 										)
 									);
@@ -1916,7 +1916,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 						<path fill="url(#vexpayLockGrad)" d="M17 9V7a5 5 0 0 0-10 0v2H5.5A1.5 1.5 0 0 0 4 10.5v8A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 18.5 9H17Zm-8-2a3 3 0 0 1 6 0v2H9V7Zm3 10.25a1.75 1.75 0 1 1 0-3.5 1.75 1.75 0 0 1 0 3.5Z"/>
 					</svg>
 				</span>
-				<?php echo esc_html__( 'Secured by VEXPay', 'woo-vexpay-gateway' ); ?>
+				<?php echo esc_html__( 'Secured by VEXPay', 'vexpay-gateway-for-woocommerce' ); ?>
 			</footer>
 		</div>
 	</main>
@@ -1935,10 +1935,10 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 */
 	private function render_checkout_steps( int $active, ?string $step1_url = null ): void {
 		$steps = array(
-			1 => __( 'Your details', 'woo-vexpay-gateway' ),
-			2 => __( 'OTP code', 'woo-vexpay-gateway' ),
+			1 => __( 'Your details', 'vexpay-gateway-for-woocommerce' ),
+			2 => __( 'OTP code', 'vexpay-gateway-for-woocommerce' ),
 		);
-		echo '<ol class="vexpay-steps" aria-label="' . esc_attr__( 'Payment steps', 'woo-vexpay-gateway' ) . '">';
+		echo '<ol class="vexpay-steps" aria-label="' . esc_attr__( 'Payment steps', 'vexpay-gateway-for-woocommerce' ) . '">';
 		foreach ( $steps as $num => $label ) {
 			$classes = 'vexpay-step';
 			if ( $num === $active ) {
@@ -1989,7 +1989,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$status = (string) $order->get_meta( VEXPay_Helpers::META_STATUS );
 		if ( 'COMPLETED' === strtoupper( $status ) || $order->is_paid() ) {
-			echo '<p>' . esc_html__( 'This order is already paid.', 'woo-vexpay-gateway' ) . '</p>';
+			echo '<p>' . esc_html__( 'This order is already paid.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			return;
 		}
 
@@ -2020,26 +2020,26 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$this->render_checkout_steps( 2, $change_url );
 
 		if ( $sandbox ) {
-			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'woo-vexpay-gateway' ) . '</strong> — ';
-			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'woo-vexpay-gateway' );
+			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'vexpay-gateway-for-woocommerce' ) . '</strong> — ';
+			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'vexpay-gateway-for-woocommerce' );
 			echo '</p>';
 		}
 
 		echo '<div class="vexpay-step-panel">';
 
 		if ( ! $otp_requested ) {
-			echo '<h1 class="vexpay-step-title vexpay-otp-title">' . esc_html__( 'Send your OTP code', 'woo-vexpay-gateway' ) . '</h1>';
+			echo '<h1 class="vexpay-step-title vexpay-otp-title">' . esc_html__( 'Send your OTP code', 'vexpay-gateway-for-woocommerce' ) . '</h1>';
 			if ( $sandbox ) {
-				echo '<p class="vexpay-step-copy">' . esc_html__( 'Tap send — sandbox drops a rotating code in the VEXPay Portal for you to paste here next.', 'woo-vexpay-gateway' ) . '</p>';
+				echo '<p class="vexpay-step-copy">' . esc_html__( 'Tap send — sandbox drops a rotating code in the VEXPay Portal for you to paste here next.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			} else {
-				echo '<p class="vexpay-step-copy">' . esc_html__( 'Tap send and your bank texts the OTP to the phone below.', 'woo-vexpay-gateway' ) . '</p>';
+				echo '<p class="vexpay-step-copy">' . esc_html__( 'Tap send and your bank texts the OTP to the phone below.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			}
 		} else {
-			echo '<h1 class="vexpay-step-title vexpay-otp-title">' . esc_html__( 'Enter your OTP code', 'woo-vexpay-gateway' ) . '</h1>';
+			echo '<h1 class="vexpay-step-title vexpay-otp-title">' . esc_html__( 'Enter your OTP code', 'vexpay-gateway-for-woocommerce' ) . '</h1>';
 			if ( $sandbox ) {
-				echo '<p class="vexpay-step-copy">' . esc_html__( 'Sandbox mode — snag the rotating code from the VEXPay Portal and paste it here.', 'woo-vexpay-gateway' ) . '</p>';
+				echo '<p class="vexpay-step-copy">' . esc_html__( 'Sandbox mode — snag the rotating code from the VEXPay Portal and paste it here.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			} else {
-				echo '<p class="vexpay-step-copy">' . esc_html__( 'Your bank just texted a code — drop it in below and you’re good.', 'woo-vexpay-gateway' ) . '</p>';
+				echo '<p class="vexpay-step-copy">' . esc_html__( 'Your bank just texted a code — drop it in below and you’re good.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			}
 		}
 
@@ -2075,25 +2075,25 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '</span>';
 			printf(
 				'<button type="button" class="vexpay-otp-account__edit" data-vexpay-otp-account-edit data-edit-label="%2$s" data-hide-label="%1$s" aria-expanded="false"><span class="vexpay-otp-account__edit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" focusable="false"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm18-11.5a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75L21 5.75Z"/></svg></span><span class="vexpay-otp-account__edit-label">%3$s</span></button>',
-				esc_attr__( 'Hide', 'woo-vexpay-gateway' ),
-				esc_attr__( 'Edit', 'woo-vexpay-gateway' ),
-				esc_html__( 'Edit', 'woo-vexpay-gateway' )
+				esc_attr__( 'Hide', 'vexpay-gateway-for-woocommerce' ),
+				esc_attr__( 'Edit', 'vexpay-gateway-for-woocommerce' ),
+				esc_html__( 'Edit', 'vexpay-gateway-for-woocommerce' )
 			);
 			echo '</div>';
 			echo '<div class="vexpay-otp-account__details" data-vexpay-otp-account-details hidden>';
 			echo '<div class="vexpay-otp-account__header">';
-			echo '<span class="vexpay-otp-account__title">' . esc_html__( 'Your details', 'woo-vexpay-gateway' ) . '</span>';
+			echo '<span class="vexpay-otp-account__title">' . esc_html__( 'Your details', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 			echo '<a class="vexpay-otp-change__link" href="' . esc_url( $change_url ) . '">';
-			echo esc_html__( 'Change account', 'woo-vexpay-gateway' );
+			echo esc_html__( 'Change account', 'vexpay-gateway-for-woocommerce' );
 			echo '</a>';
 			echo '</div>';
 			echo '<ul class="vexpay-otp-meta">';
 			if ( '' !== $id_display ) {
-				echo '<li><span class="vexpay-otp-meta__label">' . esc_html__( 'Cédula', 'woo-vexpay-gateway' ) . '</span> <span class="vexpay-otp-meta__value">' . esc_html( $id_display ) . '</span></li>';
+				echo '<li><span class="vexpay-otp-meta__label">' . esc_html__( 'Cédula', 'vexpay-gateway-for-woocommerce' ) . '</span> <span class="vexpay-otp-meta__value">' . esc_html( $id_display ) . '</span></li>';
 			}
 			if ( '' !== $bank_label ) {
 				echo '<li class="vexpay-otp-meta__bank">';
-				echo '<span class="vexpay-otp-meta__label">' . esc_html__( 'Bank', 'woo-vexpay-gateway' ) . '</span>';
+				echo '<span class="vexpay-otp-meta__label">' . esc_html__( 'Bank', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 				echo '<span class="vexpay-otp-bank">';
 				if ( '' !== $bank_logo ) {
 					printf(
@@ -2109,7 +2109,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				echo '</li>';
 			}
 			if ( '' !== $phone_masked ) {
-				echo '<li><span class="vexpay-otp-meta__label">' . esc_html__( 'Phone', 'woo-vexpay-gateway' ) . '</span> <span class="vexpay-otp-meta__value">' . esc_html( $phone_masked ) . '</span></li>';
+				echo '<li><span class="vexpay-otp-meta__label">' . esc_html__( 'Phone', 'vexpay-gateway-for-woocommerce' ) . '</span> <span class="vexpay-otp-meta__value">' . esc_html( $phone_masked ) . '</span></li>';
 			}
 			echo '</ul>';
 			echo '</div>';
@@ -2117,7 +2117,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		} else {
 			echo '<p class="vexpay-otp-change">';
 			echo '<a class="vexpay-otp-change__link" href="' . esc_url( $change_url ) . '">';
-			echo esc_html__( 'Change account', 'woo-vexpay-gateway' );
+			echo esc_html__( 'Change account', 'vexpay-gateway-for-woocommerce' );
 			echo '</a>';
 			echo '</p>';
 		}
@@ -2131,12 +2131,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '<input type="hidden" name="order_id" value="' . esc_attr( (string) $order_id ) . '" />';
 			echo '<input type="hidden" name="key" value="' . esc_attr( $order->get_order_key() ) . '" />';
 			echo '<p class="vexpay-otp-actions">';
-			echo '<button type="submit" class="button alt vexpay-otp-submit vexpay-otp-send">' . esc_html__( 'Send OTP code', 'woo-vexpay-gateway' ) . '</button>';
+			echo '<button type="submit" class="button alt vexpay-otp-submit vexpay-otp-send">' . esc_html__( 'Send OTP code', 'vexpay-gateway-for-woocommerce' ) . '</button>';
 			echo '</p>';
 			if ( $sandbox ) {
-				echo '<p class="vexpay-otp-hint">' . esc_html__( 'Sandbox: no bank SMS — copy the rotating code from VEXPay Portal → Sandbox.', 'woo-vexpay-gateway' ) . '</p>';
+				echo '<p class="vexpay-otp-hint">' . esc_html__( 'Sandbox: no bank SMS — copy the rotating code from VEXPay Portal → Sandbox.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			} else {
-				echo '<p class="vexpay-otp-hint">' . esc_html__( 'We’ll text the code, then you can enter it on the next step.', 'woo-vexpay-gateway' ) . '</p>';
+				echo '<p class="vexpay-otp-hint">' . esc_html__( 'We’ll text the code, then you can enter it on the next step.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 			}
 			echo '</form>';
 			echo '</div></div>';
@@ -2153,7 +2153,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		wp_nonce_field( 'vexpay_otp_' . $order_id, 'vexpay_otp_nonce' );
 		echo '<input type="hidden" name="order_id" value="' . esc_attr( (string) $order_id ) . '" />';
 		echo '<div class="form-row vexpay-field-group vexpay-otp-field">';
-		echo '<label id="vexpay_token_label" for="vexpay_otp_cell_0">' . esc_html__( 'Your code', 'woo-vexpay-gateway' ) . '</label>';
+		echo '<label id="vexpay_token_label" for="vexpay_otp_cell_0">' . esc_html__( 'Your code', 'vexpay-gateway-for-woocommerce' ) . '</label>';
 		echo '<input type="hidden" name="vexpay_token" id="vexpay_token" value="" autocomplete="one-time-code" />';
 		echo '<div class="vexpay-otp-pin" data-vexpay-otp-pin role="group" aria-labelledby="vexpay_token_label">';
 		for ( $i = 0; $i < 8; $i++ ) {
@@ -2162,12 +2162,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				(int) $i,
 				0 === $i ? 'one-time-code' : 'off',
 				/* translators: %d: digit position 1–8 */
-				esc_attr( sprintf( __( 'Digit %d', 'woo-vexpay-gateway' ), $i + 1 ) )
+				esc_attr( sprintf( __( 'Digit %d', 'vexpay-gateway-for-woocommerce' ), $i + 1 ) )
 			);
 		}
 		echo '</div>';
-		echo '<p class="vexpay-otp-hint">' . esc_html__( '6–8 digits · paste works too', 'woo-vexpay-gateway' ) . '</p>';
-		echo '<p class="vexpay-otp-hint vexpay-otp-hint--secondary">' . esc_html__( 'Code may arrive by SMS or notification — check your bank app if needed.', 'woo-vexpay-gateway' ) . '</p>';
+		echo '<p class="vexpay-otp-hint">' . esc_html__( '6–8 digits · paste works too', 'vexpay-gateway-for-woocommerce' ) . '</p>';
+		echo '<p class="vexpay-otp-hint vexpay-otp-hint--secondary">' . esc_html__( 'Code may arrive by SMS or notification — check your bank app if needed.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 		if ( '' !== $otp_inline_msg ) {
 			printf(
 				'<p class="vexpay-otp-inline-error" role="alert">%s</p>',
@@ -2181,7 +2181,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		wp_nonce_field( 'vexpay_otp_resend_' . $order_id, 'vexpay_otp_resend_nonce' );
 		echo '<input type="hidden" name="order_id" value="' . esc_attr( (string) $order_id ) . '" />';
 		echo '<input type="hidden" name="key" value="' . esc_attr( $order->get_order_key() ) . '" />';
-		$resend_label = __( 'Didn’t get it? Resend code', 'woo-vexpay-gateway' );
+		$resend_label = __( 'Didn’t get it? Resend code', 'vexpay-gateway-for-woocommerce' );
 		printf(
 			'<button type="submit" class="vexpay-otp-resend"%s data-vexpay-otp-resend>%s</button>',
 			$cooldown_left > 0 ? ' disabled' : '',
@@ -2193,13 +2193,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				(int) $cooldown_left,
 				esc_attr(
 					/* translators: %d: seconds remaining */
-					__( 'Hang tight — you can resend in %d sec.', 'woo-vexpay-gateway' )
+					__( 'Hang tight — you can resend in %d sec.', 'vexpay-gateway-for-woocommerce' )
 				)
 			);
 			echo esc_html(
 				sprintf(
 					/* translators: %d: seconds remaining */
-					__( 'Hang tight — you can resend in %d sec.', 'woo-vexpay-gateway' ),
+					__( 'Hang tight — you can resend in %d sec.', 'vexpay-gateway-for-woocommerce' ),
 					$cooldown_left
 				)
 			);
@@ -2209,12 +2209,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		echo '<p class="vexpay-otp-actions">';
 		echo '<button type="submit" form="vexpay_otp_form" class="button alt vexpay-otp-submit">';
-		echo '<span class="vexpay-otp-submit__label">' . esc_html__( 'Confirm payment', 'woo-vexpay-gateway' ) . '</span>';
+		echo '<span class="vexpay-otp-submit__label">' . esc_html__( 'Confirm payment', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 		echo '<span class="vexpay-otp-submit__secure">';
 		echo '<span class="vexpay-otp-submit__lock" aria-hidden="true">';
 		echo '<svg viewBox="0 0 24 24" width="11" height="11" focusable="false"><path fill="currentColor" d="M17 9V7a5 5 0 0 0-10 0v2H5.5A1.5 1.5 0 0 0 4 10.5v8A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 18.5 9H17Zm-8-2a3 3 0 0 1 6 0v2H9V7Z"/></svg>';
 		echo '</span>';
-		echo esc_html__( 'Encrypted', 'woo-vexpay-gateway' );
+		echo esc_html__( 'Encrypted', 'vexpay-gateway-for-woocommerce' );
 		echo '</span>';
 		echo '</button>';
 		echo '</p>';
@@ -2262,24 +2262,24 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$this->render_checkout_steps( 1 );
 
 		if ( $sandbox ) {
-			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'woo-vexpay-gateway' ) . '</strong> — ';
-			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'woo-vexpay-gateway' );
+			echo '<p class="vexpay-test-mode"><strong>' . esc_html__( 'SANDBOX', 'vexpay-gateway-for-woocommerce' ) . '</strong> — ';
+			echo esc_html__( "it's giving demo energy. No real money moves here — practice all you want.", 'vexpay-gateway-for-woocommerce' );
 			echo '</p>';
 		}
 
 		echo '<div class="vexpay-step-panel">';
-		echo '<h1 class="vexpay-step-title vexpay-otp-title">' . esc_html__( 'Change account', 'woo-vexpay-gateway' ) . '</h1>';
-		echo '<p class="vexpay-step-copy">' . esc_html__( 'Update who is paying. We’ll reset the OTP step so you can send a fresh code.', 'woo-vexpay-gateway' ) . '</p>';
+		echo '<h1 class="vexpay-step-title vexpay-otp-title">' . esc_html__( 'Change account', 'vexpay-gateway-for-woocommerce' ) . '</h1>';
+		echo '<p class="vexpay-step-copy">' . esc_html__( 'Update who is paying. We’ll reset the OTP step so you can send a fresh code.', 'vexpay-gateway-for-woocommerce' ) . '</p>';
 
 		if ( ! empty( $accounts ) ) {
 			echo '<div class="vexpay-accounts" data-vexpay-accounts data-vexpay-keep-details="1">';
 			echo '<div class="vexpay-accounts__head">';
-			echo '<span class="vexpay-accounts__label">' . esc_html__( 'Saved accounts', 'woo-vexpay-gateway' ) . '</span>';
+			echo '<span class="vexpay-accounts__label">' . esc_html__( 'Saved accounts', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 			echo '<button type="button" class="vexpay-accounts__new" data-vexpay-account-new>';
-			echo esc_html__( '+ Use another', 'woo-vexpay-gateway' );
+			echo esc_html__( '+ Use another', 'vexpay-gateway-for-woocommerce' );
 			echo '</button>';
 			echo '</div>';
-			echo '<div class="vexpay-accounts__list" role="listbox" aria-label="' . esc_attr__( 'Saved payer accounts', 'woo-vexpay-gateway' ) . '">';
+			echo '<div class="vexpay-accounts__list" role="listbox" aria-label="' . esc_attr__( 'Saved payer accounts', 'vexpay-gateway-for-woocommerce' ) . '">';
 			foreach ( $accounts as $account ) {
 				$is_active = $active_fp && (string) $account['id'] === (string) $active_fp;
 				$this->render_debtor_account_chip( $account, $is_active );
@@ -2293,9 +2293,9 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '<input type="hidden" name="key" value="' . esc_attr( $order->get_order_key() ) . '" />';
 
 		echo '<p class="form-row form-row-wide vexpay-field-group">';
-		echo '<label for="vexpay_debtor_id_number">' . esc_html__( 'Cédula / RIF', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<label for="vexpay_debtor_id_number">' . esc_html__( 'Cédula / RIF', 'vexpay-gateway-for-woocommerce' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
 		echo '<span class="vexpay-split-field">';
-		echo '<select name="vexpay_debtor_id_type" id="vexpay_debtor_id_type" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Document type', 'woo-vexpay-gateway' ) . '">';
+		echo '<select name="vexpay_debtor_id_type" id="vexpay_debtor_id_type" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Document type', 'vexpay-gateway-for-woocommerce' ) . '">';
 		foreach ( VEXPay_Helpers::debtor_id_types() as $type ) {
 			printf(
 				'<option value="%1$s" %2$s>%1$s</option>',
@@ -2307,14 +2307,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		printf(
 			'<input type="text" class="input-text vexpay-split-input" name="vexpay_debtor_id_number" id="vexpay_debtor_id_number" inputmode="numeric" autocomplete="off" placeholder="12345678" maxlength="9" value="%s" aria-label="%s" />',
 			esc_attr( $profile['id_number'] ),
-			esc_attr__( 'Document number', 'woo-vexpay-gateway' )
+			esc_attr__( 'Document number', 'vexpay-gateway-for-woocommerce' )
 		);
 		echo '</span></p>';
 
 		echo '<p class="form-row form-row-wide vexpay-field-group">';
-		echo '<label for="vexpay_debtor_phone_number">' . esc_html__( 'Phone', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<label for="vexpay_debtor_phone_number">' . esc_html__( 'Phone', 'vexpay-gateway-for-woocommerce' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
 		echo '<span class="vexpay-split-field">';
-		echo '<select name="vexpay_debtor_phone_prefix" id="vexpay_debtor_phone_prefix" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Phone prefix', 'woo-vexpay-gateway' ) . '">';
+		echo '<select name="vexpay_debtor_phone_prefix" id="vexpay_debtor_phone_prefix" class="vexpay-split-prefix" aria-label="' . esc_attr__( 'Phone prefix', 'vexpay-gateway-for-woocommerce' ) . '">';
 		foreach ( VEXPay_Helpers::phone_prefixes() as $prefix ) {
 			printf(
 				'<option value="%1$s" %2$s>%1$s</option>',
@@ -2326,17 +2326,17 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		printf(
 			'<input type="tel" class="input-text vexpay-split-input" name="vexpay_debtor_phone_number" id="vexpay_debtor_phone_number" inputmode="numeric" autocomplete="tel-national" placeholder="1234567" maxlength="7" value="%s" aria-label="%s" />',
 			esc_attr( $profile['phone_number'] ),
-			esc_attr__( 'Phone number', 'woo-vexpay-gateway' )
+			esc_attr__( 'Phone number', 'vexpay-gateway-for-woocommerce' )
 		);
 		echo '</span></p>';
 
 		echo '<p class="form-row form-row-wide vexpay-field-group vexpay-bank-field">';
-		echo '<label id="vexpay_debtor_bank_label">' . esc_html__( 'Bank', 'woo-vexpay-gateway' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
+		echo '<label id="vexpay_debtor_bank_label">' . esc_html__( 'Bank', 'vexpay-gateway-for-woocommerce' ) . '&nbsp;<abbr class="required" title="required">*</abbr></label>';
 		echo '<input type="hidden" name="vexpay_debtor_bank" id="vexpay_debtor_bank" value="' . esc_attr( $profile['bank'] ) . '" />';
 		echo '<div class="vexpay-bank-picker" data-vexpay-bank-picker>';
 		echo '<button type="button" class="vexpay-bank-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="vexpay_debtor_bank_label">';
 		echo '<span class="vexpay-bank-trigger-content">';
-		echo '<span class="vexpay-bank-placeholder">' . esc_html__( 'Select your bank', 'woo-vexpay-gateway' ) . '</span>';
+		echo '<span class="vexpay-bank-placeholder">' . esc_html__( 'Select your bank', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 		echo '</span>';
 		echo '<span class="vexpay-bank-chevron" aria-hidden="true"></span>';
 		echo '</button>';
@@ -2366,10 +2366,10 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '</ul></div></p>';
 
 		echo '<p class="vexpay-otp-actions">';
-		echo '<button type="submit" class="button alt vexpay-otp-submit">' . esc_html__( 'Save & continue', 'woo-vexpay-gateway' ) . '</button>';
+		echo '<button type="submit" class="button alt vexpay-otp-submit">' . esc_html__( 'Save & continue', 'vexpay-gateway-for-woocommerce' ) . '</button>';
 		echo '</p>';
 		echo '<p class="vexpay-otp-change">';
-		echo '<a class="vexpay-otp-change__link" href="' . esc_url( $back_url ) . '">' . esc_html__( 'Back to OTP', 'woo-vexpay-gateway' ) . '</a>';
+		echo '<a class="vexpay-otp-change__link" href="' . esc_url( $back_url ) . '">' . esc_html__( 'Back to OTP', 'vexpay-gateway-for-woocommerce' ) . '</a>';
 		echo '</p>';
 		echo '</form>';
 		echo '</div></div>';
@@ -2384,16 +2384,16 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$key      = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
 
 		if ( ! $order_id || ! wp_verify_nonce( $nonce, 'vexpay_otp_change_' . $order_id ) ) {
-			wp_die( esc_html__( 'Invalid change request.', 'woo-vexpay-gateway' ), 403 );
+			wp_die( esc_html__( 'Invalid change request.', 'vexpay-gateway-for-woocommerce' ), 403 );
 		}
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order || $order->get_payment_method() !== $this->id || ! hash_equals( $order->get_order_key(), $key ) ) {
-			wp_die( esc_html__( 'Order not found.', 'woo-vexpay-gateway' ), 404 );
+			wp_die( esc_html__( 'Order not found.', 'vexpay-gateway-for-woocommerce' ), 404 );
 		}
 
 		if ( ! $this->order_awaits_otp( $order ) ) {
-			wc_add_notice( __( 'This order can no longer change the paying account.', 'woo-vexpay-gateway' ), 'error' );
+			wc_add_notice( __( 'This order can no longer change the paying account.', 'vexpay-gateway-for-woocommerce' ), 'error' );
 			wp_safe_redirect( $this->get_return_url( $order ) );
 			exit;
 		}
@@ -2404,7 +2404,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$bank_simf    = VEXPay_Helpers::format_simf_bank_code( $bank_raw );
 
 		if ( ! $debtor_id || ! $debtor_phone || '' === $bank_simf ) {
-			$this->set_otp_flash( $order_id, 'error', __( 'Enter a valid cédula/RIF, phone, and bank.', 'woo-vexpay-gateway' ) );
+			$this->set_otp_flash( $order_id, 'error', __( 'Enter a valid cédula/RIF, phone, and bank.', 'vexpay-gateway-for-woocommerce' ) );
 			$this->redirect_to_otp( $order, array( 'change_account' => '1' ) );
 		}
 
@@ -2417,7 +2417,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$order->add_order_note(
 			sprintf(
 				/* translators: 1: debtor id, 2: phone, 3: bank code */
-				__( 'Customer changed the VEXPay paying account to %1$s / %2$s / bank %3$s. OTP step reset.', 'woo-vexpay-gateway' ),
+				__( 'Customer changed the VEXPay paying account to %1$s / %2$s / bank %3$s. OTP step reset.', 'vexpay-gateway-for-woocommerce' ),
 				$debtor_id,
 				$debtor_phone,
 				$bank_simf
@@ -2435,7 +2435,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$this->save_debtor_profile( $debtor_id, $debtor_phone, $bank_simf );
 
-		$this->set_otp_flash( $order_id, 'success', __( 'Account updated — send a new OTP when you’re ready.', 'woo-vexpay-gateway' ) );
+		$this->set_otp_flash( $order_id, 'success', __( 'Account updated — send a new OTP when you’re ready.', 'vexpay-gateway-for-woocommerce' ) );
 		$this->redirect_to_otp( $order, array( 'account_updated' => '1' ) );
 	}
 
@@ -2469,7 +2469,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		return sprintf(
 			'<img class="vexpay-order-summary-logo" src="%1$s" alt="%2$s" width="56" height="30" decoding="async" /> %3$s',
 			esc_url( $logo_url ),
-			esc_attr__( 'VEXPay', 'woo-vexpay-gateway' ),
+			esc_attr__( 'VEXPay', 'vexpay-gateway-for-woocommerce' ),
 			$title
 		);
 	}
@@ -2508,38 +2508,38 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		switch ( $phase ) {
 			case 'paid':
-				$title = __( 'Paid via VEXPay', 'woo-vexpay-gateway' );
-				$copy  = __( 'Your Débito inmediato payment was successful.', 'woo-vexpay-gateway' );
+				$title = __( 'Paid via VEXPay', 'vexpay-gateway-for-woocommerce' );
+				$copy  = __( 'Your Débito inmediato payment was successful.', 'vexpay-gateway-for-woocommerce' );
 				break;
 			case 'settling':
-				$title = __( 'Payment processing', 'woo-vexpay-gateway' );
-				$copy  = __( 'VEXPay is waiting for the bank to confirm your Débito inmediato. This page will stay up to date once settlement finishes.', 'woo-vexpay-gateway' );
+				$title = __( 'Payment processing', 'vexpay-gateway-for-woocommerce' );
+				$copy  = __( 'VEXPay is waiting for the bank to confirm your Débito inmediato. This page will stay up to date once settlement finishes.', 'vexpay-gateway-for-woocommerce' );
 				break;
 			case 'otp':
-				$title = __( 'Finish paying with VEXPay', 'woo-vexpay-gateway' );
-				$copy  = __( 'Your order is ready — enter the bank OTP to complete Débito inmediato.', 'woo-vexpay-gateway' );
+				$title = __( 'Finish paying with VEXPay', 'vexpay-gateway-for-woocommerce' );
+				$copy  = __( 'Your order is ready — enter the bank OTP to complete Débito inmediato.', 'vexpay-gateway-for-woocommerce' );
 				$cta   = $this->get_otp_redirect_url( $order );
 				break;
 			case 'failed':
-				$title = __( 'Payment failed', 'woo-vexpay-gateway' );
-				$copy  = __( 'The VEXPay Débito inmediato payment did not go through. You can try again from the order or contact the store.', 'woo-vexpay-gateway' );
+				$title = __( 'Payment failed', 'vexpay-gateway-for-woocommerce' );
+				$copy  = __( 'The VEXPay Débito inmediato payment did not go through. You can try again from the order or contact the store.', 'vexpay-gateway-for-woocommerce' );
 				break;
 			case 'refunded':
-				$title = __( 'Payment reversed', 'woo-vexpay-gateway' );
-				$copy  = __( 'This VEXPay payment was reversed.', 'woo-vexpay-gateway' );
+				$title = __( 'Payment reversed', 'vexpay-gateway-for-woocommerce' );
+				$copy  = __( 'This VEXPay payment was reversed.', 'vexpay-gateway-for-woocommerce' );
 				break;
 			default:
-				$title = __( 'Paid via VEXPay', 'woo-vexpay-gateway' );
-				$copy  = __( 'Débito inmediato through VEXPay.', 'woo-vexpay-gateway' );
+				$title = __( 'Paid via VEXPay', 'vexpay-gateway-for-woocommerce' );
+				$copy  = __( 'Débito inmediato through VEXPay.', 'vexpay-gateway-for-woocommerce' );
 				break;
 		}
 
 		$logo_url = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';
 
-		echo '<section class="vexpay-thankyou-panel vexpay-checkout-panel" aria-label="' . esc_attr__( 'VEXPay payment', 'woo-vexpay-gateway' ) . '">';
+		echo '<section class="vexpay-thankyou-panel vexpay-checkout-panel" aria-label="' . esc_attr__( 'VEXPay payment', 'vexpay-gateway-for-woocommerce' ) . '">';
 		echo '<div class="vexpay-checkout-brand">';
-		echo '<img class="vexpay-checkout-brand__logo" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr__( 'VEXPay', 'woo-vexpay-gateway' ) . '" width="72" height="38" decoding="async" />';
-		echo '<span class="vexpay-checkout-brand__tag">' . esc_html__( 'Débito inmediato', 'woo-vexpay-gateway' ) . '</span>';
+		echo '<img class="vexpay-checkout-brand__logo" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr__( 'VEXPay', 'vexpay-gateway-for-woocommerce' ) . '" width="72" height="38" decoding="async" />';
+		echo '<span class="vexpay-checkout-brand__tag">' . esc_html__( 'Débito inmediato', 'vexpay-gateway-for-woocommerce' ) . '</span>';
 		echo '</div>';
 
 		echo '<div class="vexpay-thankyou-panel__status vexpay-thankyou-panel__status--' . esc_attr( $phase ) . '">';
@@ -2547,7 +2547,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		echo '<p class="vexpay-thankyou-panel__copy">' . esc_html( $copy ) . '</p>';
 		if ( '' !== $cta ) {
 			echo '<p class="vexpay-thankyou-panel__actions">';
-			echo '<a class="button alt vexpay-thankyou-panel__cta" href="' . esc_url( $cta ) . '">' . esc_html__( 'Enter OTP code', 'woo-vexpay-gateway' ) . '</a>';
+			echo '<a class="button alt vexpay-thankyou-panel__cta" href="' . esc_url( $cta ) . '">' . esc_html__( 'Enter OTP code', 'vexpay-gateway-for-woocommerce' ) . '</a>';
 			echo '</p>';
 		}
 		echo '</div>';
@@ -2556,13 +2556,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '<dl class="vexpay-thankyou-panel__meta">';
 			if ( '' !== $txn_id ) {
 				echo '<div class="vexpay-thankyou-panel__meta-row">';
-				echo '<dt>' . esc_html__( 'Transaction ID', 'woo-vexpay-gateway' ) . '</dt>';
+				echo '<dt>' . esc_html__( 'Transaction ID', 'vexpay-gateway-for-woocommerce' ) . '</dt>';
 				echo '<dd><code>' . esc_html( $txn_id ) . '</code></dd>';
 				echo '</div>';
 			}
 			if ( '' !== $ref ) {
 				echo '<div class="vexpay-thankyou-panel__meta-row">';
-				echo '<dt>' . esc_html__( 'Reference', 'woo-vexpay-gateway' ) . '</dt>';
+				echo '<dt>' . esc_html__( 'Reference', 'vexpay-gateway-for-woocommerce' ) . '</dt>';
 				echo '<dd><code>' . esc_html( $ref ) . '</code></dd>';
 				echo '</div>';
 			}
@@ -2580,12 +2580,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$nonce    = isset( $_POST['vexpay_otp_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_otp_nonce'] ) ) : '';
 
 		if ( ! $order_id || ! wp_verify_nonce( $nonce, 'vexpay_otp_' . $order_id ) ) {
-			wp_die( esc_html__( 'Invalid OTP request.', 'woo-vexpay-gateway' ), 403 );
+			wp_die( esc_html__( 'Invalid OTP request.', 'vexpay-gateway-for-woocommerce' ), 403 );
 		}
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order || $order->get_payment_method() !== $this->id ) {
-			wp_die( esc_html__( 'Order not found.', 'woo-vexpay-gateway' ), 404 );
+			wp_die( esc_html__( 'Order not found.', 'vexpay-gateway-for-woocommerce' ), 404 );
 		}
 
 		$token = isset( $_POST['vexpay_token'] ) ? sanitize_text_field( wp_unslash( $_POST['vexpay_token'] ) ) : '';
@@ -2593,7 +2593,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$this->set_otp_flash(
 				$order_id,
 				'error',
-				__( 'That code didn’t work. Try again or resend.', 'woo-vexpay-gateway' ),
+				__( 'That code didn’t work. Try again or resend.', 'vexpay-gateway-for-woocommerce' ),
 				'otp_inline'
 			);
 			$this->redirect_to_otp( $order );
@@ -2611,7 +2611,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( ! $debtor_id || ! $debtor_phone || '' === $bank_simf || $ves <= 0 ) {
-			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ) );
+			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'vexpay-gateway-for-woocommerce' ) );
 			$this->redirect_to_otp( $order );
 		}
 
@@ -2634,7 +2634,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$this->set_otp_flash(
 				$order_id,
 				'error',
-				__( 'That code didn’t work. Try again or resend.', 'woo-vexpay-gateway' ),
+				__( 'That code didn’t work. Try again or resend.', 'vexpay-gateway-for-woocommerce' ),
 				'otp_inline'
 			);
 			$this->redirect_to_otp( $order );
@@ -2664,7 +2664,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$status = strtoupper( (string) $order->get_meta( VEXPay_Helpers::META_STATUS ) );
 		if ( VEXPay_Helpers::is_pending_settlement_status( $status ) ) {
-			$this->set_otp_flash( $order_id, 'notice', __( 'Payment is processing — hang tight while the bank confirms.', 'woo-vexpay-gateway' ) );
+			$this->set_otp_flash( $order_id, 'notice', __( 'Payment is processing — hang tight while the bank confirms.', 'vexpay-gateway-for-woocommerce' ) );
 			wp_safe_redirect( $this->get_return_url( $order ) );
 			exit;
 		}
@@ -2672,7 +2672,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$this->set_otp_flash(
 			$order_id,
 			'error',
-			__( 'That code didn’t work. Try again or resend.', 'woo-vexpay-gateway' ),
+			__( 'That code didn’t work. Try again or resend.', 'vexpay-gateway-for-woocommerce' ),
 			'otp_inline'
 		);
 		$this->redirect_to_otp( $order );
@@ -2703,20 +2703,20 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$key      = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
 
 		if ( ! $order_id || ! wp_verify_nonce( $nonce, 'vexpay_otp_resend_' . $order_id ) ) {
-			wp_die( esc_html__( 'Invalid resend request.', 'woo-vexpay-gateway' ), 403 );
+			wp_die( esc_html__( 'Invalid resend request.', 'vexpay-gateway-for-woocommerce' ), 403 );
 		}
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order || $order->get_payment_method() !== $this->id ) {
-			wp_die( esc_html__( 'Order not found.', 'woo-vexpay-gateway' ), 404 );
+			wp_die( esc_html__( 'Order not found.', 'vexpay-gateway-for-woocommerce' ), 404 );
 		}
 
 		if ( '' !== $key && ! hash_equals( $order->get_order_key(), $key ) ) {
-			wp_die( esc_html__( 'Order not found.', 'woo-vexpay-gateway' ), 404 );
+			wp_die( esc_html__( 'Order not found.', 'vexpay-gateway-for-woocommerce' ), 404 );
 		}
 
 		if ( ! $this->order_awaits_otp( $order ) ) {
-			$this->set_otp_flash( $order_id, 'error', __( 'This order is not waiting for an OTP.', 'woo-vexpay-gateway' ) );
+			$this->set_otp_flash( $order_id, 'error', __( 'This order is not waiting for an OTP.', 'vexpay-gateway-for-woocommerce' ) );
 			wp_safe_redirect( $this->get_return_url( $order ) );
 			exit;
 		}
@@ -2729,7 +2729,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'error',
 				sprintf(
 					/* translators: %d: seconds remaining */
-					__( 'Easy — wait %d seconds before requesting another code.', 'woo-vexpay-gateway' ),
+					__( 'Easy — wait %d seconds before requesting another code.', 'vexpay-gateway-for-woocommerce' ),
 					$cooldown
 				)
 			);
@@ -2763,7 +2763,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 					(string) $ves
 				)
 			);
-			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'woo-vexpay-gateway' ) );
+			$this->set_otp_flash( $order_id, 'error', __( 'Missing payment details — start checkout again.', 'vexpay-gateway-for-woocommerce' ) );
 			$this->redirect_to_otp( $order );
 		}
 
@@ -2843,19 +2843,19 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( VEXPay_Helpers::META_VES_AMOUNT, number_format( $ves, 2, '.', '' ) );
 		$order->add_order_note(
 			$first_send
-				? __( 'Customer requested VEXPay débito OTP.', 'woo-vexpay-gateway' )
-				: __( 'Customer requested a new VEXPay débito OTP.', 'woo-vexpay-gateway' )
+				? __( 'Customer requested VEXPay débito OTP.', 'vexpay-gateway-for-woocommerce' )
+				: __( 'Customer requested a new VEXPay débito OTP.', 'vexpay-gateway-for-woocommerce' )
 		);
 		$order->save();
 
 		if ( $simulated ) {
 			$flash = $first_send
-				? __( 'Sandbox OTP ready — copy the rotating code from VEXPay Portal → Sandbox (no SMS on Test twin keys).', 'woo-vexpay-gateway' )
-				: __( 'Fresh sandbox OTP ready — copy the current code from VEXPay Portal → Sandbox.', 'woo-vexpay-gateway' );
+				? __( 'Sandbox OTP ready — copy the rotating code from VEXPay Portal → Sandbox (no SMS on Test twin keys).', 'vexpay-gateway-for-woocommerce' )
+				: __( 'Fresh sandbox OTP ready — copy the current code from VEXPay Portal → Sandbox.', 'vexpay-gateway-for-woocommerce' );
 		} else {
 			$flash = $first_send
-				? __( 'Code sent — check your texts.', 'woo-vexpay-gateway' )
-				: __( 'Fresh code sent — check your texts.', 'woo-vexpay-gateway' );
+				? __( 'Code sent — check your texts.', 'vexpay-gateway-for-woocommerce' )
+				: __( 'Fresh code sent — check your texts.', 'vexpay-gateway-for-woocommerce' );
 		}
 		$this->set_otp_flash( $order_id, 'success', $flash );
 		$this->redirect_to_otp( $order );
@@ -2955,7 +2955,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				$order->add_order_note(
 					sprintf(
 						/* translators: %s: payment id */
-						__( 'VEXPay débito completed (%s).', 'woo-vexpay-gateway' ),
+						__( 'VEXPay débito completed (%s).', 'vexpay-gateway-for-woocommerce' ),
 						(string) ( $result['paymentId'] ?? '' )
 					)
 				);
@@ -2965,10 +2965,10 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$order->update_status( 'failed', 'VEXPay: ' . $reason );
 		} elseif ( 'refund' === $action ) {
 			if ( ! $order->has_status( 'refunded' ) ) {
-				$order->update_status( 'refunded', __( 'VEXPay payment reversed.', 'woo-vexpay-gateway' ) );
+				$order->update_status( 'refunded', __( 'VEXPay payment reversed.', 'vexpay-gateway-for-woocommerce' ) );
 			}
 		} elseif ( 'hold' === $action && ! $order->has_status( array( 'on-hold', 'pending' ) ) ) {
-			$order->update_status( 'on-hold', __( 'VEXPay payment pending.', 'woo-vexpay-gateway' ) );
+			$order->update_status( 'on-hold', __( 'VEXPay payment pending.', 'vexpay-gateway-for-woocommerce' ) );
 		}
 
 		$order->save();
@@ -2986,7 +2986,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		unset( $order_id, $amount, $reason );
 		return new WP_Error(
 			'vexpay_refund',
-			__( 'Automatic refunds are not available for Débito inmediato yet. Handle the reversal in VEXPay / bank ops.', 'woo-vexpay-gateway' )
+			__( 'Automatic refunds are not available for Débito inmediato yet. Handle the reversal in VEXPay / bank ops.', 'vexpay-gateway-for-woocommerce' )
 		);
 	}
 }

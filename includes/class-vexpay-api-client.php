@@ -214,7 +214,7 @@ class VEXPay_API_Client {
 	 */
 	private function request( string $method, string $path, ?array $body = null ) {
 		if ( '' === $this->api_key ) {
-			return new WP_Error( 'vexpay_missing_key', __( 'VEXPay API key is not configured.', 'woo-vexpay-gateway' ) );
+			return new WP_Error( 'vexpay_missing_key', __( 'VEXPay API key is not configured.', 'vexpay-gateway-for-woocommerce' ) );
 		}
 
 		$url  = $this->base_url . $path;
@@ -249,7 +249,7 @@ class VEXPay_API_Client {
 		$data = json_decode( $raw, true );
 
 		if ( $code < 200 || $code >= 300 ) {
-			$message = __( 'VEXPay API request failed.', 'woo-vexpay-gateway' );
+			$message = __( 'VEXPay API request failed.', 'vexpay-gateway-for-woocommerce' );
 			if ( is_array( $data ) ) {
 				if ( ! empty( $data['message'] ) && is_string( $data['message'] ) ) {
 					$message = $data['message'];

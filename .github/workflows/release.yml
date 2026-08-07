@@ -13,12 +13,12 @@ jobs:
       - name: Build plugin zip
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mkdir -p dist/woo-vexpay-gateway
-          rsync -a --exclude-from=.distignore ./ dist/woo-vexpay-gateway/
+          mkdir -p dist/vexpay-gateway-for-woocommerce
+          rsync -a --exclude-from=.distignore ./ dist/vexpay-gateway-for-woocommerce/
           cd dist
-          zip -r "woo-vexpay-gateway-${VERSION}.zip" woo-vexpay-gateway
+          zip -r "vexpay-gateway-for-woocommerce-${VERSION}.zip" vexpay-gateway-for-woocommerce
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/woo-vexpay-gateway-*.zip
+          files: dist/vexpay-gateway-for-woocommerce-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
