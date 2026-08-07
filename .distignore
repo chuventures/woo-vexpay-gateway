@@ -3,7 +3,12 @@
 .wordpress-org
 .gitignore
 .distignore
+.wp-env.json
+.cursor
+.DS_Store
+.phpunit.cache
 .phpunit.result.cache
+dist
 composer.lock
 node_modules
 tests
@@ -14,6 +19,6 @@ README.md
 CONTRIBUTING.md
 Makefile
 bin
-vendor/bin
+vendor
 *.md
 !readme.txt
