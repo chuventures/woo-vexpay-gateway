@@ -618,7 +618,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			if ( ! is_wp_error( $quote ) && isset( $quote['vesAmount'], $quote['bcvRate'] ) ) {
 				echo '<div class="vexpay-fx-strip">';
 				echo '<span class="vexpay-fx-strip__ves">' . esc_html( sprintf( /* translators: %s: VES amount */ __( 'Bs. %s', 'woo-vexpay-gateway' ), number_format_i18n( (float) $quote['vesAmount'], 2 ) ) ) . '</span>';
-				echo '<span class="vexpay-fx-strip__rate">' . esc_html( sprintf( /* translators: %s: BCV rate */ __( 'BCV %s', 'woo-vexpay-gateway' ), number_format_i18n( (float) $quote['bcvRate'], 4 ) ) ) . '</span>';
+				echo '<span class="vexpay-fx-strip__rate">' . esc_html( sprintf( /* translators: %s: BCV FX rate */ __( 'BCV %s', 'woo-vexpay-gateway' ), number_format_i18n( (float) $quote['bcvRate'], 4 ) ) ) . '</span>';
 				echo '</div>';
 			}
 		}
@@ -1879,18 +1879,21 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 								<?php endforeach; ?>
 							</ul>
 						<?php endif; ?>
-						<?php if ( $bcv_rate > 0 ) : ?>
-							<p class="vexpay-otp-page__rate-exact">
-								<?php
-								echo esc_html(
-									sprintf(
-										/* translators: %s: BCV FX rate with full precision */
-										__( 'Exact BCV %s', 'woo-vexpay-gateway' ),
-										number_format_i18n( $bcv_rate, 4 )
-									)
-								);
-								?>
-							</p>
+						<?php if ( $ves > 0 ) : ?>
+							<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--subtotal">
+								<span class="vexpay-otp-page__subtotal-label"><?php echo esc_html__( 'Subtotal', 'woo-vexpay-gateway' ); ?></span>
+								<span class="vexpay-otp-page__subtotal-value">
+									<?php
+									echo esc_html(
+										sprintf(
+											/* translators: %s: VES amount */
+											__( 'Bs. %s', 'woo-vexpay-gateway' ),
+											number_format_i18n( $ves, 2 )
+										)
+									);
+									?>
+								</span>
+							</div>
 						<?php endif; ?>
 					</details>
 				<?php endif; ?>
@@ -2045,19 +2048,37 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$phone_masked     = '' !== $phone ? VEXPay_Helpers::mask_phone_for_display( $phone ) : '';
 
 		if ( $has_account_meta ) {
-			$summary_parts = array_values(
-				array_filter(
-					array( $id_display, $bank_label, $phone_masked )
-				)
-			);
-			$summary_line  = implode( ' · ', $summary_parts );
-
 			echo '<div class="vexpay-otp-account" data-vexpay-otp-account>';
 			echo '<div class="vexpay-otp-account__summary">';
-			echo '<span class="vexpay-otp-account__summary-text">' . esc_html( $summary_line ) . '</span>';
+			echo '<span class="vexpay-otp-account__summary-text">';
+			$summary_segments = array();
+			if ( '' !== $id_display ) {
+				$summary_segments[] = '<span class="vexpay-otp-account__summary-part">' . esc_html( $id_display ) . '</span>';
+			}
+			if ( '' !== $bank_label ) {
+				$bank_segment = '<span class="vexpay-otp-account__summary-bank">';
+				if ( '' !== $bank_logo ) {
+					$bank_segment .= sprintf(
+						'<img class="vexpay-otp-account__summary-logo" src="%1$s" alt="" width="20" height="20" loading="lazy" decoding="async" />',
+						esc_url( $bank_logo )
+					);
+				} else {
+					$fallback      = '' !== $bank_code ? substr( $bank_code, -2 ) : '?';
+					$bank_segment .= '<span class="vexpay-otp-account__summary-logo vexpay-otp-account__summary-logo--fallback" aria-hidden="true">' . esc_html( $fallback ) . '</span>';
+				}
+				$bank_segment      .= '<span class="vexpay-otp-account__summary-bank-name">' . esc_html( $bank_label ) . '</span>';
+				$bank_segment      .= '</span>';
+				$summary_segments[] = $bank_segment;
+			}
+			if ( '' !== $phone_masked ) {
+				$summary_segments[] = '<span class="vexpay-otp-account__summary-part">' . esc_html( $phone_masked ) . '</span>';
+			}
+			echo implode( '<span class="vexpay-otp-account__summary-sep" aria-hidden="true"> | </span>', $summary_segments ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- segments escaped above.
+			echo '</span>';
 			printf(
-				'<button type="button" class="vexpay-otp-account__edit" data-vexpay-otp-account-edit data-hide-label="%1$s" aria-expanded="false">%2$s</button>',
+				'<button type="button" class="vexpay-otp-account__edit" data-vexpay-otp-account-edit data-edit-label="%2$s" data-hide-label="%1$s" aria-expanded="false"><span class="vexpay-otp-account__edit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" focusable="false"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm18-11.5a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75L21 5.75Z"/></svg></span><span class="vexpay-otp-account__edit-label">%3$s</span></button>',
 				esc_attr__( 'Hide', 'woo-vexpay-gateway' ),
+				esc_attr__( 'Edit', 'woo-vexpay-gateway' ),
 				esc_html__( 'Edit', 'woo-vexpay-gateway' )
 			);
 			echo '</div>';
@@ -2134,19 +2155,16 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		wp_nonce_field( 'vexpay_otp_' . $order_id, 'vexpay_otp_nonce' );
 		echo '<input type="hidden" name="order_id" value="' . esc_attr( (string) $order_id ) . '" />';
 		echo '<div class="form-row vexpay-field-group vexpay-otp-field">';
-		echo '<label id="vexpay_token_label" for="vexpay_otp_cell_0">' . esc_html__( 'Your code', 'woo-vexpay-gateway' ) . '&nbsp;<span class="required">*</span></label>';
+		echo '<label id="vexpay_token_label" for="vexpay_otp_cell_0">' . esc_html__( 'Your code', 'woo-vexpay-gateway' ) . '</label>';
 		echo '<input type="hidden" name="vexpay_token" id="vexpay_token" value="" autocomplete="one-time-code" />';
 		echo '<div class="vexpay-otp-pin" data-vexpay-otp-pin role="group" aria-labelledby="vexpay_token_label">';
 		for ( $i = 0; $i < 8; $i++ ) {
-			$cell_class = 'vexpay-otp-cell' . ( $i >= 6 ? ' vexpay-otp-cell--extra' : '' );
 			printf(
-				'<input type="text" class="%4$s" id="vexpay_otp_cell_%1$d" inputmode="numeric" maxlength="1" pattern="\\d*" autocomplete="%2$s" aria-label="%3$s" data-index="%1$d"%5$s />',
+				'<input type="text" class="vexpay-otp-cell" id="vexpay_otp_cell_%1$d" inputmode="numeric" maxlength="1" pattern="\\d*" autocomplete="%2$s" aria-label="%3$s" data-index="%1$d" />',
 				(int) $i,
 				0 === $i ? 'one-time-code' : 'off',
 				/* translators: %d: digit position 1–8 */
-				esc_attr( sprintf( __( 'Digit %d', 'woo-vexpay-gateway' ), $i + 1 ) ),
-				esc_attr( $cell_class ),
-				$i >= 6 ? ' tabindex="-1"' : ''
+				esc_attr( sprintf( __( 'Digit %d', 'woo-vexpay-gateway' ), $i + 1 ) )
 			);
 		}
 		echo '</div>';
@@ -2190,15 +2208,16 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 		echo '</form>';
 
-		echo '<p class="vexpay-otp-trust">';
-		echo '<span class="vexpay-otp-trust__lock" aria-hidden="true">';
-		echo '<svg viewBox="0 0 24 24" width="12" height="12" focusable="false"><path fill="currentColor" d="M17 9V7a5 5 0 0 0-10 0v2H5.5A1.5 1.5 0 0 0 4 10.5v8A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 18.5 9H17Zm-8-2a3 3 0 0 1 6 0v2H9V7Z"/></svg>';
-		echo '</span>';
-		echo '<span>' . esc_html__( 'Encrypted', 'woo-vexpay-gateway' ) . '</span>';
-		echo '</p>';
-
 		echo '<p class="vexpay-otp-actions">';
-		echo '<button type="submit" form="vexpay_otp_form" class="button alt vexpay-otp-submit">' . esc_html__( 'Confirm payment', 'woo-vexpay-gateway' ) . '</button>';
+		echo '<button type="submit" form="vexpay_otp_form" class="button alt vexpay-otp-submit">';
+		echo '<span class="vexpay-otp-submit__label">' . esc_html__( 'Confirm payment', 'woo-vexpay-gateway' ) . '</span>';
+		echo '<span class="vexpay-otp-submit__secure">';
+		echo '<span class="vexpay-otp-submit__lock" aria-hidden="true">';
+		echo '<svg viewBox="0 0 24 24" width="11" height="11" focusable="false"><path fill="currentColor" d="M17 9V7a5 5 0 0 0-10 0v2H5.5A1.5 1.5 0 0 0 4 10.5v8A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 18.5 9H17Zm-8-2a3 3 0 0 1 6 0v2H9V7Z"/></svg>';
+		echo '</span>';
+		echo esc_html__( 'Encrypted', 'woo-vexpay-gateway' );
+		echo '</span>';
+		echo '</button>';
 		echo '</p>';
 		echo '</div>';
 

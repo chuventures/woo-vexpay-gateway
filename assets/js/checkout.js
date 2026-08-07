@@ -22,7 +22,11 @@
 		if (!bank || !bank.code) {
 			$content.html(
 				'<span class="vexpay-bank-placeholder">' +
-					($picker.data('placeholder') || 'Select your bank') +
+					($picker.data('placeholder') ||
+						(window.vexpayCheckout &&
+							vexpayCheckout.i18n &&
+							vexpayCheckout.i18n.selectBank) ||
+						'Select your bank') +
 					'</span>'
 			);
 			return;
@@ -447,7 +451,8 @@
 			return;
 		}
 
-		var editLabel = edit.textContent;
+		var labelEl = edit.querySelector('.vexpay-otp-account__edit-label');
+		var editLabel = edit.getAttribute('data-edit-label') || (labelEl ? labelEl.textContent : '') || 'Edit';
 		var hideLabel = edit.getAttribute('data-hide-label') || 'Hide';
 
 		edit.addEventListener('click', function () {
@@ -456,12 +461,20 @@
 				details.removeAttribute('hidden');
 				account.classList.add('is-expanded');
 				edit.setAttribute('aria-expanded', 'true');
-				edit.textContent = hideLabel;
+				if (labelEl) {
+					labelEl.textContent = hideLabel;
+				} else {
+					edit.textContent = hideLabel;
+				}
 			} else {
 				details.setAttribute('hidden', '');
 				account.classList.remove('is-expanded');
 				edit.setAttribute('aria-expanded', 'false');
-				edit.textContent = editLabel;
+				if (labelEl) {
+					labelEl.textContent = editLabel;
+				} else {
+					edit.textContent = editLabel;
+				}
 			}
 		});
 	}
@@ -483,23 +496,6 @@
 		var autoSubmitTimer = null;
 		var submitting = false;
 
-		function setExtended(extended) {
-			pin.classList.toggle('is-extended', extended);
-			cells.forEach(function (cell, index) {
-				if (index < 6) {
-					return;
-				}
-				if (extended) {
-					cell.removeAttribute('tabindex');
-				} else {
-					cell.setAttribute('tabindex', '-1');
-					if (!cell.value) {
-						cell.classList.remove('is-filled');
-					}
-				}
-			});
-		}
-
 		function sync() {
 			var value = '';
 			for (var i = 0; i < cells.length; i += 1) {
@@ -510,15 +506,13 @@
 				value += digit.charAt(0);
 			}
 			hidden.value = value;
-			setExtended(value.length > 6);
 			pin.classList.toggle('is-complete', value.length >= 6);
 			pin.classList.remove('is-invalid');
 			return value;
 		}
 
 		function focusAt(index) {
-			var max = pin.classList.contains('is-extended') ? cells.length - 1 : 5;
-			var cell = cells[Math.max(0, Math.min(index, max))];
+			var cell = cells[Math.max(0, Math.min(index, cells.length - 1))];
 			if (cell) {
 				cell.focus();
 				cell.select();
@@ -557,9 +551,6 @@
 		}
 
 		function fillFrom(startIndex, digits) {
-			if (digits.length > 6) {
-				setExtended(true);
-			}
 			var i = startIndex;
 			var d = 0;
 			while (i < cells.length && d < digits.length) {
@@ -573,7 +564,7 @@
 				cells[i].classList.remove('is-filled');
 			}
 			var value = sync();
-			if (d >= cells.length || value.length >= 8) {
+			if (value.length >= cells.length) {
 				focusAt(cells.length - 1);
 			} else if (value.length >= 6 && digits.length <= 6) {
 				focusAt(5);
@@ -589,31 +580,22 @@
 				if (!digits) {
 					cell.value = '';
 					cell.classList.remove('is-filled');
-					var cleared = sync();
-					if (cleared.length <= 6) {
-						setExtended(false);
-					}
+					sync();
 					return;
 				}
 				if (digits.length > 1) {
 					fillFrom(index, digits.slice(0, cells.length - index));
 					return;
 				}
-				if (index >= 6) {
-					setExtended(true);
-				}
 				cell.value = digits.charAt(0);
 				cell.classList.add('is-filled');
 				var value = sync();
 				if (index === 5 && value.length === 6) {
-					// Stay on 6th; allow typing into 7th by extending on next digit.
+					// Stay on 6th so a quick 7th digit can continue before autosubmit.
 					maybeAutoSubmit(value);
 					return;
 				}
-				if (index < cells.length - 1 && (index < 5 || value.length > 6)) {
-					if (index === 5 && value.length === 6) {
-						setExtended(true);
-					}
+				if (index < cells.length - 1) {
 					focusAt(index + 1);
 				}
 				maybeAutoSubmit(value);
@@ -628,10 +610,7 @@
 					if (cell.value) {
 						cell.value = '';
 						cell.classList.remove('is-filled');
-						var afterClear = sync();
-						if (afterClear.length <= 6) {
-							setExtended(false);
-						}
+						sync();
 						event.preventDefault();
 						return;
 					}
@@ -639,10 +618,7 @@
 						event.preventDefault();
 						cells[index - 1].value = '';
 						cells[index - 1].classList.remove('is-filled');
-						var afterBack = sync();
-						if (afterBack.length <= 6) {
-							setExtended(false);
-						}
+						sync();
 						focusAt(index - 1);
 					}
 					return;
@@ -653,12 +629,11 @@
 						window.clearTimeout(autoSubmitTimer);
 						autoSubmitTimer = null;
 					}
-					setExtended(true);
 					cells[6].value = event.key;
 					cells[6].classList.add('is-filled');
-					var extendedValue = sync();
+					var continued = sync();
 					focusAt(6);
-					maybeAutoSubmit(extendedValue);
+					maybeAutoSubmit(continued);
 					return;
 				}
 				if (event.key === 'ArrowLeft' && index > 0) {
@@ -668,9 +643,6 @@
 				}
 				if (event.key === 'ArrowRight' && index < cells.length - 1) {
 					event.preventDefault();
-					if (index >= 5) {
-						setExtended(true);
-					}
 					focusAt(index + 1);
 				}
 			});

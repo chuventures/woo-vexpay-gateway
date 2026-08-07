@@ -353,13 +353,25 @@
 	text-decoration: none;
 }
 
-.vexpay-otp-page__rate-exact {
-	margin: 0.35rem 0 0;
+.vexpay-otp-page__summary-row--subtotal {
+	margin-top: 0.35rem;
+	padding-top: 0.4rem;
+	border-top: 1px solid var(--vex-line);
 	font-family: var(--vex-font-display);
-	font-size: 0.7rem;
-	font-weight: 500;
+	font-size: 0.78rem;
+	font-weight: 600;
 	font-variant-numeric: tabular-nums;
+	color: var(--vex-ink);
+}
+
+.vexpay-otp-page__subtotal-label {
 	color: var(--vex-muted);
+	font-weight: 500;
+}
+
+.vexpay-otp-page__subtotal-value {
+	font-weight: 600;
+	color: var(--vex-ink);
 }
 
 .vexpay-otp-page__items {
@@ -602,44 +614,105 @@
 }
 
 .vexpay-otp-page .vexpay-otp-account__summary-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 0;
 	min-width: 0;
 	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	font-family: var(--vex-font-display);
 	font-size: 0.78rem;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
 	color: var(--vex-ink);
 	line-height: 1.35;
+	white-space: nowrap;
+}
+
+.vexpay-otp-page .vexpay-otp-account__summary-part,
+.vexpay-otp-page .vexpay-otp-account__summary-sep {
+	flex-shrink: 0;
+}
+
+.vexpay-otp-page .vexpay-otp-account__summary-bank {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.vexpay-otp-page .vexpay-otp-account__summary-logo {
+	width: 20px;
+	height: 20px;
+	object-fit: contain;
+	border-radius: 5px;
+	background: #fff;
+	border: 1px solid var(--vex-line);
+	flex-shrink: 0;
+}
+
+.vexpay-otp-page .vexpay-otp-account__summary-logo--fallback {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.55rem;
+	font-weight: 700;
+	color: var(--vex-brand);
+}
+
+.vexpay-otp-page .vexpay-otp-account__summary-bank-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .vexpay-otp-page .vexpay-otp-account__edit {
 	appearance: none;
 	-webkit-appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.28rem;
 	flex-shrink: 0;
 	margin: 0;
-	padding: 0;
-	border: none;
-	background: transparent;
+	padding: 0.22rem 0.5rem;
+	border: 1px solid rgba(92, 86, 104, 0.14);
+	border-radius: 999px;
+	background: rgba(92, 86, 104, 0.08);
 	font-family: var(--vex-font-body);
 	font-size: 0.72rem;
 	font-weight: 500;
-	color: var(--vex-brand);
-	text-decoration: underline;
-	text-underline-offset: 0.16em;
+	color: var(--vex-muted);
+	text-decoration: none;
 	cursor: pointer;
 	line-height: 1.3;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.vexpay-otp-page .vexpay-otp-account__edit-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: currentColor;
+	opacity: 0.85;
+}
+
+.vexpay-otp-page .vexpay-otp-account__edit-icon svg {
+	display: block;
 }
 
 .vexpay-otp-page .vexpay-otp-account__edit:hover {
 	color: var(--vex-brand-deep);
+	background: rgba(97, 58, 143, 0.08);
+	border-color: rgba(97, 58, 143, 0.18);
 }
 
 .vexpay-otp-page .vexpay-otp-account__edit:focus-visible {
 	outline: 2px solid rgba(97, 58, 143, 0.28);
-	outline-offset: 3px;
-	border-radius: 4px;
+	outline-offset: 2px;
 }
 
 .vexpay-otp-page .vexpay-otp-account.is-expanded .vexpay-otp-account__summary {
@@ -781,19 +854,14 @@
 
 .vexpay-otp-page .vexpay-otp-pin {
 	display: grid;
-	grid-template-columns: repeat(6, minmax(0, 1fr));
-	gap: 0.45rem;
+	grid-template-columns: repeat(8, minmax(0, 1fr));
+	gap: 0.3rem;
 	padding: 0.15rem 0.1rem 0.35rem;
 	border-radius: 0;
 	background: transparent;
 	border: none;
 	box-shadow: none;
 	transition: none;
-}
-
-.vexpay-otp-page .vexpay-otp-pin.is-extended {
-	grid-template-columns: repeat(8, minmax(0, 1fr));
-	gap: 0.3rem;
 }
 
 .vexpay-otp-page .vexpay-otp-pin.is-focused {
@@ -808,14 +876,6 @@
 
 .vexpay-otp-page .vexpay-otp-pin.is-invalid {
 	animation: vexpay-otp-shake 0.4s ease;
-}
-
-.vexpay-otp-page .vexpay-otp-cell--extra {
-	display: none;
-}
-
-.vexpay-otp-page .vexpay-otp-pin.is-extended .vexpay-otp-cell--extra {
-	display: block;
 }
 
 @keyframes vexpay-otp-shake {
@@ -842,12 +902,12 @@
 	padding: 0 0 0.35rem;
 	box-sizing: border-box;
 	border: none;
-	border-bottom: 2px solid rgba(97, 58, 143, 0.22);
+	border-bottom: 2px solid #c8c8d0;
 	border-radius: 0;
 	background: transparent;
 	box-shadow: none;
 	font-family: var(--vex-font-display);
-	font-size: clamp(1.2rem, 4vw, 1.55rem);
+	font-size: clamp(1.15rem, 3.6vw, 1.45rem);
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
@@ -866,7 +926,7 @@
 }
 
 .vexpay-otp-page .vexpay-otp-cell:hover {
-	border-color: rgba(97, 58, 143, 0.4);
+	border-color: #a8a8b4;
 }
 
 .vexpay-otp-page .vexpay-otp-cell:focus {
@@ -900,43 +960,19 @@
 }
 
 .vexpay-otp-page .vexpay-otp-actions {
-	margin: 0.55rem 0 0;
-}
-
-.vexpay-otp-page .vexpay-otp-trust {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	align-self: center;
-	gap: 0.3rem;
 	margin: 0.7rem 0 0;
-	font-family: var(--vex-font-body);
-	font-size: 0.7rem;
-	font-weight: 500;
-	color: var(--vex-muted);
-	letter-spacing: 0.01em;
-}
-
-.vexpay-otp-page .vexpay-otp-trust__lock {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--vex-success);
-	opacity: 0.9;
-}
-
-.vexpay-otp-page .vexpay-otp-trust__lock svg {
-	display: block;
 }
 
 .vexpay-otp-page .vexpay-otp-submit,
 .vexpay-otp-page button.vexpay-otp-submit {
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	gap: 0.18rem;
 	width: 100%;
-	min-height: 2.75rem;
-	padding: 0.7rem 1rem;
+	min-height: 2.9rem;
+	padding: 0.65rem 1rem 0.55rem;
 	border: none;
 	border-radius: 12px;
 	background: linear-gradient(180deg, #6d459d 0%, var(--vex-brand) 55%, var(--vex-brand-deep) 100%);
@@ -948,6 +984,34 @@
 	color: #fff;
 	cursor: pointer;
 	transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.vexpay-otp-page .vexpay-otp-submit__label {
+	line-height: 1.2;
+}
+
+.vexpay-otp-page .vexpay-otp-submit__secure {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.28rem;
+	font-family: var(--vex-font-body);
+	font-size: 0.68rem;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	color: rgba(255, 255, 255, 0.82);
+	line-height: 1;
+}
+
+.vexpay-otp-page .vexpay-otp-submit__lock {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.95;
+}
+
+.vexpay-otp-page .vexpay-otp-submit__lock svg {
+	display: block;
 }
 
 .vexpay-otp-page .vexpay-otp-submit:hover,
@@ -1175,12 +1239,8 @@
 	}
 
 	.vexpay-otp-page .vexpay-otp-pin {
-		gap: 0.3rem;
+		gap: 0.22rem;
 		padding: 0.1rem 0 0.25rem;
-	}
-
-	.vexpay-otp-page .vexpay-otp-pin.is-extended {
-		gap: 0.2rem;
 	}
 
 	.vexpay-otp-page .vexpay-otp-cell {

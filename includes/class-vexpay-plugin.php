@@ -179,6 +179,7 @@ final class VEXPay_Plugin {
 			'i18n'    => array(
 				'removeAccount' => __( 'Remove saved account', 'woo-vexpay-gateway' ),
 				'removeFailed'  => __( 'Could not remove saved account.', 'woo-vexpay-gateway' ),
+				'selectBank'    => __( 'Select your bank', 'woo-vexpay-gateway' ),
 			),
 		);
 	}
