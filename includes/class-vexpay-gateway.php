@@ -845,25 +845,29 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function get_debtor_accounts( bool $enrich = true ): array {
-		$accounts = array();
+		$accounts    = array();
+		$initialized = false;
 
 		if ( function_exists( 'WC' ) && WC()->session ) {
 			$session = WC()->session->get( VEXPay_Helpers::ACCOUNTS_SESSION_KEY );
+			// Explicit empty array means "cleared" — do not fall through to meta/orders.
 			if ( is_array( $session ) ) {
-				$accounts = VEXPay_Helpers::sanitize_debtor_accounts( $session );
+				$accounts    = VEXPay_Helpers::sanitize_debtor_accounts( $session );
+				$initialized = true;
 			}
 		}
 
 		$user_id = get_current_user_id();
-		if ( empty( $accounts ) && $user_id > 0 ) {
-			$meta = get_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY, true );
-			if ( is_array( $meta ) ) {
-				$accounts = VEXPay_Helpers::sanitize_debtor_accounts( $meta );
-			}
+		if ( ! $initialized && $user_id > 0 && metadata_exists( 'user', $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY ) ) {
+			$meta        = get_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY, true );
+			$accounts    = VEXPay_Helpers::sanitize_debtor_accounts( is_array( $meta ) ? $meta : array() );
+			$initialized = true;
 		}
 
-		// Migrate legacy single profile / recent orders into the accounts list once.
-		if ( empty( $accounts ) ) {
+		// Migrate legacy single profile / recent orders only when the multi-account
+		// list has never been established. An intentional empty list (after delete)
+		// must not be rehydrated from order history on the next page load.
+		if ( ! $initialized ) {
 			$legacy = null;
 			if ( function_exists( 'WC' ) && WC()->session ) {
 				$session_profile = WC()->session->get( VEXPay_Helpers::PROFILE_SESSION_KEY );
@@ -967,11 +971,9 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$user_id = get_current_user_id();
 		if ( $user_id > 0 ) {
-			if ( empty( $accounts ) ) {
-				delete_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY );
-			} else {
-				update_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY, $accounts );
-			}
+			// Always write, including []. Deleting the meta key made an empty list
+			// indistinguishable from "never migrated", so deletes came back from orders.
+			update_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY, $accounts );
 		}
 	}
 
@@ -1103,10 +1105,29 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
+	 * Ensure WooCommerce customer session is available (admin-ajax often skips it).
+	 */
+	private function ensure_customer_session(): void {
+		if ( ! function_exists( 'WC' ) ) {
+			return;
+		}
+
+		if ( null === WC()->cart && function_exists( 'wc_load_cart' ) ) {
+			wc_load_cart();
+		}
+
+		if ( WC()->session && ! WC()->session->has_session() ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+	}
+
+	/**
 	 * AJAX: remove a saved payer account for the current user/session.
 	 */
 	public function ajax_delete_debtor_account(): void {
 		check_ajax_referer( 'vexpay_delete_debtor_account', 'nonce' );
+
+		$this->ensure_customer_session();
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified above.
 		$profile = VEXPay_Helpers::sanitize_debtor_profile(
@@ -1746,11 +1767,6 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	</div>
 	<main class="vexpay-otp-page__main">
 		<div class="vexpay-otp-page__card">
-			<p class="vexpay-otp-page__back">
-				<a class="vexpay-otp-page__back-link" href="<?php echo esc_url( $this->get_back_to_checkout_url( $order ) ); ?>">
-					<?php echo esc_html__( 'Back to checkout', 'woo-vexpay-gateway' ); ?>
-				</a>
-			</p>
 			<header class="vexpay-otp-page__header">
 				<img
 					class="vexpay-otp-page__logo"
@@ -1760,53 +1776,71 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 					height="84"
 					decoding="async"
 				/>
+				<a class="vexpay-otp-page__back-link" href="<?php echo esc_url( $this->get_back_to_checkout_url( $order ) ); ?>">
+					<?php echo esc_html__( 'Back to checkout', 'woo-vexpay-gateway' ); ?>
+				</a>
 			</header>
 
 			<div class="vexpay-otp-page__summary">
-				<div class="vexpay-otp-page__summary-row">
-					<span class="vexpay-otp-page__order">
-						<?php
-						echo esc_html(
-							sprintf(
-								/* translators: %s: order number */
-								__( 'Order #%s', 'woo-vexpay-gateway' ),
-								$order->get_order_number()
-							)
-						);
-						?>
-					</span>
-					<?php if ( $usd > 0 ) : ?>
-						<span class="vexpay-otp-page__amount">
-							<?php echo esc_html( sprintf( '$%s USD', number_format_i18n( $usd, 2 ) ) ); ?>
-						</span>
-					<?php endif; ?>
-				</div>
+				<?php
+				$order_label = sprintf(
+					/* translators: %s: order number */
+					__( 'Order #%s', 'woo-vexpay-gateway' ),
+					$order->get_order_number()
+				);
+				?>
 				<?php if ( ! empty( $line_items ) ) : ?>
-					<?php if ( 1 === count( $line_items ) ) : ?>
-						<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--items">
-							<span class="vexpay-otp-page__items">
-								<?php
-								echo esc_html(
-									sprintf(
-										/* translators: 1: product name, 2: quantity */
-										__( '%1$s × %2$d', 'woo-vexpay-gateway' ),
-										$line_items[0]['name'],
-										$line_items[0]['qty']
-									)
-								);
-								?>
+					<details class="vexpay-otp-page__items-disclosure">
+						<summary class="vexpay-otp-page__items-summary">
+							<span class="vexpay-otp-page__order">
+								<?php echo esc_html( $order_label ); ?>
 							</span>
-						</div>
-					<?php else : ?>
-						<ul class="vexpay-otp-page__items-list">
-							<?php foreach ( $line_items as $line_item ) : ?>
-								<li class="vexpay-otp-page__items-list-item">
-									<span class="vexpay-otp-page__item-name"><?php echo esc_html( $line_item['name'] ); ?></span>
-									<span class="vexpay-otp-page__item-qty"><?php echo esc_html( '× ' . (string) (int) $line_item['qty'] ); ?></span>
-								</li>
-							<?php endforeach; ?>
-						</ul>
-					<?php endif; ?>
+							<span class="vexpay-otp-page__items-summary-end">
+								<?php if ( $usd > 0 ) : ?>
+									<span class="vexpay-otp-page__amount">
+										<?php echo esc_html( sprintf( '$%s USD', number_format_i18n( $usd, 2 ) ) ); ?>
+									</span>
+								<?php endif; ?>
+								<span class="vexpay-otp-page__items-chevron" aria-hidden="true"></span>
+							</span>
+						</summary>
+						<?php if ( 1 === count( $line_items ) ) : ?>
+							<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--items">
+								<span class="vexpay-otp-page__items">
+									<?php
+									echo esc_html(
+										sprintf(
+											/* translators: 1: product name, 2: quantity */
+											__( '%1$s × %2$d', 'woo-vexpay-gateway' ),
+											$line_items[0]['name'],
+											$line_items[0]['qty']
+										)
+									);
+									?>
+								</span>
+							</div>
+						<?php else : ?>
+							<ul class="vexpay-otp-page__items-list">
+								<?php foreach ( $line_items as $line_item ) : ?>
+									<li class="vexpay-otp-page__items-list-item">
+										<span class="vexpay-otp-page__item-name"><?php echo esc_html( $line_item['name'] ); ?></span>
+										<span class="vexpay-otp-page__item-qty"><?php echo esc_html( '× ' . (string) (int) $line_item['qty'] ); ?></span>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						<?php endif; ?>
+					</details>
+				<?php else : ?>
+					<div class="vexpay-otp-page__summary-row">
+						<span class="vexpay-otp-page__order">
+							<?php echo esc_html( $order_label ); ?>
+						</span>
+						<?php if ( $usd > 0 ) : ?>
+							<span class="vexpay-otp-page__amount">
+								<?php echo esc_html( sprintf( '$%s USD', number_format_i18n( $usd, 2 ) ) ); ?>
+							</span>
+						<?php endif; ?>
+					</div>
 				<?php endif; ?>
 				<?php if ( $ves > 0 || $bcv_rate > 0 ) : ?>
 					<div class="vexpay-otp-page__summary-row vexpay-otp-page__summary-row--fx">
@@ -1985,7 +2019,16 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			}
 		}
 
-		if ( '' !== $bank_label || '' !== $phone || '' !== $id_display ) {
+		$has_account_meta = '' !== $bank_label || '' !== $phone || '' !== $id_display;
+
+		if ( $has_account_meta ) {
+			echo '<div class="vexpay-otp-account">';
+			echo '<div class="vexpay-otp-account__header">';
+			echo '<span class="vexpay-otp-account__title">' . esc_html__( 'Your details', 'woo-vexpay-gateway' ) . '</span>';
+			echo '<a class="vexpay-otp-change__link" href="' . esc_url( $change_url ) . '">';
+			echo esc_html__( 'Change account', 'woo-vexpay-gateway' );
+			echo '</a>';
+			echo '</div>';
 			echo '<ul class="vexpay-otp-meta">';
 			if ( '' !== $id_display ) {
 				echo '<li><span class="vexpay-otp-meta__label">' . esc_html__( 'Cédula', 'woo-vexpay-gateway' ) . '</span> <span class="vexpay-otp-meta__value">' . esc_html( $id_display ) . '</span></li>';
@@ -2012,13 +2055,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				echo '<li><span class="vexpay-otp-meta__label">' . esc_html__( 'Phone', 'woo-vexpay-gateway' ) . '</span> <span class="vexpay-otp-meta__value">' . esc_html( $masked ) . '</span></li>';
 			}
 			echo '</ul>';
+			echo '</div>';
+		} else {
+			echo '<p class="vexpay-otp-change">';
+			echo '<a class="vexpay-otp-change__link" href="' . esc_url( $change_url ) . '">';
+			echo esc_html__( 'Change account', 'woo-vexpay-gateway' );
+			echo '</a>';
+			echo '</p>';
 		}
-
-		echo '<p class="vexpay-otp-change">';
-		echo '<a class="vexpay-otp-change__link" href="' . esc_url( $change_url ) . '">';
-		echo esc_html__( 'Change account', 'woo-vexpay-gateway' );
-		echo '</a>';
-		echo '</p>';
 
 		$resend_action = $this->get_wc_api_url( 'vexpay_otp_resend' );
 		$cooldown_left = $this->otp_resend_cooldown_remaining( $order );

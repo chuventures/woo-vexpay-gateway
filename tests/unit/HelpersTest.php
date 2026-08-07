@@ -157,6 +157,43 @@ final class HelpersTest extends TestCase {
 		$this->assertCount( 0, $list );
 	}
 
+	public function test_remove_debtor_account_matches_formatted_variants(): void {
+		$stored = VEXPay_Helpers::profile_from_normalized( 'V18819897', '584149333844', '0102' );
+		$list   = VEXPay_Helpers::upsert_debtor_account( array(), $stored );
+		$this->assertCount( 1, $list );
+
+		// Chip/AJAX payloads often carry display-ish id (dots) or full local phone digits.
+		$from_chip = VEXPay_Helpers::sanitize_debtor_profile(
+			array(
+				'id_type'      => 'V',
+				'id_number'    => '18.819.897',
+				'phone_prefix' => '0414',
+				'phone_number' => '9333844',
+				'bank'         => '0102',
+			)
+		);
+		$this->assertSame(
+			VEXPay_Helpers::debtor_profile_fingerprint( $stored ),
+			VEXPay_Helpers::debtor_profile_fingerprint( $from_chip )
+		);
+
+		$list = VEXPay_Helpers::remove_debtor_account( $list, $from_chip );
+		$this->assertCount( 0, $list );
+
+		$list = VEXPay_Helpers::upsert_debtor_account( array(), $stored );
+		$bank_variant = VEXPay_Helpers::sanitize_debtor_profile(
+			array(
+				'id_type'      => 'v',
+				'id_number'    => 'V-18.819.897',
+				'phone_prefix' => '0414',
+				'phone_number' => '9333844',
+				'bank'         => '102',
+			)
+		);
+		$list = VEXPay_Helpers::remove_debtor_account( $list, $bank_variant );
+		$this->assertCount( 0, $list );
+	}
+
 	public function test_is_valid_token(): void {
 		$this->assertTrue( VEXPay_Helpers::is_valid_token( '123456' ) );
 		$this->assertTrue( VEXPay_Helpers::is_valid_token( '12345678' ) );
