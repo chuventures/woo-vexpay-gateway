@@ -482,11 +482,15 @@ msgstr "Tu código"
 msgid "Digit %d"
 msgstr "Dígito %d"
 
-#: includes/class-vexpay-gateway.php:2153
+#: includes/class-vexpay-gateway.php:2170
 msgid "6–8 digits · paste works too"
 msgstr "6–8 dígitos · también puedes pegar"
 
-#: includes/class-vexpay-gateway.php:2167
+#: includes/class-vexpay-gateway.php:2170
+msgid "Code may arrive by SMS or notification — check your bank app if needed."
+msgstr "El código puede llegar por SMS o notificación — revísalo en la app del banco."
+
+#: includes/class-vexpay-gateway.php:2185
 msgid "Didn’t get it? Resend code"
 msgstr "¿No te llegó? Reenviar código"
 

@@ -1785,20 +1785,19 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	<main class="vexpay-otp-page__main">
 		<div class="vexpay-otp-page__card">
 			<header class="vexpay-otp-page__header">
-				<div class="vexpay-otp-page__brand">
-					<a class="vexpay-otp-page__back-link" href="<?php echo esc_url( $this->get_back_to_checkout_url( $order ) ); ?>">
-						<span class="vexpay-otp-page__back-arrow" aria-hidden="true">←</span>
-						<?php echo esc_html__( 'Back to checkout', 'woo-vexpay-gateway' ); ?>
-					</a>
-					<img
-						class="vexpay-otp-page__logo"
-						src="<?php echo esc_url( $logo_url ); ?>"
-						alt="VEXPay"
-						width="160"
-						height="84"
-						decoding="async"
-					/>
-				</div>
+				<a class="vexpay-otp-page__back-link" href="<?php echo esc_url( $this->get_back_to_checkout_url( $order ) ); ?>">
+					<span class="vexpay-otp-page__back-arrow" aria-hidden="true">←</span>
+					<?php echo esc_html__( 'Back to checkout', 'woo-vexpay-gateway' ); ?>
+				</a>
+				<img
+					class="vexpay-otp-page__logo"
+					src="<?php echo esc_url( $logo_url ); ?>"
+					alt="VEXPay"
+					width="160"
+					height="84"
+					decoding="async"
+				/>
+				<span class="vexpay-otp-page__header-spacer" aria-hidden="true"></span>
 			</header>
 
 			<div class="vexpay-otp-page__summary">
@@ -2051,27 +2050,26 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '<div class="vexpay-otp-account" data-vexpay-otp-account>';
 			echo '<div class="vexpay-otp-account__summary">';
 			echo '<span class="vexpay-otp-account__summary-text">';
-			$summary_segments = array();
-			if ( '' !== $id_display ) {
-				$summary_segments[] = '<span class="vexpay-otp-account__summary-part">' . esc_html( $id_display ) . '</span>';
-			}
-			if ( '' !== $bank_label ) {
-				$bank_segment = '<span class="vexpay-otp-account__summary-bank">';
+			// Icon leftmost — bank name lives in the expanded Edit card only.
+			if ( '' !== $bank_label || '' !== $bank_logo || '' !== $bank_code ) {
+				echo '<span class="vexpay-otp-account__summary-bank">';
 				if ( '' !== $bank_logo ) {
-					$bank_segment .= sprintf(
+					printf(
 						'<img class="vexpay-otp-account__summary-logo" src="%1$s" alt="" width="20" height="20" loading="lazy" decoding="async" />',
 						esc_url( $bank_logo )
 					);
 				} else {
-					$fallback      = '' !== $bank_code ? substr( $bank_code, -2 ) : '?';
-					$bank_segment .= '<span class="vexpay-otp-account__summary-logo vexpay-otp-account__summary-logo--fallback" aria-hidden="true">' . esc_html( $fallback ) . '</span>';
+					$fallback = '' !== $bank_code ? substr( $bank_code, -2 ) : '?';
+					echo '<span class="vexpay-otp-account__summary-logo vexpay-otp-account__summary-logo--fallback" aria-hidden="true">' . esc_html( $fallback ) . '</span>';
 				}
-				$bank_segment      .= '<span class="vexpay-otp-account__summary-bank-name">' . esc_html( $bank_label ) . '</span>';
-				$bank_segment      .= '</span>';
-				$summary_segments[] = $bank_segment;
+				echo '</span>';
+			}
+			$summary_segments = array();
+			if ( '' !== $id_display ) {
+				$summary_segments[] = '<span class="vexpay-otp-account__summary-part">' . esc_html( $id_display ) . '</span>';
 			}
 			if ( '' !== $phone_masked ) {
-				$summary_segments[] = '<span class="vexpay-otp-account__summary-part">' . esc_html( $phone_masked ) . '</span>';
+				$summary_segments[] = '<span class="vexpay-otp-account__summary-part vexpay-otp-account__summary-phone">' . esc_html( $phone_masked ) . '</span>';
 			}
 			echo implode( '<span class="vexpay-otp-account__summary-sep" aria-hidden="true"> | </span>', $summary_segments ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- segments escaped above.
 			echo '</span>';
@@ -2169,6 +2167,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		}
 		echo '</div>';
 		echo '<p class="vexpay-otp-hint">' . esc_html__( '6–8 digits · paste works too', 'woo-vexpay-gateway' ) . '</p>';
+		echo '<p class="vexpay-otp-hint vexpay-otp-hint--secondary">' . esc_html__( 'Code may arrive by SMS or notification — check your bank app if needed.', 'woo-vexpay-gateway' ) . '</p>';
 		if ( '' !== $otp_inline_msg ) {
 			printf(
 				'<p class="vexpay-otp-inline-error" role="alert">%s</p>',
