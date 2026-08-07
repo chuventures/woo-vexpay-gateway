@@ -386,15 +386,14 @@
 					if ( ! data || ! data.success ) {
 						throw new Error( 'delete failed' );
 					}
-					let shouldClear = wasActive;
-					setAccounts( ( prev ) => {
-						const next = prev.filter( ( row ) => fingerprint( row ) !== id );
-						if ( next.length === 0 ) {
-							shouldClear = true;
-						}
-						return next;
-					} );
-					if ( shouldClear ) {
+					// Compute remaining synchronously — do not mutate flags inside
+					// setState updaters (React may defer them; last-chip delete then
+					// left showDetails=false with an empty accounts list).
+					const remaining = accounts.filter(
+						( row ) => fingerprint( row ) !== id
+					);
+					setAccounts( remaining );
+					if ( wasActive || remaining.length === 0 ) {
 						applyAccount( null );
 					}
 				} )
@@ -408,6 +407,14 @@
 					setRemovingId( null );
 				} );
 		};
+
+		// Safety net: empty saved-accounts list must never leave the form gated off.
+		useEffect( () => {
+			if ( accounts.length === 0 && ! showDetails ) {
+				setActiveAccount( 'new' );
+				setShowDetails( true );
+			}
+		}, [ accounts.length, showDetails ] );
 
 		useEffect( () => {
 			const unsubscribe = onPaymentSetup( () => {
