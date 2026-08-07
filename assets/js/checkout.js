@@ -434,6 +434,38 @@
 			});
 	}
 
+	function bindOtpAccount(root) {
+		var account = (root || document).querySelector('[data-vexpay-otp-account]');
+		if (!account || account.getAttribute('data-vexpay-bound') === '1') {
+			return;
+		}
+		account.setAttribute('data-vexpay-bound', '1');
+
+		var edit = account.querySelector('[data-vexpay-otp-account-edit]');
+		var details = account.querySelector('[data-vexpay-otp-account-details]');
+		if (!edit || !details) {
+			return;
+		}
+
+		var editLabel = edit.textContent;
+		var hideLabel = edit.getAttribute('data-hide-label') || 'Hide';
+
+		edit.addEventListener('click', function () {
+			var expanded = details.hasAttribute('hidden');
+			if (expanded) {
+				details.removeAttribute('hidden');
+				account.classList.add('is-expanded');
+				edit.setAttribute('aria-expanded', 'true');
+				edit.textContent = hideLabel;
+			} else {
+				details.setAttribute('hidden', '');
+				account.classList.remove('is-expanded');
+				edit.setAttribute('aria-expanded', 'false');
+				edit.textContent = editLabel;
+			}
+		});
+	}
+
 	function bindOtpPin(root) {
 		var pin = (root || document).querySelector('[data-vexpay-otp-pin]');
 		if (!pin || pin.getAttribute('data-vexpay-bound') === '1') {
@@ -441,11 +473,31 @@
 		}
 		pin.setAttribute('data-vexpay-bound', '1');
 
-		var form = pin.closest('form');
-		var hidden = form ? form.querySelector('#vexpay_token') : null;
+		var form = pin.closest('form') || document.getElementById('vexpay_otp_form');
+		var hidden = form ? form.querySelector('#vexpay_token') : document.getElementById('vexpay_token');
 		var cells = Array.prototype.slice.call(pin.querySelectorAll('.vexpay-otp-cell'));
 		if (!hidden || !cells.length) {
 			return;
+		}
+
+		var autoSubmitTimer = null;
+		var submitting = false;
+
+		function setExtended(extended) {
+			pin.classList.toggle('is-extended', extended);
+			cells.forEach(function (cell, index) {
+				if (index < 6) {
+					return;
+				}
+				if (extended) {
+					cell.removeAttribute('tabindex');
+				} else {
+					cell.setAttribute('tabindex', '-1');
+					if (!cell.value) {
+						cell.classList.remove('is-filled');
+					}
+				}
+			});
 		}
 
 		function sync() {
@@ -458,19 +510,56 @@
 				value += digit.charAt(0);
 			}
 			hidden.value = value;
+			setExtended(value.length > 6);
 			pin.classList.toggle('is-complete', value.length >= 6);
 			pin.classList.remove('is-invalid');
+			return value;
 		}
 
 		function focusAt(index) {
-			var cell = cells[Math.max(0, Math.min(index, cells.length - 1))];
+			var max = pin.classList.contains('is-extended') ? cells.length - 1 : 5;
+			var cell = cells[Math.max(0, Math.min(index, max))];
 			if (cell) {
 				cell.focus();
 				cell.select();
 			}
 		}
 
+		function maybeAutoSubmit(value) {
+			if (!form || submitting) {
+				return;
+			}
+			if (value.length !== 6 && value.length !== 8) {
+				return;
+			}
+			if (autoSubmitTimer) {
+				window.clearTimeout(autoSubmitTimer);
+			}
+			autoSubmitTimer = window.setTimeout(function () {
+				autoSubmitTimer = null;
+				if (submitting) {
+					return;
+				}
+				var current = sync();
+				if (current.length !== 6 && current.length !== 8) {
+					return;
+				}
+				if (!/^\d{6,8}$/.test(current)) {
+					return;
+				}
+				submitting = true;
+				if (typeof form.requestSubmit === 'function') {
+					form.requestSubmit();
+				} else {
+					form.submit();
+				}
+			}, 280);
+		}
+
 		function fillFrom(startIndex, digits) {
+			if (digits.length > 6) {
+				setExtended(true);
+			}
 			var i = startIndex;
 			var d = 0;
 			while (i < cells.length && d < digits.length) {
@@ -483,12 +572,15 @@
 				cells[i].value = '';
 				cells[i].classList.remove('is-filled');
 			}
-			sync();
-			if (d >= cells.length) {
+			var value = sync();
+			if (d >= cells.length || value.length >= 8) {
 				focusAt(cells.length - 1);
+			} else if (value.length >= 6 && digits.length <= 6) {
+				focusAt(5);
 			} else {
 				focusAt(startIndex + d);
 			}
+			maybeAutoSubmit(value);
 		}
 
 		cells.forEach(function (cell, index) {
@@ -497,27 +589,49 @@
 				if (!digits) {
 					cell.value = '';
 					cell.classList.remove('is-filled');
-					sync();
+					var cleared = sync();
+					if (cleared.length <= 6) {
+						setExtended(false);
+					}
 					return;
 				}
 				if (digits.length > 1) {
 					fillFrom(index, digits.slice(0, cells.length - index));
 					return;
 				}
+				if (index >= 6) {
+					setExtended(true);
+				}
 				cell.value = digits.charAt(0);
 				cell.classList.add('is-filled');
-				sync();
-				if (index < cells.length - 1) {
+				var value = sync();
+				if (index === 5 && value.length === 6) {
+					// Stay on 6th; allow typing into 7th by extending on next digit.
+					maybeAutoSubmit(value);
+					return;
+				}
+				if (index < cells.length - 1 && (index < 5 || value.length > 6)) {
+					if (index === 5 && value.length === 6) {
+						setExtended(true);
+					}
 					focusAt(index + 1);
 				}
+				maybeAutoSubmit(value);
 			});
 
 			cell.addEventListener('keydown', function (event) {
 				if (event.key === 'Backspace') {
+					if (autoSubmitTimer) {
+						window.clearTimeout(autoSubmitTimer);
+						autoSubmitTimer = null;
+					}
 					if (cell.value) {
 						cell.value = '';
 						cell.classList.remove('is-filled');
-						sync();
+						var afterClear = sync();
+						if (afterClear.length <= 6) {
+							setExtended(false);
+						}
 						event.preventDefault();
 						return;
 					}
@@ -525,9 +639,26 @@
 						event.preventDefault();
 						cells[index - 1].value = '';
 						cells[index - 1].classList.remove('is-filled');
-						sync();
+						var afterBack = sync();
+						if (afterBack.length <= 6) {
+							setExtended(false);
+						}
 						focusAt(index - 1);
 					}
+					return;
+				}
+				if (event.key >= '0' && event.key <= '9' && index === 5 && cell.value) {
+					event.preventDefault();
+					if (autoSubmitTimer) {
+						window.clearTimeout(autoSubmitTimer);
+						autoSubmitTimer = null;
+					}
+					setExtended(true);
+					cells[6].value = event.key;
+					cells[6].classList.add('is-filled');
+					var extendedValue = sync();
+					focusAt(6);
+					maybeAutoSubmit(extendedValue);
 					return;
 				}
 				if (event.key === 'ArrowLeft' && index > 0) {
@@ -537,6 +668,9 @@
 				}
 				if (event.key === 'ArrowRight' && index < cells.length - 1) {
 					event.preventDefault();
+					if (index >= 5) {
+						setExtended(true);
+					}
 					focusAt(index + 1);
 				}
 			});
@@ -570,6 +704,7 @@
 				sync();
 				if (!/^\d{6,8}$/.test(hidden.value)) {
 					event.preventDefault();
+					submitting = false;
 					pin.classList.add('is-invalid');
 					focusAt(Math.min(hidden.value.length, cells.length - 1));
 				}
@@ -593,7 +728,6 @@
 			scope.querySelector('[data-vexpay-otp-resend]');
 		var left = parseInt(wait.getAttribute('data-vexpay-otp-cooldown'), 10);
 		var template = wait.getAttribute('data-vexpay-otp-cooldown-template') || '';
-		var idle = wait.getAttribute('data-vexpay-otp-cooldown-idle') || '';
 
 		if (!left || left < 1 || !template) {
 			return;
@@ -612,11 +746,9 @@
 				button.disabled = false;
 				button.removeAttribute('disabled');
 			}
-			wait.classList.add('vexpay-otp-resend-wait--idle');
 			wait.removeAttribute('data-vexpay-otp-cooldown');
-			if (idle) {
-				wait.textContent = idle;
-			}
+			wait.textContent = '';
+			wait.hidden = true;
 		}
 
 		render(left);
@@ -634,12 +766,17 @@
 
 	$(function () {
 		bindSplitFields();
+		bindOtpAccount(document);
 		bindOtpPin(document);
 		bindOtpResendCooldown(document);
 		$(document.body).on('updated_checkout', bindSplitFields);
 
 		$(document).on('submit', '.vexpay-otp-send-form, .vexpay-otp-resend-form, .vexpay-otp-form, .vexpay-change-account-form', function () {
-			var $btn = $(this).find('button[type="submit"]').filter(':not(:disabled)').first();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]').filter(':not(:disabled)').first();
+			if (!$btn.length && this.id) {
+				$btn = $('button[type="submit"][form="' + this.id + '"]').filter(':not(:disabled)').first();
+			}
 			if ($btn.length) {
 				$btn.prop('disabled', true).attr('aria-busy', 'true').addClass('is-loading');
 			}

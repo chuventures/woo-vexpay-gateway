@@ -354,6 +354,13 @@ final class HelpersTest extends TestCase {
 		$this->assertSame( '****', VEXPay_Helpers::mask_phone_for_log( '12' ) );
 	}
 
+	public function test_mask_phone_for_display(): void {
+		$this->assertSame( '••• •••• 3844', VEXPay_Helpers::mask_phone_for_display( '584121233844' ) );
+		$this->assertSame( '••• •••• 4567', VEXPay_Helpers::mask_phone_for_display( '584121234567' ) );
+		$this->assertSame( '123', VEXPay_Helpers::mask_phone_for_display( '123' ) );
+		$this->assertSame( '', VEXPay_Helpers::mask_phone_for_display( '' ) );
+	}
+
 	public function test_debit_otp_accepted(): void {
 		$this->assertTrue( VEXPay_Helpers::debit_otp_accepted( array( 'code' => '202', 'success' => true ) ) );
 		$this->assertTrue( VEXPay_Helpers::debit_otp_accepted( array( 'code' => '00' ) ) );

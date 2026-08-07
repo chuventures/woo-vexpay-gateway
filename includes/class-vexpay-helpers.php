@@ -897,6 +897,26 @@ class VEXPay_Helpers {
 	}
 
 	/**
+	 * Mask a phone for UI display with readable grouping (keep last 4 digits).
+	 *
+	 * Example: 584121233844 → ••• •••• 3844
+	 *
+	 * @param string $phone Raw or normalized phone.
+	 * @return string
+	 */
+	public static function mask_phone_for_display( string $phone ): string {
+		$digits = preg_replace( '/\D+/', '', $phone ) ?? '';
+		if ( '' === $digits ) {
+			return '';
+		}
+		if ( strlen( $digits ) < 4 ) {
+			return $digits;
+		}
+
+		return '••• •••• ' . substr( $digits, -4 );
+	}
+
+	/**
 	 * Compact shape summary for débito OTP request logs (no secrets).
 	 *
 	 * @param array $body Request body (banco, monto, telefono, cedula).
