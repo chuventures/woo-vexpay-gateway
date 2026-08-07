@@ -1132,11 +1132,11 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified above.
 		$profile = VEXPay_Helpers::sanitize_debtor_profile(
 			array(
-				'id_type'      => isset( $_POST['id_type'] ) ? wp_unslash( $_POST['id_type'] ) : '',
-				'id_number'    => isset( $_POST['id_number'] ) ? wp_unslash( $_POST['id_number'] ) : '',
-				'phone_prefix' => isset( $_POST['phone_prefix'] ) ? wp_unslash( $_POST['phone_prefix'] ) : '',
-				'phone_number' => isset( $_POST['phone_number'] ) ? wp_unslash( $_POST['phone_number'] ) : '',
-				'bank'         => isset( $_POST['bank'] ) ? wp_unslash( $_POST['bank'] ) : '',
+				'id_type'      => isset( $_POST['id_type'] ) ? sanitize_text_field( wp_unslash( $_POST['id_type'] ) ) : '',
+				'id_number'    => isset( $_POST['id_number'] ) ? sanitize_text_field( wp_unslash( $_POST['id_number'] ) ) : '',
+				'phone_prefix' => isset( $_POST['phone_prefix'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_prefix'] ) ) : '',
+				'phone_number' => isset( $_POST['phone_number'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_number'] ) ) : '',
+				'bank'         => isset( $_POST['bank'] ) ? sanitize_text_field( wp_unslash( $_POST['bank'] ) ) : '',
 			)
 		);
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -1669,6 +1669,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			array(),
 			VEXPAY_GATEWAY_VERSION
 		);
+		wp_enqueue_style(
+			'vexpay-gateway-fonts',
+			'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap',
+			array(),
+			VEXPAY_GATEWAY_VERSION
+		);
 
 		wp_enqueue_script(
 			'vexpay-gateway',
@@ -1708,7 +1714,6 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	<title><?php echo esc_html( sprintf( /* translators: %s: site name */ __( 'Confirm payment — %s', 'vexpay-gateway-for-woocommerce' ), $site_name ) ); ?></title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
 	<?php wp_head(); ?>
 </head>
 <body class="vexpay-otp-page">

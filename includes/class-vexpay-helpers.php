@@ -1100,15 +1100,15 @@ class VEXPay_Helpers {
 			return sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
 		}
 
-		if ( isset( $_POST['payment_data'] ) && is_array( $_POST['payment_data'] ) ) {
-			foreach ( $_POST['payment_data'] as $entry ) {
-				if ( ! is_array( $entry ) ) {
-					continue;
-				}
-				$entry_key = isset( $entry['key'] ) ? (string) $entry['key'] : '';
-				if ( $entry_key === $key && isset( $entry['value'] ) ) {
-					return sanitize_text_field( wp_unslash( (string) $entry['value'] ) );
-				}
+		$payment_data = isset( $_POST['payment_data'] ) ? map_deep( wp_unslash( $_POST['payment_data'] ), 'sanitize_text_field' ) : array();
+		$payment_data = is_array( $payment_data ) ? $payment_data : array();
+		foreach ( $payment_data as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+			$entry_key = isset( $entry['key'] ) ? (string) $entry['key'] : '';
+			if ( $entry_key === $key && isset( $entry['value'] ) ) {
+				return sanitize_text_field( wp_unslash( (string) $entry['value'] ) );
 			}
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing

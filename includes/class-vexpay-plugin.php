@@ -35,8 +35,6 @@ final class VEXPay_Plugin {
 	 * Hook registrations.
 	 */
 	public function init(): void {
-		load_plugin_textdomain( 'vexpay-gateway-for-woocommerce', false, dirname( plugin_basename( VEXPAY_GATEWAY_FILE ) ) . '/languages' );
-
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateway' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front_assets' ) );
 		// Register on the plugin, not the gateway constructor — WC may not instantiate
@@ -196,7 +194,7 @@ final class VEXPay_Plugin {
 			'vexpay-fonts',
 			'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap',
 			array(),
-			null
+			VEXPAY_GATEWAY_VERSION
 		);
 
 		wp_enqueue_style(

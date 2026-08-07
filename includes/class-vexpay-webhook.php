@@ -126,8 +126,13 @@ class VEXPay_Webhook {
 			$orders = wc_get_orders(
 				array(
 					'limit'      => 1,
-					'meta_key'   => VEXPay_Helpers::META_EXTERNAL_REF,
-					'meta_value' => $external_ref,
+					// Necessary lookup: external reference is stored as order meta and has no WC native field.
+					'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+						array(
+							'key'   => VEXPay_Helpers::META_EXTERNAL_REF,
+							'value' => $external_ref,
+						),
+					),
 				)
 			);
 			if ( ! empty( $orders[0] ) ) {
@@ -139,8 +144,13 @@ class VEXPay_Webhook {
 			$orders = wc_get_orders(
 				array(
 					'limit'      => 1,
-					'meta_key'   => VEXPay_Helpers::META_PAYMENT_ID,
-					'meta_value' => $payment_id,
+					// Necessary lookup: VEXPay payment ID is stored as order meta and has no WC native field.
+					'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+						array(
+							'key'   => VEXPay_Helpers::META_PAYMENT_ID,
+							'value' => $payment_id,
+						),
+					),
 				)
 			);
 			if ( ! empty( $orders[0] ) ) {
