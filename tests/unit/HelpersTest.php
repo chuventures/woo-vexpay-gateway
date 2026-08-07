@@ -172,6 +172,22 @@ final class HelpersTest extends TestCase {
 		$this->assertSame( 'ignore', VEXPay_Helpers::map_payment_status( 'UNKNOWN' ) );
 	}
 
+	public function test_thankyou_panel_phase_and_transaction_id(): void {
+		$this->assertSame( 'otp', VEXPay_Helpers::thankyou_panel_phase( 'PENDING', '', false ) );
+		$this->assertSame( 'otp', VEXPay_Helpers::thankyou_panel_phase( '', '', false ) );
+		$this->assertSame( 'settling', VEXPay_Helpers::thankyou_panel_phase( 'PENDING', 'pay-1', false ) );
+		$this->assertSame( 'settling', VEXPay_Helpers::thankyou_panel_phase( 'AC00', 'pay-1', false ) );
+		$this->assertSame( 'paid', VEXPay_Helpers::thankyou_panel_phase( 'COMPLETED', 'pay-1', true ) );
+		$this->assertSame( 'paid', VEXPay_Helpers::thankyou_panel_phase( 'ACCP', 'pay-1', false ) );
+		$this->assertSame( 'failed', VEXPay_Helpers::thankyou_panel_phase( 'FAILED', 'pay-1', false ) );
+		$this->assertSame( 'failed', VEXPay_Helpers::thankyou_panel_phase( 'PENDING', 'pay-1', false, 'failed' ) );
+		$this->assertSame( 'refunded', VEXPay_Helpers::thankyou_panel_phase( 'REVERSED', 'pay-1', false ) );
+
+		$this->assertSame( 'bank-ref', VEXPay_Helpers::thankyou_transaction_id( 'bank-ref', 'pay-1' ) );
+		$this->assertSame( 'pay-1', VEXPay_Helpers::thankyou_transaction_id( '', 'pay-1' ) );
+		$this->assertSame( '', VEXPay_Helpers::thankyou_transaction_id( '', '' ) );
+	}
+
 	public function test_normalize_debit_execute_result(): void {
 		$accp = VEXPay_Helpers::normalize_debit_execute_result(
 			array(

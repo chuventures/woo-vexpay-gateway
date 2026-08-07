@@ -37,7 +37,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
 		// OTP wc-api hooks are registered on VEXPay_Plugin so they fire even when
 		// payment gateways have not been instantiated yet for the request.
-		add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_otp_notice' ) );
+		add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_panel' ) );
+		add_filter( 'woocommerce_order_get_payment_method_title', array( $this, 'filter_order_payment_method_title' ), 10, 2 );
 		add_action( 'template_redirect', array( $this, 'maybe_redirect_order_pay_to_otp' ), 20 );
 		add_filter( 'woocommerce_valid_order_statuses_for_payment', array( $this, 'valid_statuses_for_otp_payment' ), 10, 2 );
 		add_filter( 'woocommerce_valid_order_statuses_for_payment_complete', array( $this, 'valid_statuses_for_otp_payment' ), 10, 2 );
@@ -2205,20 +2206,136 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Hint on thank-you if still pending.
+	 * Prepend VEXPay logo before the payment method title on order confirmation.
+	 *
+	 * Blocks Order Confirmation Summary uses get_payment_method_title() and
+	 * passes the value through wp_kses_post(), so a small <img> is allowed.
+	 * Scoped to the order-received page so emails/admin stay plain text.
+	 *
+	 * @param string        $title Payment method title.
+	 * @param WC_Order|null $order Order object.
+	 * @return string
+	 */
+	public function filter_order_payment_method_title( $title, $order = null ) {
+		if ( ! is_order_received_page() || is_admin() ) {
+			return $title;
+		}
+
+		if ( ! $order instanceof WC_Order || $this->id !== $order->get_payment_method() ) {
+			return $title;
+		}
+
+		$title = (string) $title;
+		if ( '' === $title || false !== strpos( $title, 'vexpay-order-summary-logo' ) ) {
+			return $title;
+		}
+
+		$logo_url = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';
+
+		return sprintf(
+			'<img class="vexpay-order-summary-logo" src="%1$s" alt="%2$s" width="56" height="30" decoding="async" /> %3$s',
+			esc_url( $logo_url ),
+			esc_attr__( 'VEXPay', 'woo-vexpay-gateway' ),
+			$title
+		);
+	}
+
+	/**
+	 * Logo-first VEXPay status panel on order-received / thank-you.
+	 *
+	 * Hooked to `woocommerce_thankyou_vexpay` (classic + Blocks order-received).
 	 *
 	 * @param int $order_id Order ID.
 	 */
-	public function thankyou_otp_notice( $order_id ): void {
+	public function thankyou_panel( $order_id ): void {
 		$order = wc_get_order( $order_id );
-		if ( ! $order || $order->is_paid() ) {
+		if ( ! $order || $this->id !== $order->get_payment_method() ) {
 			return;
 		}
-		$url = $this->get_otp_redirect_url( $order );
-		echo '<p class="vexpay-thankyou-otp">';
-		echo esc_html__( 'Payment is waiting for your bank OTP.', 'woo-vexpay-gateway' ) . ' ';
-		echo '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Enter OTP code', 'woo-vexpay-gateway' ) . '</a>';
-		echo '</p>';
+
+		$status     = (string) $order->get_meta( VEXPay_Helpers::META_STATUS );
+		$payment_id = (string) $order->get_meta( VEXPay_Helpers::META_PAYMENT_ID );
+		$phase      = VEXPay_Helpers::thankyou_panel_phase(
+			$status,
+			$payment_id,
+			$order->is_paid(),
+			$order->get_status()
+		);
+
+		$txn_id = VEXPay_Helpers::thankyou_transaction_id(
+			(string) $order->get_transaction_id(),
+			$payment_id
+		);
+		$ref    = trim( (string) $order->get_meta( VEXPay_Helpers::META_EXTERNAL_REF ) );
+
+		$title = '';
+		$copy  = '';
+		$cta   = '';
+
+		switch ( $phase ) {
+			case 'paid':
+				$title = __( 'Paid via VEXPay', 'woo-vexpay-gateway' );
+				$copy  = __( 'Your Débito inmediato payment was successful.', 'woo-vexpay-gateway' );
+				break;
+			case 'settling':
+				$title = __( 'Payment processing', 'woo-vexpay-gateway' );
+				$copy  = __( 'VEXPay is waiting for the bank to confirm your Débito inmediato. This page will stay up to date once settlement finishes.', 'woo-vexpay-gateway' );
+				break;
+			case 'otp':
+				$title = __( 'Finish paying with VEXPay', 'woo-vexpay-gateway' );
+				$copy  = __( 'Your order is ready — enter the bank OTP to complete Débito inmediato.', 'woo-vexpay-gateway' );
+				$cta   = $this->get_otp_redirect_url( $order );
+				break;
+			case 'failed':
+				$title = __( 'Payment failed', 'woo-vexpay-gateway' );
+				$copy  = __( 'The VEXPay Débito inmediato payment did not go through. You can try again from the order or contact the store.', 'woo-vexpay-gateway' );
+				break;
+			case 'refunded':
+				$title = __( 'Payment reversed', 'woo-vexpay-gateway' );
+				$copy  = __( 'This VEXPay payment was reversed.', 'woo-vexpay-gateway' );
+				break;
+			default:
+				$title = __( 'Paid via VEXPay', 'woo-vexpay-gateway' );
+				$copy  = __( 'Débito inmediato through VEXPay.', 'woo-vexpay-gateway' );
+				break;
+		}
+
+		$logo_url = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';
+
+		echo '<section class="vexpay-thankyou-panel vexpay-checkout-panel" aria-label="' . esc_attr__( 'VEXPay payment', 'woo-vexpay-gateway' ) . '">';
+		echo '<div class="vexpay-checkout-brand">';
+		echo '<img class="vexpay-checkout-brand__logo" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr__( 'VEXPay', 'woo-vexpay-gateway' ) . '" width="72" height="38" decoding="async" />';
+		echo '<span class="vexpay-checkout-brand__tag">' . esc_html__( 'Débito inmediato', 'woo-vexpay-gateway' ) . '</span>';
+		echo '</div>';
+
+		echo '<div class="vexpay-thankyou-panel__status vexpay-thankyou-panel__status--' . esc_attr( $phase ) . '">';
+		echo '<p class="vexpay-thankyou-panel__title">' . esc_html( $title ) . '</p>';
+		echo '<p class="vexpay-thankyou-panel__copy">' . esc_html( $copy ) . '</p>';
+		if ( '' !== $cta ) {
+			echo '<p class="vexpay-thankyou-panel__actions">';
+			echo '<a class="button alt vexpay-thankyou-panel__cta" href="' . esc_url( $cta ) . '">' . esc_html__( 'Enter OTP code', 'woo-vexpay-gateway' ) . '</a>';
+			echo '</p>';
+		}
+		echo '</div>';
+
+		if ( '' !== $txn_id || '' !== $ref ) {
+			echo '<dl class="vexpay-thankyou-panel__meta">';
+			if ( '' !== $txn_id ) {
+				echo '<div class="vexpay-thankyou-panel__meta-row">';
+				echo '<dt>' . esc_html__( 'Transaction ID', 'woo-vexpay-gateway' ) . '</dt>';
+				echo '<dd><code>' . esc_html( $txn_id ) . '</code></dd>';
+				echo '</div>';
+			}
+			if ( '' !== $ref ) {
+				echo '<div class="vexpay-thankyou-panel__meta-row">';
+				echo '<dt>' . esc_html__( 'Reference', 'woo-vexpay-gateway' ) . '</dt>';
+				echo '<dd><code>' . esc_html( $ref ) . '</code></dd>';
+				echo '</div>';
+			}
+			echo '</dl>';
+		}
+
+		echo '</section>';
 	}
 
 	/**
@@ -2572,6 +2689,10 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$status = isset( $result['status'] ) ? strtoupper( (string) $result['status'] ) : '';
 		if ( ! empty( $result['paymentId'] ) ) {
 			$order->update_meta_data( VEXPay_Helpers::META_PAYMENT_ID, (string) $result['paymentId'] );
+		}
+		// Persist bank reference early so thank-you can show Transaction ID while settling.
+		if ( ! empty( $result['bankReference'] ) ) {
+			$order->set_transaction_id( (string) $result['bankReference'] );
 		}
 		$this->store_fx_meta_from_result( $order, $result );
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, $status );

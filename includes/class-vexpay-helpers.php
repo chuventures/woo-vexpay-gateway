@@ -629,6 +629,57 @@ class VEXPay_Helpers {
 	}
 
 	/**
+	 * Thank-you / order-received panel phase for a VEXPay order (no WP/WC calls).
+	 *
+	 * @param string $vexpay_status `_vexpay_status` meta.
+	 * @param string $payment_id    `_vexpay_payment_id` meta.
+	 * @param bool   $is_paid       Whether the WooCommerce order is paid.
+	 * @param string $wc_status     WooCommerce order status slug (optional).
+	 * @return string One of: paid|failed|refunded|settling|otp|other
+	 */
+	public static function thankyou_panel_phase(
+		string $vexpay_status,
+		string $payment_id,
+		bool $is_paid,
+		string $wc_status = ''
+	): string {
+		$status = strtoupper( trim( $vexpay_status ) );
+		$action = self::map_payment_status( $status );
+
+		if ( $is_paid || 'complete' === $action ) {
+			return 'paid';
+		}
+		if ( 'fail' === $action || 'failed' === $wc_status ) {
+			return 'failed';
+		}
+		if ( 'refund' === $action || 'refunded' === $wc_status ) {
+			return 'refunded';
+		}
+		if ( '' !== trim( $payment_id ) && self::is_pending_settlement_status( $status ) ) {
+			return 'settling';
+		}
+		if ( in_array( $status, array( '', 'PENDING' ), true ) ) {
+			return 'otp';
+		}
+		return 'other';
+	}
+
+	/**
+	 * Prefer bank / WC transaction id, else payment UUID. Empty when neither exists.
+	 *
+	 * @param string $transaction_id WC transaction id or bank reference.
+	 * @param string $payment_id     `_vexpay_payment_id` meta.
+	 * @return string
+	 */
+	public static function thankyou_transaction_id( string $transaction_id, string $payment_id ): string {
+		$txn = trim( $transaction_id );
+		if ( '' !== $txn ) {
+			return $txn;
+		}
+		return trim( $payment_id );
+	}
+
+	/**
 	 * Whether an order is a candidate for settlement polling (no WP/WC calls).
 	 *
 	 * Candidates have a stored payment id (OTP execute created a payment) and a
