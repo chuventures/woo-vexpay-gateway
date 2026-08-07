@@ -128,6 +128,8 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			}
 		}
 
+		$checkout = VEXPay_Plugin::checkout_script_data();
+
 		return array(
 			'title'          => $title,
 			'description'    => $desc,
@@ -138,6 +140,9 @@ final class VEXPay_Blocks_Payment_Method extends AbstractPaymentMethodType {
 			'savedProfile'   => $saved_profile,
 			'savedAccounts'  => $saved_accounts,
 			'quote'          => $quote,
+			'ajaxUrl'        => $checkout['ajaxUrl'],
+			'deleteAccount'  => $checkout['deleteAccount'],
+			'i18n'           => $checkout['i18n'],
 		);
 	}
 }

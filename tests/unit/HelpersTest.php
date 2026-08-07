@@ -142,6 +142,19 @@ final class HelpersTest extends TestCase {
 		$this->assertStringContainsString( 'Banco de Venezuela', $label );
 		$this->assertSame( 'V-18.819.897', VEXPay_Helpers::format_debtor_id_display( 'V', '18819897' ) );
 		$this->assertSame( 'J-1.234.567', VEXPay_Helpers::format_debtor_id_display( 'J', '1234567' ) );
+
+		$list = VEXPay_Helpers::remove_debtor_account( $list, $a );
+		$this->assertCount( 1, $list );
+		$this->assertSame( '87654321', $list[0]['id_number'] );
+
+		// Removing a missing / incomplete profile is a no-op.
+		$list = VEXPay_Helpers::remove_debtor_account( $list, $a );
+		$this->assertCount( 1, $list );
+		$list = VEXPay_Helpers::remove_debtor_account( $list, VEXPay_Helpers::empty_debtor_profile() );
+		$this->assertCount( 1, $list );
+
+		$list = VEXPay_Helpers::remove_debtor_account( $list, $b );
+		$this->assertCount( 0, $list );
 	}
 
 	public function test_is_valid_token(): void {

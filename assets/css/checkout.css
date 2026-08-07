@@ -1242,21 +1242,18 @@
 }
 
 .vexpay-account-chip {
-	appearance: none;
-	-webkit-appearance: none;
 	display: flex;
 	align-items: center;
-	gap: 0.65rem;
+	gap: 0.35rem;
 	width: 100%;
 	margin: 0;
-	padding: 0.55rem 0.65rem;
+	padding: 0.4rem 0.4rem 0.4rem 0.65rem;
 	border: 1px solid var(--vex-line);
 	border-radius: 12px;
 	background: #fff;
-	text-align: left;
-	cursor: pointer;
 	color: var(--vex-ink);
 	transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+	box-sizing: border-box;
 }
 
 .vexpay-account-chip:hover {
@@ -1270,9 +1267,67 @@
 	box-shadow: 0 4px 14px rgba(97, 58, 143, 0.1);
 }
 
-.vexpay-account-chip:focus-visible {
+.vexpay-account-chip__body {
+	appearance: none;
+	-webkit-appearance: none;
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	padding: 0.15rem 0;
+	border: 0;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+	color: inherit;
+	font: inherit;
+}
+
+.vexpay-account-chip__body:focus-visible {
 	outline: 3px solid rgba(97, 58, 143, 0.28);
 	outline-offset: 2px;
+	border-radius: 8px;
+}
+
+.vexpay-account-chip__remove {
+	appearance: none;
+	-webkit-appearance: none;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.85rem;
+	height: 1.85rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--vex-muted);
+	font-family: var(--vex-font-display);
+	font-size: 1.15rem;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vexpay-account-chip__remove:hover,
+.vexpay-account-chip__remove:focus-visible {
+	background: rgba(97, 58, 143, 0.1);
+	color: var(--vex-brand);
+}
+
+.vexpay-account-chip__remove:focus-visible {
+	outline: 3px solid rgba(97, 58, 143, 0.28);
+	outline-offset: 1px;
+}
+
+.vexpay-account-chip__remove:disabled {
+	opacity: 0.45;
+	cursor: wait;
 }
 
 .vexpay-account-chip__logo {

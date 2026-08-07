@@ -290,6 +290,13 @@
 			$details = $root.find('.vexpay-change-account-form').first();
 		}
 
+		var cfg =
+			typeof window.vexpayCheckout === 'object' && window.vexpayCheckout
+				? window.vexpayCheckout
+				: {};
+		var deleteCfg = cfg.deleteAccount || {};
+		var i18n = cfg.i18n || {};
+
 		function hideDetailsPanel() {
 			// Change-account editor keeps fields visible (data-vexpay-keep-details).
 			if ($wrap.attr('data-vexpay-keep-details') === '1') {
@@ -306,6 +313,14 @@
 			}
 		}
 
+		function clearFormFields() {
+			$('#vexpay_debtor_id_type').val('V');
+			$('#vexpay_debtor_id_number').val('');
+			$('#vexpay_debtor_phone_prefix').val('0412');
+			$('#vexpay_debtor_phone_number').val('');
+			setBankByCode('');
+		}
+
 		function markActive($chip) {
 			$wrap.find('[data-vexpay-account]').removeClass('is-active').attr('aria-selected', 'false');
 			$wrap.find('[data-vexpay-account-new]').removeClass('is-active');
@@ -316,9 +331,7 @@
 			}
 		}
 
-		$wrap.on('click', '[data-vexpay-account]', function (e) {
-			e.preventDefault();
-			var $chip = $(this);
+		function selectChip($chip) {
 			$('#vexpay_debtor_id_type').val(String($chip.data('id-type') || 'V'));
 			$('#vexpay_debtor_id_number').val(String($chip.data('id-number') || ''));
 			$('#vexpay_debtor_phone_prefix').val(String($chip.data('phone-prefix') || '0412'));
@@ -327,17 +340,74 @@
 			markActive($chip);
 			// Selecting a saved account collapses the form again.
 			hideDetailsPanel();
+		}
+
+		$wrap.on('click', '[data-vexpay-account-select]', function (e) {
+			e.preventDefault();
+			selectChip($(this).closest('[data-vexpay-account]'));
 		});
 
 		$wrap.on('click', '[data-vexpay-account-new]', function (e) {
 			e.preventDefault();
-			$('#vexpay_debtor_id_type').val('V');
-			$('#vexpay_debtor_id_number').val('');
-			$('#vexpay_debtor_phone_prefix').val('0412');
-			$('#vexpay_debtor_phone_number').val('');
-			setBankByCode('');
+			clearFormFields();
 			markActive(null);
 			showDetailsPanel();
+		});
+
+		$wrap.on('click', '[data-vexpay-account-remove]', function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			var $btn = $(this);
+			var $chip = $btn.closest('[data-vexpay-account]');
+			if (!$chip.length || $btn.prop('disabled')) {
+				return;
+			}
+			if (!cfg.ajaxUrl || !deleteCfg.action || !deleteCfg.nonce) {
+				return;
+			}
+
+			var wasActive = $chip.hasClass('is-active');
+			$btn.prop('disabled', true);
+
+			$.ajax({
+				url: cfg.ajaxUrl,
+				method: 'POST',
+				dataType: 'json',
+				data: {
+					action: deleteCfg.action,
+					nonce: deleteCfg.nonce,
+					id_type: String($chip.data('id-type') || ''),
+					id_number: String($chip.data('id-number') || ''),
+					phone_prefix: String($chip.data('phone-prefix') || ''),
+					phone_number: String($chip.data('phone-number') || ''),
+					bank: String($chip.data('bank') || ''),
+				},
+			})
+				.done(function (res) {
+					if (!res || !res.success) {
+						$btn.prop('disabled', false);
+						window.alert(i18n.removeFailed || 'Could not remove saved account.');
+						return;
+					}
+
+					$chip.remove();
+					if (!$wrap.find('[data-vexpay-account]').length) {
+						$wrap.remove();
+						clearFormFields();
+						showDetailsPanel();
+						return;
+					}
+					if (wasActive) {
+						clearFormFields();
+						markActive(null);
+						showDetailsPanel();
+					}
+				})
+				.fail(function () {
+					$btn.prop('disabled', false);
+					window.alert(i18n.removeFailed || 'Could not remove saved account.');
+				});
 		});
 
 		$('#vexpay_debtor_id_type, #vexpay_debtor_id_number, #vexpay_debtor_phone_prefix, #vexpay_debtor_phone_number, #vexpay_debtor_bank')

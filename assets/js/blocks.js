@@ -269,7 +269,9 @@
 		const { eventRegistration, emitResponse } = props;
 		const { onPaymentSetup } = eventRegistration;
 		const saved = settings.savedProfile || {};
-		const savedAccounts = Array.isArray( settings.savedAccounts ) ? settings.savedAccounts : [];
+		const initialAccounts = Array.isArray( settings.savedAccounts )
+			? settings.savedAccounts
+			: [];
 		const fingerprint = ( profile ) =>
 			(
 				String( profile.id_type || '' ).toUpperCase() +
@@ -281,33 +283,38 @@
 				String( profile.bank || '' )
 			).toLowerCase();
 
-		const hasSavedAccounts = savedAccounts.length > 0;
+		const [ accounts, setAccounts ] = useState( initialAccounts );
+		const [ removingId, setRemovingId ] = useState( null );
+		const hasSavedAccounts = accounts.length > 0;
+		const startedWithAccounts = initialAccounts.length > 0;
 		const [ idType, setIdType ] = useState(
-			! hasSavedAccounts && ID_TYPES.includes( String( saved.id_type || '' ).toUpperCase() )
+			! startedWithAccounts && ID_TYPES.includes( String( saved.id_type || '' ).toUpperCase() )
 				? String( saved.id_type ).toUpperCase()
 				: 'V'
 		);
 		const [ idNumber, setIdNumber ] = useState(
-			! hasSavedAccounts
+			! startedWithAccounts
 				? String( saved.id_number || '' ).replace( /\D+/g, '' ).slice( 0, 9 )
 				: ''
 		);
 		const [ phonePrefix, setPhonePrefix ] = useState(
-			! hasSavedAccounts && PHONE_PREFIXES.includes( String( saved.phone_prefix || '' ) )
+			! startedWithAccounts && PHONE_PREFIXES.includes( String( saved.phone_prefix || '' ) )
 				? String( saved.phone_prefix )
 				: '0412'
 		);
 		const [ phoneNumber, setPhoneNumber ] = useState(
-			! hasSavedAccounts
+			! startedWithAccounts
 				? String( saved.phone_number || '' ).replace( /\D+/g, '' ).slice( 0, 7 )
 				: ''
 		);
 		const [ debtorBank, setDebtorBank ] = useState(
-			! hasSavedAccounts ? String( saved.bank || '' ) : ''
+			! startedWithAccounts ? String( saved.bank || '' ) : ''
 		);
 		// Pick a chip (or “Use another”) before the detail fields appear.
-		const [ activeAccount, setActiveAccount ] = useState( hasSavedAccounts ? null : 'new' );
-		const [ showDetails, setShowDetails ] = useState( ! hasSavedAccounts );
+		const [ activeAccount, setActiveAccount ] = useState(
+			startedWithAccounts ? null : 'new'
+		);
+		const [ showDetails, setShowDetails ] = useState( ! startedWithAccounts );
 
 		const applyAccount = ( account ) => {
 			if ( ! account ) {
@@ -344,6 +351,62 @@
 				setActiveAccount( 'new' );
 			}
 			setShowDetails( true );
+		};
+
+		const removeAccount = ( account ) => {
+			const id = fingerprint( account );
+			const deleteCfg = settings.deleteAccount || {};
+			const ajaxUrl = settings.ajaxUrl || '';
+			if ( ! ajaxUrl || ! deleteCfg.action || ! deleteCfg.nonce || removingId ) {
+				return;
+			}
+
+			const wasActive = activeAccount === id;
+			setRemovingId( id );
+			const body = new window.URLSearchParams();
+			body.set( 'action', deleteCfg.action );
+			body.set( 'nonce', deleteCfg.nonce );
+			body.set( 'id_type', String( account.id_type || '' ) );
+			body.set( 'id_number', String( account.id_number || '' ) );
+			body.set( 'phone_prefix', String( account.phone_prefix || '' ) );
+			body.set( 'phone_number', String( account.phone_number || '' ) );
+			body.set( 'bank', String( account.bank || '' ) );
+
+			window
+				.fetch( ajaxUrl, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					body: body.toString(),
+				} )
+				.then( ( res ) => res.json() )
+				.then( ( data ) => {
+					if ( ! data || ! data.success ) {
+						throw new Error( 'delete failed' );
+					}
+					let shouldClear = wasActive;
+					setAccounts( ( prev ) => {
+						const next = prev.filter( ( row ) => fingerprint( row ) !== id );
+						if ( next.length === 0 ) {
+							shouldClear = true;
+						}
+						return next;
+					} );
+					if ( shouldClear ) {
+						applyAccount( null );
+					}
+				} )
+				.catch( () => {
+					window.alert(
+						( settings.i18n && settings.i18n.removeFailed ) ||
+							__( 'Could not remove saved account.', 'woo-vexpay-gateway' )
+					);
+				} )
+				.finally( () => {
+					setRemovingId( null );
+				} );
 		};
 
 		useEffect( () => {
@@ -541,7 +604,7 @@
 							)
 					  )
 					: null,
-				savedAccounts.length
+				accounts.length
 					? createElement(
 							'div',
 							{ className: 'vexpay-accounts' },
@@ -572,7 +635,7 @@
 									role: 'listbox',
 									'aria-label': __( 'Saved payer accounts', 'woo-vexpay-gateway' ),
 								},
-								savedAccounts.map( ( account ) => {
+								accounts.map( ( account ) => {
 									const id = fingerprint( account );
 									const isActive = activeAccount === id;
 									const digits = String( account.phone_number || '' );
@@ -585,51 +648,74 @@
 										.filter( Boolean )
 										.join( ' · ' );
 									return createElement(
-										'button',
+										'div',
 										{
 											key: id,
-											type: 'button',
 											role: 'option',
 											'aria-selected': isActive ? 'true' : 'false',
 											className:
 												'vexpay-account-chip' + ( isActive ? ' is-active' : '' ),
-											onClick: () => applyAccount( account ),
 										},
-										account.bankLogo
-											? createElement( 'img', {
-													className: 'vexpay-account-chip__logo',
-													src: account.bankLogo,
-													alt: '',
-													width: 28,
-													height: 28,
-													loading: 'lazy',
-													decoding: 'async',
-											  } )
-											: createElement(
-													'span',
-													{
-														className:
-															'vexpay-account-chip__logo vexpay-account-chip__logo--fallback',
-														'aria-hidden': 'true',
-													},
-													String( account.bank || '??' ).slice( -2 )
-											  ),
 										createElement(
-											'span',
-											{ className: 'vexpay-account-chip__text' },
+											'button',
+											{
+												type: 'button',
+												className: 'vexpay-account-chip__body',
+												onClick: () => applyAccount( account ),
+											},
+											account.bankLogo
+												? createElement( 'img', {
+														className: 'vexpay-account-chip__logo',
+														src: account.bankLogo,
+														alt: '',
+														width: 28,
+														height: 28,
+														loading: 'lazy',
+														decoding: 'async',
+												  } )
+												: createElement(
+														'span',
+														{
+															className:
+																'vexpay-account-chip__logo vexpay-account-chip__logo--fallback',
+															'aria-hidden': 'true',
+														},
+														String( account.bank || '??' ).slice( -2 )
+												  ),
 											createElement(
 												'span',
-												{ className: 'vexpay-account-chip__title' },
-												formatDebtorIdDisplay(
-													account.id_type,
-													account.id_number
+												{ className: 'vexpay-account-chip__text' },
+												createElement(
+													'span',
+													{ className: 'vexpay-account-chip__title' },
+													formatDebtorIdDisplay(
+														account.id_type,
+														account.id_number
+													)
+												),
+												createElement(
+													'span',
+													{ className: 'vexpay-account-chip__meta' },
+													meta
 												)
-											),
-											createElement(
-												'span',
-												{ className: 'vexpay-account-chip__meta' },
-												meta
 											)
+										),
+										createElement(
+											'button',
+											{
+												type: 'button',
+												className: 'vexpay-account-chip__remove',
+												'aria-label':
+													( settings.i18n && settings.i18n.removeAccount ) ||
+													__( 'Remove saved account', 'woo-vexpay-gateway' ),
+												disabled: removingId === id,
+												onClick: ( event ) => {
+													event.preventDefault();
+													event.stopPropagation();
+													removeAccount( account );
+												},
+											},
+											'×'
 										)
 									);
 								} )

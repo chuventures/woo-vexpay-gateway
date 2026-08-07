@@ -43,6 +43,8 @@ final class VEXPay_Plugin {
 		// payment gateways during admin-ajax.php / early wc-api requests, which would leave
 		// the action unregistered (blank response / HTTP 400 / "0").
 		add_action( 'wp_ajax_vexpay_test_connection', array( $this, 'ajax_test_connection' ) );
+		add_action( 'wp_ajax_vexpay_delete_debtor_account', array( $this, 'ajax_delete_debtor_account' ) );
+		add_action( 'wp_ajax_nopriv_vexpay_delete_debtor_account', array( $this, 'ajax_delete_debtor_account' ) );
 		add_action( 'woocommerce_api_vexpay_otp', array( $this, 'api_otp_submit' ) );
 		add_action( 'woocommerce_api_vexpay_otp_resend', array( $this, 'api_otp_resend' ) );
 		add_action( 'woocommerce_api_vexpay_otp_change_account', array( $this, 'api_otp_change_account' ) );
@@ -149,6 +151,39 @@ final class VEXPay_Plugin {
 	}
 
 	/**
+	 * AJAX: delete a saved payer account from the current user/session.
+	 */
+	public function ajax_delete_debtor_account(): void {
+		$gateway = $this->gateway();
+		if ( ! $gateway ) {
+			wp_send_json_error(
+				array( 'message' => __( 'VEXPay gateway is not available.', 'woo-vexpay-gateway' ) )
+			);
+		}
+
+		$gateway->ajax_delete_debtor_account();
+	}
+
+	/**
+	 * Data localized onto the classic checkout script (and OTP page).
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function checkout_script_data(): array {
+		return array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'deleteAccount' => array(
+				'action' => 'vexpay_delete_debtor_account',
+				'nonce'  => wp_create_nonce( 'vexpay_delete_debtor_account' ),
+			),
+			'i18n'    => array(
+				'removeAccount' => __( 'Remove saved account', 'woo-vexpay-gateway' ),
+				'removeFailed'  => __( 'Could not remove saved account.', 'woo-vexpay-gateway' ),
+			),
+		);
+	}
+
+	/**
 	 * Front-end CSS/JS for checkout + OTP page.
 	 */
 	public function enqueue_front_assets(): void {
@@ -177,5 +212,7 @@ final class VEXPay_Plugin {
 			VEXPAY_GATEWAY_VERSION,
 			true
 		);
+
+		wp_localize_script( 'vexpay-gateway', 'vexpayCheckout', self::checkout_script_data() );
 	}
 }

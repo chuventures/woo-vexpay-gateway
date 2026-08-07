@@ -642,36 +642,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '</div>';
 			echo '<div class="vexpay-accounts__list" role="listbox" aria-label="' . esc_attr__( 'Saved payer accounts', 'woo-vexpay-gateway' ) . '">';
 			foreach ( $accounts as $account ) {
-				printf(
-					'<button type="button" class="vexpay-account-chip" role="option" aria-selected="false" data-vexpay-account data-id-type="%1$s" data-id-number="%2$s" data-phone-prefix="%3$s" data-phone-number="%4$s" data-bank="%5$s">',
-					esc_attr( $account['id_type'] ),
-					esc_attr( $account['id_number'] ),
-					esc_attr( $account['phone_prefix'] ),
-					esc_attr( $account['phone_number'] ),
-					esc_attr( $account['bank'] )
-				);
-				if ( ! empty( $account['bankLogo'] ) ) {
-					printf(
-						'<img class="vexpay-account-chip__logo" src="%1$s" alt="" width="28" height="28" loading="lazy" decoding="async" />',
-						esc_url( (string) $account['bankLogo'] )
-					);
-				} else {
-					echo '<span class="vexpay-account-chip__logo vexpay-account-chip__logo--fallback" aria-hidden="true">' . esc_html( substr( (string) $account['bank'], -2 ) ) . '</span>';
-				}
-				echo '<span class="vexpay-account-chip__text">';
-				echo '<span class="vexpay-account-chip__title">' . esc_html( VEXPay_Helpers::format_debtor_id_display( $account['id_type'], $account['id_number'] ) ) . '</span>';
-				$meta_bits = array();
-				$digits    = (string) $account['phone_number'];
-				$phone_bit = (string) $account['phone_prefix'];
-				if ( strlen( $digits ) >= 4 ) {
-					$phone_bit .= '•••' . substr( $digits, -4 );
-				} elseif ( '' !== $digits ) {
-					$phone_bit .= $digits;
-				}
-				$meta_bits[] = $phone_bit;
-				$meta_bits[] = ! empty( $account['bankName'] ) ? (string) $account['bankName'] : (string) $account['bank'];
-				echo '<span class="vexpay-account-chip__meta">' . esc_html( implode( ' · ', $meta_bits ) ) . '</span>';
-				echo '</span></button>';
+				$this->render_debtor_account_chip( $account, false );
 			}
 			echo '</div></div>';
 		}
@@ -996,8 +967,179 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 
 		$user_id = get_current_user_id();
 		if ( $user_id > 0 ) {
-			update_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY, $accounts );
+			if ( empty( $accounts ) ) {
+				delete_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY );
+			} else {
+				update_user_meta( $user_id, VEXPay_Helpers::ACCOUNTS_META_KEY, $accounts );
+			}
 		}
+	}
+
+	/**
+	 * Render one saved-account chip (select + remove).
+	 *
+	 * Outer element is a div so the remove control is not nested inside a button.
+	 *
+	 * @param array $account  Enriched account row.
+	 * @param bool  $is_active Whether the chip is selected.
+	 */
+	private function render_debtor_account_chip( array $account, bool $is_active = false ): void {
+		printf(
+			'<div class="vexpay-account-chip%1$s" role="option" aria-selected="%2$s" data-vexpay-account data-id-type="%3$s" data-id-number="%4$s" data-phone-prefix="%5$s" data-phone-number="%6$s" data-bank="%7$s">',
+			$is_active ? ' is-active' : '',
+			$is_active ? 'true' : 'false',
+			esc_attr( (string) $account['id_type'] ),
+			esc_attr( (string) $account['id_number'] ),
+			esc_attr( (string) $account['phone_prefix'] ),
+			esc_attr( (string) $account['phone_number'] ),
+			esc_attr( (string) $account['bank'] )
+		);
+
+		echo '<button type="button" class="vexpay-account-chip__body" data-vexpay-account-select>';
+		if ( ! empty( $account['bankLogo'] ) ) {
+			printf(
+				'<img class="vexpay-account-chip__logo" src="%1$s" alt="" width="28" height="28" loading="lazy" decoding="async" />',
+				esc_url( (string) $account['bankLogo'] )
+			);
+		} else {
+			echo '<span class="vexpay-account-chip__logo vexpay-account-chip__logo--fallback" aria-hidden="true">' . esc_html( substr( (string) $account['bank'], -2 ) ) . '</span>';
+		}
+		echo '<span class="vexpay-account-chip__text">';
+		echo '<span class="vexpay-account-chip__title">' . esc_html( VEXPay_Helpers::format_debtor_id_display( (string) $account['id_type'], (string) $account['id_number'] ) ) . '</span>';
+
+		$meta_bits = array();
+		$digits    = (string) $account['phone_number'];
+		$phone_bit = (string) $account['phone_prefix'];
+		if ( strlen( $digits ) >= 4 ) {
+			$phone_bit .= '•••' . substr( $digits, -4 );
+		} elseif ( '' !== $digits ) {
+			$phone_bit .= $digits;
+		}
+		$meta_bits[] = $phone_bit;
+		$meta_bits[] = ! empty( $account['bankName'] ) ? (string) $account['bankName'] : (string) $account['bank'];
+		echo '<span class="vexpay-account-chip__meta">' . esc_html( implode( ' · ', $meta_bits ) ) . '</span>';
+		echo '</span></button>';
+
+		printf(
+			'<button type="button" class="vexpay-account-chip__remove" data-vexpay-account-remove aria-label="%1$s">&times;</button>',
+			esc_attr__( 'Remove saved account', 'woo-vexpay-gateway' )
+		);
+		echo '</div>';
+	}
+
+	/**
+	 * Delete a remembered payer account for the current customer/session.
+	 *
+	 * Only mutates the current WC session and (when logged in) the current user's meta.
+	 *
+	 * @param array $profile Account profile fields.
+	 * @return bool True when an account was removed.
+	 */
+	public function delete_debtor_account( array $profile ): bool {
+		$profile = VEXPay_Helpers::sanitize_debtor_profile( $profile );
+		if ( ! VEXPay_Helpers::debtor_profile_is_complete( $profile ) ) {
+			return false;
+		}
+
+		$before = $this->get_debtor_accounts( false );
+		$after  = VEXPay_Helpers::remove_debtor_account( $before, $profile );
+		if ( count( $after ) === count( $before ) ) {
+			return false;
+		}
+
+		$this->persist_debtor_accounts( $after );
+		$this->sync_legacy_profile_after_delete(
+			VEXPay_Helpers::debtor_profile_fingerprint( $profile ),
+			$after
+		);
+
+		return true;
+	}
+
+	/**
+	 * If the legacy single-profile pointer matched the deleted account, replace or clear it.
+	 *
+	 * @param string $deleted_fp Deleted fingerprint.
+	 * @param array  $remaining  Remaining accounts.
+	 */
+	private function sync_legacy_profile_after_delete( string $deleted_fp, array $remaining ): void {
+		$replacement = ! empty( $remaining[0] )
+			? VEXPay_Helpers::sanitize_debtor_profile( $remaining[0] )
+			: VEXPay_Helpers::empty_debtor_profile();
+
+		if ( function_exists( 'WC' ) && WC()->session ) {
+			$session = WC()->session->get( VEXPay_Helpers::PROFILE_SESSION_KEY );
+			if ( is_array( $session ) ) {
+				$session = VEXPay_Helpers::sanitize_debtor_profile( $session );
+				if (
+					VEXPay_Helpers::debtor_profile_is_complete( $session )
+					&& VEXPay_Helpers::debtor_profile_fingerprint( $session ) === $deleted_fp
+				) {
+					WC()->session->set(
+						VEXPay_Helpers::PROFILE_SESSION_KEY,
+						VEXPay_Helpers::debtor_profile_has_values( $replacement ) ? $replacement : null
+					);
+				}
+			}
+		}
+
+		$user_id = get_current_user_id();
+		if ( $user_id > 0 ) {
+			$meta = get_user_meta( $user_id, VEXPay_Helpers::PROFILE_META_KEY, true );
+			if ( is_array( $meta ) ) {
+				$meta = VEXPay_Helpers::sanitize_debtor_profile( $meta );
+				if (
+					VEXPay_Helpers::debtor_profile_is_complete( $meta )
+					&& VEXPay_Helpers::debtor_profile_fingerprint( $meta ) === $deleted_fp
+				) {
+					if ( VEXPay_Helpers::debtor_profile_has_values( $replacement ) ) {
+						update_user_meta( $user_id, VEXPay_Helpers::PROFILE_META_KEY, $replacement );
+					} else {
+						delete_user_meta( $user_id, VEXPay_Helpers::PROFILE_META_KEY );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * AJAX: remove a saved payer account for the current user/session.
+	 */
+	public function ajax_delete_debtor_account(): void {
+		check_ajax_referer( 'vexpay_delete_debtor_account', 'nonce' );
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified above.
+		$profile = VEXPay_Helpers::sanitize_debtor_profile(
+			array(
+				'id_type'      => isset( $_POST['id_type'] ) ? wp_unslash( $_POST['id_type'] ) : '',
+				'id_number'    => isset( $_POST['id_number'] ) ? wp_unslash( $_POST['id_number'] ) : '',
+				'phone_prefix' => isset( $_POST['phone_prefix'] ) ? wp_unslash( $_POST['phone_prefix'] ) : '',
+				'phone_number' => isset( $_POST['phone_number'] ) ? wp_unslash( $_POST['phone_number'] ) : '',
+				'bank'         => isset( $_POST['bank'] ) ? wp_unslash( $_POST['bank'] ) : '',
+			)
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		if ( ! VEXPay_Helpers::debtor_profile_is_complete( $profile ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Invalid account.', 'woo-vexpay-gateway' ) ),
+				400
+			);
+		}
+
+		if ( ! $this->delete_debtor_account( $profile ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Account not found.', 'woo-vexpay-gateway' ) ),
+				404
+			);
+		}
+
+		$remaining = $this->get_debtor_accounts( false );
+		wp_send_json_success(
+			array(
+				'remaining' => count( $remaining ),
+			)
+		);
 	}
 
 	/**
@@ -1497,6 +1639,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			VEXPAY_GATEWAY_VERSION,
 			true
 		);
+		wp_localize_script( 'vexpay-gateway', 'vexpayCheckout', VEXPay_Plugin::checkout_script_data() );
 
 		$site_name = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 		$logo_url  = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';
@@ -2017,38 +2160,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			echo '<div class="vexpay-accounts__list" role="listbox" aria-label="' . esc_attr__( 'Saved payer accounts', 'woo-vexpay-gateway' ) . '">';
 			foreach ( $accounts as $account ) {
 				$is_active = $active_fp && (string) $account['id'] === (string) $active_fp;
-				printf(
-					'<button type="button" class="vexpay-account-chip%1$s" role="option" aria-selected="%2$s" data-vexpay-account data-id-type="%3$s" data-id-number="%4$s" data-phone-prefix="%5$s" data-phone-number="%6$s" data-bank="%7$s">',
-					$is_active ? ' is-active' : '',
-					$is_active ? 'true' : 'false',
-					esc_attr( $account['id_type'] ),
-					esc_attr( $account['id_number'] ),
-					esc_attr( $account['phone_prefix'] ),
-					esc_attr( $account['phone_number'] ),
-					esc_attr( $account['bank'] )
-				);
-				if ( ! empty( $account['bankLogo'] ) ) {
-					printf(
-						'<img class="vexpay-account-chip__logo" src="%1$s" alt="" width="28" height="28" loading="lazy" decoding="async" />',
-						esc_url( (string) $account['bankLogo'] )
-					);
-				} else {
-					echo '<span class="vexpay-account-chip__logo vexpay-account-chip__logo--fallback" aria-hidden="true">' . esc_html( substr( (string) $account['bank'], -2 ) ) . '</span>';
-				}
-				echo '<span class="vexpay-account-chip__text">';
-				echo '<span class="vexpay-account-chip__title">' . esc_html( VEXPay_Helpers::format_debtor_id_display( $account['id_type'], $account['id_number'] ) ) . '</span>';
-				$meta_bits   = array();
-				$digits      = (string) $account['phone_number'];
-				$phone_bit   = (string) $account['phone_prefix'];
-				if ( strlen( $digits ) >= 4 ) {
-					$phone_bit .= '•••' . substr( $digits, -4 );
-				} elseif ( '' !== $digits ) {
-					$phone_bit .= $digits;
-				}
-				$meta_bits[] = $phone_bit;
-				$meta_bits[] = ! empty( $account['bankName'] ) ? (string) $account['bankName'] : (string) $account['bank'];
-				echo '<span class="vexpay-account-chip__meta">' . esc_html( implode( ' · ', $meta_bits ) ) . '</span>';
-				echo '</span></button>';
+				$this->render_debtor_account_chip( $account, $is_active );
 			}
 			echo '</div></div>';
 		}

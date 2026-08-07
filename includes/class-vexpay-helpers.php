@@ -506,6 +506,31 @@ class VEXPay_Helpers {
 	}
 
 	/**
+	 * Remove a profile from the accounts list (match by fingerprint).
+	 *
+	 * @param array $accounts Existing accounts.
+	 * @param array $profile  Profile to remove.
+	 * @return array<int, array{id_type:string,id_number:string,phone_prefix:string,phone_number:string,bank:string}>
+	 */
+	public static function remove_debtor_account( array $accounts, array $profile ): array {
+		$profile = self::sanitize_debtor_profile( $profile );
+		if ( ! self::debtor_profile_is_complete( $profile ) ) {
+			return self::sanitize_debtor_accounts( $accounts );
+		}
+
+		$fp  = self::debtor_profile_fingerprint( $profile );
+		$out = array();
+		foreach ( self::sanitize_debtor_accounts( $accounts ) as $existing ) {
+			if ( self::debtor_profile_fingerprint( $existing ) === $fp ) {
+				continue;
+			}
+			$out[] = $existing;
+		}
+
+		return $out;
+	}
+
+	/**
 	 * Display format for cédula/RIF: V-18.819.897
 	 *
 	 * @param string $type   Document type letter.
