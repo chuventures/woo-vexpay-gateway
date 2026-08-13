@@ -22,3 +22,6 @@ bin
 vendor
 *.md
 !readme.txt
+languages/*.po
+languages/*.mo
+languages/*.json

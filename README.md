@@ -7,7 +7,7 @@ WooCommerce payment gateway for **VEXPay** (Venezuela C2P). The plugin talks HTT
 - WordPress 6.0+
 - WooCommerce 8.0+
 - PHP 8.1+
-- A VEXPay merchant account with a **Test** (and later Live) API key from the [VEXPay dashboard](https://banking.chuventures.com)
+- A VEXPay merchant account with a **Test** (and later Live) API key from the [VEXPay dashboard](https://pay.vexwallet.co)
 
 ## Install (development)
 
@@ -29,7 +29,7 @@ Default site: [http://localhost:8888](http://localhost:8888)
 | Sandbox | On (toggle) |
 | API key | Sandbox key from VEXPay dashboard |
 
-The API origin is fixed to `https://api.banking.chuventures.com` (not editable in settings). Sandbox on/off switches which stored API key is active; the UI shows a single **API key** field (no Test/Live labels).
+The API origin is fixed to `https://api.pay.vexwallet.co` (not editable in settings). Sandbox on/off switches which stored API key is active; the UI shows a single **API key** field (no Test/Live labels).
 
 1. Click **Test connection** — expect bank count and BCV rate.
 2. Save settings (webhook registration runs when the store URL is reachable from VEXPay).

@@ -43,6 +43,7 @@ final class VEXPay_Plugin {
 		add_action( 'wp_ajax_vexpay_test_connection', array( $this, 'ajax_test_connection' ) );
 		add_action( 'wp_ajax_vexpay_delete_debtor_account', array( $this, 'ajax_delete_debtor_account' ) );
 		add_action( 'wp_ajax_nopriv_vexpay_delete_debtor_account', array( $this, 'ajax_delete_debtor_account' ) );
+		add_filter( 'nonce_user_logged_out', array( $this, 'scope_guest_nonce_to_session' ), 10, 2 );
 		add_action( 'woocommerce_api_vexpay_otp', array( $this, 'api_otp_submit' ) );
 		add_action( 'woocommerce_api_vexpay_otp_resend', array( $this, 'api_otp_resend' ) );
 		add_action( 'woocommerce_api_vexpay_otp_change_account', array( $this, 'api_otp_change_account' ) );
@@ -146,6 +147,31 @@ final class VEXPay_Plugin {
 		}
 
 		$gateways['vexpay']->ajax_test_connection();
+	}
+
+	/**
+	 * WordPress issues the same nonce (uid 0) to every logged-out visitor, so
+	 * check_ajax_referer() alone doesn't stop one guest from forging a request
+	 * against another guest's browser. Bind the guest nonce to their WooCommerce
+	 * customer session instead, per https://developer.wordpress.org/apis/security/nonces/#customize-nonces-for-guests-non-logged-in-users
+	 *
+	 * @param int    $uid    Nonce "user id" (0 for guests).
+	 * @param string $action Nonce action name.
+	 * @return int|string
+	 */
+	public function scope_guest_nonce_to_session( $uid, $action ) {
+		if ( 'vexpay_delete_debtor_account' !== $action ) {
+			return $uid;
+		}
+
+		if ( function_exists( 'WC' ) && WC()->session ) {
+			$customer_id = WC()->session->get_customer_id();
+			if ( $customer_id ) {
+				return $customer_id;
+			}
+		}
+
+		return $uid;
 	}
 
 	/**

@@ -1125,9 +1125,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 * AJAX: remove a saved payer account for the current user/session.
 	 */
 	public function ajax_delete_debtor_account(): void {
-		check_ajax_referer( 'vexpay_delete_debtor_account', 'nonce' );
-
+		// Load the session first: guest nonces are scoped to the WC customer id
+		// (see VEXPay_Plugin::scope_guest_nonce_to_session()), and that id must be
+		// read from the same session the nonce was created against.
 		$this->ensure_customer_session();
+
+		check_ajax_referer( 'vexpay_delete_debtor_account', 'nonce' );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified above.
 		$profile = VEXPay_Helpers::sanitize_debtor_profile(

@@ -1,5 +1,5 @@
 === VEXPay Gateway for WooCommerce ===
-Contributors: vexpay
+Contributors: tinhochu
 Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.0
@@ -12,7 +12,7 @@ Accept Venezuela C2P payments in WooCommerce via the VEXPay payment gateway.
 
 == Description ==
 
-VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) through [VEXPay](https://banking.chuventures.com).
+VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) through [VEXPay](https://pay.vexwallet.co).
 
 = Features =
 
@@ -68,6 +68,26 @@ v1 maps a WooCommerce refund to a full VEXPay C2P reverse of the original paymen
 = Which currencies are supported? =
 
 Orders should be in USD (or your store currency converted to the USD amount sent to VEXPay). VEXPay settles in VES using the official BCV rate.
+
+== External services ==
+
+This plugin connects to the VEXPay API (https://api.pay.vexwallet.co), a paid Venezuelan payment-processing service, to authorize, confirm (OTP), and refund C2P/Débito Inmediato payments. It is required for the plugin's core function: without it, no payments can be processed.
+
+The following data is sent to VEXPay:
+
+* When a customer checks out: order amount and currency, and the debtor's payer details entered at checkout (cédula/RIF, phone number, and issuing bank) — needed to initiate the C2P charge.
+* When a customer confirms payment: the OTP/token they received from their own banking app.
+* When a merchant clicks "Test connection" in the gateway settings: the store's configured VEXPay API key, to verify it is valid and reachable.
+* When an order is refunded: the original payment reference, to request a reverse.
+* VEXPay also calls back to this site's webhook endpoint with signed payment-status updates.
+
+No data is sent unless a customer actively submits the checkout/OTP form, a merchant explicitly tests the connection, or a refund is triggered by store staff.
+
+VEXPay Terms of Service: https://vexwallet.co/cumplimiento
+VEXPay Privacy Policy: https://vexwallet.co/politica-privacidad
+
+This plugin also loads the "IBM Plex Sans" and "Outfit" web fonts from Google Fonts (fonts.googleapis.com / fonts.gstatic.com) on the checkout and OTP confirmation pages, for consistent typography. Loading these fonts causes the visitor's browser to make a direct request to Google, which transmits their IP address to Google.
+Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/fonts/faq), [Google Privacy Policy](https://policies.google.com/privacy)
 
 == Screenshots ==
 

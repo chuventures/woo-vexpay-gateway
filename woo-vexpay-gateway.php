@@ -6,8 +6,9 @@
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
+ * Requires Plugins:  woocommerce
  * Author:            VEXPay
- * Author URI:        https://banking.chuventures.com
+ * Author URI:        https://pay.vexwallet.co
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       vexpay-gateway-for-woocommerce
@@ -25,7 +26,7 @@ define( 'VEXPAY_GATEWAY_FILE', __FILE__ );
 define( 'VEXPAY_GATEWAY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
 /** Hosted VEXPay API origin — not merchant-configurable. */
-define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.banking.chuventures.com' );
+define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.pay.vexwallet.co' );
 
 /**
  * Schedule settlement poller (Action Scheduler or WP-Cron).
