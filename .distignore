@@ -5,6 +5,7 @@
 .distignore
 .wp-env.json
 .cursor
+.claude
 .DS_Store
 .phpunit.cache
 .phpunit.result.cache
