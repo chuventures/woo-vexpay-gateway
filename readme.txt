@@ -12,7 +12,7 @@ Accept Venezuela C2P payments in WooCommerce via the VEXPay payment gateway.
 
 == Description ==
 
-VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) through [VEXPay](https://pay.vexwallet.co).
+VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) through [VEXPay](https://pay.vexwallet.co/?utm_source=wp-repo&utm_medium=link&utm_campaign=readme).
 
 = Features =
 
@@ -83,8 +83,8 @@ The following data is sent to VEXPay:
 
 No data is sent unless a customer actively submits the checkout/OTP form, a merchant explicitly tests the connection, or a refund is triggered by store staff.
 
-VEXPay Terms of Service: https://vexwallet.co/cumplimiento
-VEXPay Privacy Policy: https://vexwallet.co/politica-privacidad
+VEXPay Terms of Service: https://vexwallet.co/cumplimiento?utm_source=wp-repo&utm_medium=link&utm_campaign=readme-legal
+VEXPay Privacy Policy: https://vexwallet.co/politica-privacidad?utm_source=wp-repo&utm_medium=link&utm_campaign=readme-legal
 
 This plugin also loads the "IBM Plex Sans" and "Outfit" web fonts from Google Fonts (fonts.googleapis.com / fonts.gstatic.com) on the checkout and OTP confirmation pages, for consistent typography. Loading these fonts causes the visitor's browser to make a direct request to Google, which transmits their IP address to Google.
 Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/fonts/faq), [Google Privacy Policy](https://policies.google.com/privacy)

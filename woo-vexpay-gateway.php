@@ -1,14 +1,14 @@
 <?php
 /**
  * Plugin Name:       VEXPay Gateway for WooCommerce
- * Plugin URI:        https://github.com/chuventures/woo-vexpay-gateway
+ * Plugin URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=plugin-uri&utm_medium=wp-dash
  * Description:       Accept Venezuela Débito inmediato payments via VEXPay.
  * Version:           1.0.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
  * Author:            VEXPay
- * Author URI:        https://pay.vexwallet.co
+ * Author URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=author-uri&utm_medium=wp-dash
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       vexpay-gateway-for-woocommerce
