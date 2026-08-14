@@ -6,3 +6,6 @@
 *.zip
 .idea/
 .vscode/
+
+# wordpress.org SVN checkout
+svn-wp/
