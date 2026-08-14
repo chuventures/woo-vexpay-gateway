@@ -26,3 +26,4 @@ vendor
 languages/*.po
 languages/*.mo
 languages/*.json
+logo.gif
