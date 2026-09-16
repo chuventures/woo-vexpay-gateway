@@ -4,19 +4,20 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Accept Venezuela C2P payments in WooCommerce via the VEXPay payment gateway.
+Accept Venezuela C2P and card (VPOS) payments in WooCommerce via the VEXPay payment gateway.
 
 == Description ==
 
-VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) through [VEXPay](https://pay.vexwallet.co/?utm_source=wp-repo&utm_medium=link&utm_campaign=readme).
+VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) or a **Visa/Mastercard/Maestro card** through [VEXPay](https://pay.vexwallet.co/?utm_source=wp-repo&utm_medium=link&utm_campaign=readme).
 
 = Features =
 
 * C2P checkout: cédula/RIF, phone, bank, then OTP confirmation
+* Card checkout (VPOS/BNC): a second, independent payment method that shares the same API key
 * **Test connection** button — verify API key and reachability from the shop
 * Live and Test API keys (VEXPay twin environments)
 * Signed webhooks for payment status reconciliation
@@ -97,10 +98,16 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.1.0 =
+* New: VEXPay — Tarjeta, a second payment gateway for Visa/Mastercard/Maestro charges via VEXPay VPOS (BNC). Shares the API key and Sandbox toggle already configured for VEXPay Débito inmediato. Classic checkout and Cart & Checkout Blocks support.
+
 = 1.0.0 =
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds a card (VPOS) payment option alongside Débito inmediato.
 
 = 1.0.0 =
 Initial public release.

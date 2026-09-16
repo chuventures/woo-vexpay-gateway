@@ -26,6 +26,9 @@ class VEXPay_Helpers {
 	public const META_OTP_RESEND_AT = '_vexpay_otp_resend_at';
 	/** Unix timestamp of last settlement poll attempt. */
 	public const META_LAST_POLLED_AT = '_vexpay_last_polled_at';
+	/** VPOS only — never store more than last4 / a brand label. */
+	public const META_CARD_LAST4 = '_vexpay_card_last4';
+	public const META_CARD_BRAND = '_vexpay_card_brand';
 
 	/** Minimum seconds between OTP re-requests. */
 	public const OTP_RESEND_COOLDOWN = 45;
@@ -259,6 +262,106 @@ class VEXPay_Helpers {
 		}
 		$num = (int) $digits;
 		return $num > 0 ? $num : null;
+	}
+
+	/**
+	 * Normalize a card number to digits-only, 13-19 digits (VPOS).
+	 *
+	 * @param string $raw Raw input (may contain spaces/dashes).
+	 * @return string|null
+	 */
+	public static function normalize_card_number( string $raw ): ?string {
+		$digits = preg_replace( '/\D+/', '', $raw ) ?? '';
+		return preg_match( '/^\d{13,19}$/', $digits ) ? $digits : null;
+	}
+
+	/**
+	 * Normalize a card CVV to digits-only, 3-4 digits (VPOS).
+	 *
+	 * @param string $raw Raw input.
+	 * @return string|null
+	 */
+	public static function normalize_card_cvv( string $raw ): ?string {
+		$digits = preg_replace( '/\D+/', '', $raw ) ?? '';
+		return preg_match( '/^\d{3,4}$/', $digits ) ? $digits : null;
+	}
+
+	/**
+	 * Validate a card expiry month/year pair against the ranges VEXPay's API
+	 * accepts (1-12, 2020-2099). Does not check "already expired" — the bank
+	 * is the source of truth for that, same as this plugin never duplicates
+	 * bank-side OTP/decline logic for débito.
+	 *
+	 * @param string $month Month (1-12, may be zero-padded).
+	 * @param string $year  Year (4-digit, or 2-digit as YY).
+	 * @return array{month:int,year:int}|null
+	 */
+	public static function normalize_card_expiry( string $month, string $year ): ?array {
+		$m     = (int) preg_replace( '/\D+/', '', $month );
+		$y_raw = preg_replace( '/\D+/', '', $year ) ?? '';
+		if ( 2 === strlen( $y_raw ) ) {
+			$y_raw = '20' . $y_raw;
+		}
+		$y = (int) $y_raw;
+
+		if ( $m < 1 || $m > 12 || $y < 2020 || $y > 2099 ) {
+			return null;
+		}
+		return array(
+			'month' => $m,
+			'year'  => $y,
+		);
+	}
+
+	/**
+	 * VPOS card brand codes VEXPay's API accepts.
+	 *
+	 * @return array<int, string> Code => label.
+	 */
+	public static function card_brands(): array {
+		return array(
+			1 => 'Visa',
+			2 => 'Mastercard',
+			3 => 'Maestro',
+		);
+	}
+
+	/**
+	 * Normalize a posted card brand to one of VEXPay's accepted codes.
+	 *
+	 * @param string $raw Raw input.
+	 * @return int|null
+	 */
+	public static function normalize_card_brand( string $raw ): ?int {
+		$code = (int) preg_replace( '/\D+/', '', $raw );
+		return array_key_exists( $code, self::card_brands() ) ? $code : null;
+	}
+
+	/**
+	 * VPOS account type codes VEXPay's API accepts.
+	 *
+	 * @return array<int, string> Code => label.
+	 */
+	public static function card_account_types(): array {
+		return array(
+			0  => __( 'Crédito', 'vexpay-gateway-for-woocommerce' ),
+			10 => __( 'Débito · Ahorro', 'vexpay-gateway-for-woocommerce' ),
+			20 => __( 'Débito · Corriente', 'vexpay-gateway-for-woocommerce' ),
+		);
+	}
+
+	/**
+	 * Normalize a posted account type to one of VEXPay's accepted codes.
+	 *
+	 * @param string $raw Raw input.
+	 * @return int|null
+	 */
+	public static function normalize_card_account_type( string $raw ): ?int {
+		if ( ! is_numeric( $raw ) ) {
+			return null;
+		}
+		$code = (int) $raw;
+		return array_key_exists( $code, self::card_account_types() ) ? $code : null;
 	}
 
 	/**

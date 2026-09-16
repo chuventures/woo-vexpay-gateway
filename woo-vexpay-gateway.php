@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       VEXPay Gateway for WooCommerce
  * Plugin URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=plugin-uri&utm_medium=wp-dash
- * Description:       Accept Venezuela Débito inmediato payments via VEXPay.
- * Version:           1.0.0
+ * Description:       Accept Venezuela Débito inmediato and card (VPOS) payments via VEXPay.
+ * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VEXPAY_GATEWAY_VERSION', '1.0.0' );
+define( 'VEXPAY_GATEWAY_VERSION', '1.1.0' );
 define( 'VEXPAY_GATEWAY_FILE', __FILE__ );
 define( 'VEXPAY_GATEWAY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
@@ -89,6 +89,7 @@ add_action(
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-webhook.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-poller.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway-vpos.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-plugin.php';
 

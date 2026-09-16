@@ -132,6 +132,7 @@ final class VEXPay_Plugin {
 	 */
 	public function register_gateway( array $gateways ): array {
 		$gateways[] = 'VEXPay_Gateway';
+		$gateways[] = 'VEXPay_Gateway_VPOS';
 		return $gateways;
 	}
 
@@ -195,12 +196,12 @@ final class VEXPay_Plugin {
 	 */
 	public static function checkout_script_data(): array {
 		return array(
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 			'deleteAccount' => array(
 				'action' => 'vexpay_delete_debtor_account',
 				'nonce'  => wp_create_nonce( 'vexpay_delete_debtor_account' ),
 			),
-			'i18n'    => array(
+			'i18n'          => array(
 				'removeAccount' => __( 'Remove saved account', 'vexpay-gateway-for-woocommerce' ),
 				'removeFailed'  => __( 'Could not remove saved account.', 'vexpay-gateway-for-woocommerce' ),
 				'selectBank'    => __( 'Select your bank', 'vexpay-gateway-for-woocommerce' ),

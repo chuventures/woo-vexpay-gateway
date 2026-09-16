@@ -86,6 +86,22 @@ class VEXPay_API_Client {
 	}
 
 	/**
+	 * POST /v1/payments/vpos — execute a VPOS card charge (BNC).
+	 *
+	 * Never log the raw body (contains cardNumber/cvv) — the base request()
+	 * logger only logs method/path/status, never the body, so this is safe
+	 * to call as-is, but never wrap it in a caller that logs $body directly.
+	 *
+	 * @param array $body Body (usdAmount|vesAmount, cardNumber, expirationMonth,
+	 *                    expirationYear, cvv, cardPin?, cardHolderName, cardHolderId,
+	 *                    accountType, cardType, externalRef?).
+	 * @return array|WP_Error
+	 */
+	public function execute_vpos( array $body ) {
+		return $this->request( 'POST', '/v1/payments/vpos', $body );
+	}
+
+	/**
 	 * GET /v1/payments/:id
 	 *
 	 * @param string $payment_id Payment ID.
@@ -258,7 +274,14 @@ class VEXPay_API_Client {
 				}
 			}
 			VEXPay_Logger::error( sprintf( 'API %s %s → %d: %s', $method, $path, $code, $message ) );
-			return new WP_Error( 'vexpay_api_error', $message, array( 'status' => $code, 'body' => $data ) );
+			return new WP_Error(
+				'vexpay_api_error',
+				$message,
+				array(
+					'status' => $code,
+					'body'   => $data,
+				)
+			);
 		}
 
 		$biz = '';

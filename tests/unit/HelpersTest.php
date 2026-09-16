@@ -408,4 +408,42 @@ final class HelpersTest extends TestCase {
 		$this->assertStringContainsString( '36.5000', $msg );
 		$this->assertStringContainsString( 'VEXPay', $msg );
 	}
+
+	public function test_normalize_card_number(): void {
+		$this->assertSame( '4111111111111111', VEXPay_Helpers::normalize_card_number( '4111 1111 1111 1111' ) );
+		$this->assertSame( '4111111111111111', VEXPay_Helpers::normalize_card_number( '4111-1111-1111-1111' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_number( '1234' ) ); // too short
+		$this->assertNull( VEXPay_Helpers::normalize_card_number( str_repeat( '1', 20 ) ) ); // too long
+		$this->assertNull( VEXPay_Helpers::normalize_card_number( 'not a card' ) );
+	}
+
+	public function test_normalize_card_cvv(): void {
+		$this->assertSame( '123', VEXPay_Helpers::normalize_card_cvv( '123' ) );
+		$this->assertSame( '1234', VEXPay_Helpers::normalize_card_cvv( '1234' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_cvv( '12' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_cvv( '12345' ) );
+	}
+
+	public function test_normalize_card_expiry(): void {
+		$this->assertSame( array( 'month' => 12, 'year' => 2028 ), VEXPay_Helpers::normalize_card_expiry( '12', '28' ) );
+		$this->assertSame( array( 'month' => 1, 'year' => 2030 ), VEXPay_Helpers::normalize_card_expiry( '01', '2030' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_expiry( '13', '28' ) ); // bad month
+		$this->assertNull( VEXPay_Helpers::normalize_card_expiry( '00', '28' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_expiry( '12', '19' ) ); // out of API range
+	}
+
+	public function test_normalize_card_brand(): void {
+		$this->assertSame( 1, VEXPay_Helpers::normalize_card_brand( '1' ) );
+		$this->assertSame( 3, VEXPay_Helpers::normalize_card_brand( '3' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_brand( '4' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_brand( '' ) );
+	}
+
+	public function test_normalize_card_account_type(): void {
+		$this->assertSame( 0, VEXPay_Helpers::normalize_card_account_type( '0' ) );
+		$this->assertSame( 10, VEXPay_Helpers::normalize_card_account_type( '10' ) );
+		$this->assertSame( 20, VEXPay_Helpers::normalize_card_account_type( '20' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_account_type( '5' ) );
+		$this->assertNull( VEXPay_Helpers::normalize_card_account_type( '' ) );
+	}
 }
