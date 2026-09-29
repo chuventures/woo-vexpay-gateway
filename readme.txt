@@ -17,7 +17,8 @@ VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank O
 = Features =
 
 * C2P checkout: cédula/RIF, phone, bank, then OTP confirmation
-* Card checkout (VPOS/BNC): a second, independent payment method that shares the same API key
+* Card checkout (VPOS): a second, independent payment method that shares the same API key
+* USDT checkout: redirects to VEXPay's hosted USDT page (shown only when USDT is enabled on your VEXPay account)
 * **Test connection** button — verify API key and reachability from the shop
 * Live and Test API keys (VEXPay twin environments)
 * Signed webhooks for payment status reconciliation
@@ -98,8 +99,11 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= Unreleased =
+* New: VEXPay — USDT, a third payment gateway that redirects the buyer to VEXPay's hosted USDT checkout (deposit address on the network they choose). Shown only when USDT is enabled on your VEXPay account; sales settle to your VEXPay USDT balance. Orders complete from the `payment.completed` webhook; an underpaid transfer puts the order on hold instead. Shares the API key and Sandbox toggle of VEXPay Débito inmediato. Classic checkout and Cart & Checkout Blocks support.
+
 = 1.1.0 =
-* New: VEXPay — Tarjeta, a second payment gateway for Visa/Mastercard/Maestro charges via VEXPay VPOS (BNC). Shares the API key and Sandbox toggle already configured for VEXPay Débito inmediato. Classic checkout and Cart & Checkout Blocks support.
+* New: VEXPay — Tarjeta, a second payment gateway for Visa/Mastercard/Maestro charges via VEXPay VPOS. Shares the API key and Sandbox toggle already configured for VEXPay Débito inmediato. Classic checkout and Cart & Checkout Blocks support.
 
 = 1.0.0 =
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.

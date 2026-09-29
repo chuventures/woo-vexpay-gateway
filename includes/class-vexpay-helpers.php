@@ -939,7 +939,7 @@ class VEXPay_Helpers {
 	 * Classify an API key twin without exposing the secret.
 	 *
 	 * Mode is implied by which twin key the API receives (see VEXPay auth docs).
-	 * Test twins simulate débito OTP (Portal → Sandbox); Live twins reach R4 SMS.
+	 * Test twins simulate débito OTP (Portal → Sandbox); Live twins send the real bank SMS.
 	 *
 	 * @param string $api_key Raw x-api-key.
 	 * @return string One of: live|test|missing|unknown

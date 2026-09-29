@@ -1,6 +1,6 @@
 <?php
 /**
- * WooCommerce payment gateway — VEXPay Tarjeta (VPOS / BNC).
+ * WooCommerce payment gateway — VEXPay Tarjeta (VPOS).
  *
  * @package VEXPay_Gateway
  */
@@ -21,7 +21,7 @@ class VEXPay_Gateway_VPOS extends WC_Payment_Gateway {
 	public function __construct() {
 		$this->id                 = 'vexpay_vpos';
 		$this->method_title       = __( 'VEXPay — Tarjeta', 'vexpay-gateway-for-woocommerce' );
-		$this->method_description = __( 'Accept Visa/Mastercard/Maestro charges via VEXPay VPOS (BNC). Uses the same API key as VEXPay Débito inmediato.', 'vexpay-gateway-for-woocommerce' );
+		$this->method_description = __( 'Accept Visa/Mastercard/Maestro charges via VEXPay VPOS. Uses the same API key as VEXPay Débito inmediato.', 'vexpay-gateway-for-woocommerce' );
 		$this->has_fields         = true;
 		$this->supports           = array( 'products' );
 		$this->icon               = VEXPAY_GATEWAY_URL . 'assets/images/vexpay-logo.svg';

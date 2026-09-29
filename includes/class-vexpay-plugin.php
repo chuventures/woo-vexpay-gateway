@@ -133,6 +133,7 @@ final class VEXPay_Plugin {
 	public function register_gateway( array $gateways ): array {
 		$gateways[] = 'VEXPay_Gateway';
 		$gateways[] = 'VEXPay_Gateway_VPOS';
+		$gateways[] = 'VEXPay_Gateway_USDT';
 		return $gateways;
 	}
 

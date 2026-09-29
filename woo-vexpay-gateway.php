@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VEXPay Gateway for WooCommerce
  * Plugin URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=plugin-uri&utm_medium=wp-dash
- * Description:       Accept Venezuela Débito inmediato and card (VPOS) payments via VEXPay.
+ * Description:       Accept Venezuela Débito inmediato, card (VPOS) and USDT payments via VEXPay.
  * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
@@ -25,8 +25,13 @@ define( 'VEXPAY_GATEWAY_VERSION', '1.1.0' );
 define( 'VEXPAY_GATEWAY_FILE', __FILE__ );
 define( 'VEXPAY_GATEWAY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
-/** Hosted VEXPay API origin — not merchant-configurable. */
-define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.pay.vexwallet.co' );
+/**
+ * Hosted VEXPay API origin — not merchant-configurable in settings. Plugin developers can
+ * point it at a local API by defining the constant in wp-config.php.
+ */
+if ( ! defined( 'VEXPAY_GATEWAY_API_BASE_URL' ) ) {
+	define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.pay.vexwallet.co' );
+}
 
 /**
  * Schedule settlement poller (Action Scheduler or WP-Cron).
@@ -90,6 +95,7 @@ add_action(
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-poller.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway-vpos.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway-usdt.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-plugin.php';
 

@@ -86,7 +86,7 @@ class VEXPay_API_Client {
 	}
 
 	/**
-	 * POST /v1/payments/vpos — execute a VPOS card charge (BNC).
+	 * POST /v1/payments/vpos — execute a VPOS card charge.
 	 *
 	 * Never log the raw body (contains cardNumber/cvv) — the base request()
 	 * logger only logs method/path/status, never the body, so this is safe
@@ -99,6 +99,35 @@ class VEXPay_API_Client {
 	 */
 	public function execute_vpos( array $body ) {
 		return $this->request( 'POST', '/v1/payments/vpos', $body );
+	}
+
+	/**
+	 * POST /v1/checkout/sessions — hosted checkout (used for USDT, `methods: ["usdt"]`).
+	 *
+	 * @param array $body Body (amountUsd, reference?, description?, methods?, successUrl?, cancelUrl?, expiresInMinutes?, metadata?).
+	 * @return array|WP_Error
+	 */
+	public function create_checkout_session( array $body ) {
+		return $this->request( 'POST', '/v1/checkout/sessions', $body );
+	}
+
+	/**
+	 * GET /v1/checkout/sessions/:id
+	 *
+	 * @param string $session_id Session ID (cs_…).
+	 * @return array|WP_Error
+	 */
+	public function get_checkout_session( string $session_id ) {
+		return $this->request( 'GET', '/v1/checkout/sessions/' . rawurlencode( $session_id ) );
+	}
+
+	/**
+	 * GET /v1/crypto/networks — 403 `method_not_allowed` when USDT is not enabled for the account.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function list_crypto_networks() {
+		return $this->request( 'GET', '/v1/crypto/networks' );
 	}
 
 	/**

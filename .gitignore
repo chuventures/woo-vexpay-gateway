@@ -9,3 +9,4 @@
 
 # wordpress.org SVN checkout
 svn-wp/
+.wp-env.override.json
