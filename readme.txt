@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,7 +99,7 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
-= Unreleased =
+= 1.2.0 =
 * New: VEXPay — USDT, a third payment gateway that redirects the buyer to VEXPay's hosted USDT checkout (deposit address on the network they choose). Shown only when USDT is enabled on your VEXPay account; sales settle to your VEXPay USDT balance. Orders complete from the `payment.completed` webhook; an underpaid transfer puts the order on hold instead. Shares the API key and Sandbox toggle of VEXPay Débito inmediato. Classic checkout and Cart & Checkout Blocks support.
 
 = 1.1.0 =
@@ -109,6 +109,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Adds a USDT payment option (VEXPay hosted checkout), shown when USDT is enabled on your VEXPay account.
 
 = 1.1.0 =
 Adds a card (VPOS) payment option alongside Débito inmediato.

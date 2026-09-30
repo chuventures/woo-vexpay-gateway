@@ -3,7 +3,7 @@
  * Plugin Name:       VEXPay Gateway for WooCommerce
  * Plugin URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=plugin-uri&utm_medium=wp-dash
  * Description:       Accept Venezuela Débito inmediato, card (VPOS) and USDT payments via VEXPay.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VEXPAY_GATEWAY_VERSION', '1.1.0' );
+define( 'VEXPAY_GATEWAY_VERSION', '1.2.0' );
 define( 'VEXPAY_GATEWAY_FILE', __FILE__ );
 define( 'VEXPAY_GATEWAY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
