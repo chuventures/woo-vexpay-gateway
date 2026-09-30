@@ -75,11 +75,19 @@ class VEXPay_Webhook {
 			return;
 		}
 
+		$gateways = WC()->payment_gateways()->payment_gateways();
+
+		if ( $order->get_payment_method() === 'vexpay_usdt' ) {
+			if ( str_starts_with( $event, 'payment.' ) && ! empty( $gateways['vexpay_usdt'] ) && $gateways['vexpay_usdt'] instanceof VEXPay_Gateway_USDT ) {
+				$gateways['vexpay_usdt']->apply_payment_result( $order, $data );
+			}
+			return;
+		}
+
 		if ( $order->get_payment_method() !== 'vexpay' ) {
 			return;
 		}
 
-		$gateways = WC()->payment_gateways()->payment_gateways();
 		if ( empty( $gateways['vexpay'] ) || ! $gateways['vexpay'] instanceof VEXPay_Gateway ) {
 			return;
 		}
@@ -106,13 +114,16 @@ class VEXPay_Webhook {
 	}
 
 	/**
-	 * Find order by externalRef or paymentId meta.
+	 * Find order by externalRef or paymentId meta. Payments from a hosted checkout
+	 * session (USDT) carry the session's own externalRef; the order's is then
+	 * `checkoutSession.reference`.
 	 *
 	 * @param array $data Webhook data.
 	 * @return WC_Order|null
 	 */
 	private static function find_order( array $data ): ?WC_Order {
-		$external_ref = isset( $data['externalRef'] ) ? (string) $data['externalRef'] : '';
+		$session_ref  = isset( $data['checkoutSession']['reference'] ) ? (string) $data['checkoutSession']['reference'] : '';
+		$external_ref = '' !== $session_ref ? $session_ref : ( isset( $data['externalRef'] ) ? (string) $data['externalRef'] : '' );
 		$payment_id   = isset( $data['paymentId'] ) ? (string) $data['paymentId'] : '';
 
 		if ( '' !== $external_ref && preg_match( '/^wc_order_(\d+)$/', $external_ref, $m ) ) {

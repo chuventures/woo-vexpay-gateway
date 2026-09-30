@@ -86,6 +86,51 @@ class VEXPay_API_Client {
 	}
 
 	/**
+	 * POST /v1/payments/vpos — execute a VPOS card charge.
+	 *
+	 * Never log the raw body (contains cardNumber/cvv) — the base request()
+	 * logger only logs method/path/status, never the body, so this is safe
+	 * to call as-is, but never wrap it in a caller that logs $body directly.
+	 *
+	 * @param array $body Body (usdAmount|vesAmount, cardNumber, expirationMonth,
+	 *                    expirationYear, cvv, cardPin?, cardHolderName, cardHolderId,
+	 *                    accountType, cardType, externalRef?).
+	 * @return array|WP_Error
+	 */
+	public function execute_vpos( array $body ) {
+		return $this->request( 'POST', '/v1/payments/vpos', $body );
+	}
+
+	/**
+	 * POST /v1/checkout/sessions — hosted checkout (used for USDT, `methods: ["usdt"]`).
+	 *
+	 * @param array $body Body (amountUsd, reference?, description?, methods?, successUrl?, cancelUrl?, expiresInMinutes?, metadata?).
+	 * @return array|WP_Error
+	 */
+	public function create_checkout_session( array $body ) {
+		return $this->request( 'POST', '/v1/checkout/sessions', $body );
+	}
+
+	/**
+	 * GET /v1/checkout/sessions/:id
+	 *
+	 * @param string $session_id Session ID (cs_…).
+	 * @return array|WP_Error
+	 */
+	public function get_checkout_session( string $session_id ) {
+		return $this->request( 'GET', '/v1/checkout/sessions/' . rawurlencode( $session_id ) );
+	}
+
+	/**
+	 * GET /v1/crypto/networks — 403 `method_not_allowed` when USDT is not enabled for the account.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function list_crypto_networks() {
+		return $this->request( 'GET', '/v1/crypto/networks' );
+	}
+
+	/**
 	 * GET /v1/payments/:id
 	 *
 	 * @param string $payment_id Payment ID.
@@ -258,7 +303,14 @@ class VEXPay_API_Client {
 				}
 			}
 			VEXPay_Logger::error( sprintf( 'API %s %s → %d: %s', $method, $path, $code, $message ) );
-			return new WP_Error( 'vexpay_api_error', $message, array( 'status' => $code, 'body' => $data ) );
+			return new WP_Error(
+				'vexpay_api_error',
+				$message,
+				array(
+					'status' => $code,
+					'body'   => $data,
+				)
+			);
 		}
 
 		$biz = '';

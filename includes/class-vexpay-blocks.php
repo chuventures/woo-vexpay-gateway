@@ -38,11 +38,15 @@ class VEXPay_Blocks {
 		}
 
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method-vpos.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method-usdt.php';
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			static function ( $registry ) {
 				$registry->register( new VEXPay_Blocks_Payment_Method() );
+				$registry->register( new VEXPay_Blocks_Payment_Method_VPOS() );
+				$registry->register( new VEXPay_Blocks_Payment_Method_USDT() );
 			}
 		);
 	}
