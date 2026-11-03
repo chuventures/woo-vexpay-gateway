@@ -1,14 +1,14 @@
 <?php
 /**
  * Plugin Name:       VEXPay Gateway for WooCommerce
- * Plugin URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=plugin-uri&utm_medium=wp-dash
+ * Plugin URI:        https://vexpay.app/?utm_source=wp-plugins&utm_campaign=plugin-uri&utm_medium=wp-dash
  * Description:       Accept Venezuela Débito inmediato, card (VPOS) and USDT payments via VEXPay.
- * Version:           1.2.1
+ * Version:           1.2.2
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
  * Author:            VEXPay
- * Author URI:        https://pay.vexwallet.co/?utm_source=wp-plugins&utm_campaign=author-uri&utm_medium=wp-dash
+ * Author URI:        https://vexpay.app/?utm_source=wp-plugins&utm_campaign=author-uri&utm_medium=wp-dash
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       vexpay-gateway-for-woocommerce
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'VEXPAY_GATEWAY_VERSION', '1.2.1' );
+define( 'VEXPAY_GATEWAY_VERSION', '1.2.2' );
 define( 'VEXPAY_GATEWAY_FILE', __FILE__ );
 define( 'VEXPAY_GATEWAY_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
@@ -30,7 +30,7 @@ define( 'VEXPAY_GATEWAY_URL', plugin_dir_url( __FILE__ ) );
  * point it at a local API by defining the constant in wp-config.php.
  */
 if ( ! defined( 'VEXPAY_GATEWAY_API_BASE_URL' ) ) {
-	define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.pay.vexwallet.co' );
+	define( 'VEXPAY_GATEWAY_API_BASE_URL', 'https://api.vexpay.app' );
 }
 
 /**
