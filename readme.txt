@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Accept Venezuela C2P and card (VPOS) payments in WooCommerce via the VEXPay paym
 
 == Description ==
 
-VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) or a **Visa/Mastercard/Maestro card** through [VEXPay](https://pay.vexwallet.co/?utm_source=wp-repo&utm_medium=link&utm_campaign=readme).
+VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank OTP / token) or a **Visa/Mastercard/Maestro card** through [VEXPay](https://vexpay.app/?utm_source=wp-repo&utm_medium=link&utm_campaign=readme).
 
 = Features =
 
@@ -73,7 +73,7 @@ Orders should be in USD (or your store currency converted to the USD amount sent
 
 == External services ==
 
-This plugin connects to the VEXPay API (https://api.pay.vexwallet.co), a paid Venezuelan payment-processing service, to authorize, confirm (OTP), and refund C2P/Débito Inmediato payments. It is required for the plugin's core function: without it, no payments can be processed.
+This plugin connects to the VEXPay API (https://api.vexpay.app), a paid Venezuelan payment-processing service, to authorize, confirm (OTP), and refund C2P/Débito Inmediato payments. It is required for the plugin's core function: without it, no payments can be processed.
 
 The following data is sent to VEXPay:
 
@@ -85,8 +85,8 @@ The following data is sent to VEXPay:
 
 No data is sent unless a customer actively submits the checkout/OTP form, a merchant explicitly tests the connection, or a refund is triggered by store staff.
 
-VEXPay Terms of Service: https://vexwallet.co/cumplimiento?utm_source=wp-repo&utm_medium=link&utm_campaign=readme-legal
-VEXPay Privacy Policy: https://vexwallet.co/politica-privacidad?utm_source=wp-repo&utm_medium=link&utm_campaign=readme-legal
+VEXPay Terms of Service: https://docs.vexpay.app/es/terms?utm_source=wp-repo&utm_medium=link&utm_campaign=readme-legal
+VEXPay Privacy Policy: https://docs.vexpay.app/es/privacy?utm_source=wp-repo&utm_medium=link&utm_campaign=readme-legal
 
 This plugin also loads the "IBM Plex Sans" and "Outfit" web fonts from Google Fonts (fonts.googleapis.com / fonts.gstatic.com) on the checkout and OTP confirmation pages, for consistent typography. Loading these fonts causes the visitor's browser to make a direct request to Google, which transmits their IP address to Google.
 Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/fonts/faq), [Google Privacy Policy](https://policies.google.com/privacy)
@@ -98,6 +98,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 3. OTP confirmation step
 
 == Changelog ==
+
+= 1.2.2 =
+* Tweak: The plugin talks to VEX Pay at its new address, https://api.vexpay.app. Links to VEX Pay, its terms and its privacy policy point at vexpay.app.
 
 = 1.2.1 =
 * Tweak: Tested up to WordPress 7.1 and WooCommerce 11.2.
@@ -112,6 +115,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.2.2 =
+VEX Pay moved to vexpay.app. Nothing to configure: your API keys and webhooks keep working.
 
 = 1.2.1 =
 Compatibility update for WordPress 7.1 and WooCommerce 11.2.
