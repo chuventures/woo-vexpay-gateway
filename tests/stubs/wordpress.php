@@ -176,11 +176,27 @@ class VEXPay_Test_Cart {
 	}
 }
 
+class VEXPay_Test_Session {
+	public $has_session = false;
+	public $cookie_set  = false;
+
+	public function has_session() {
+		return $this->has_session;
+	}
+
+	public function set_customer_session_cookie( $set ) {
+		$this->cookie_set  = (bool) $set;
+		$this->has_session = true;
+	}
+}
+
 class VEXPay_Test_WC {
 	public $cart;
+	public $session;
 
 	public function __construct() {
-		$this->cart = new VEXPay_Test_Cart();
+		$this->cart    = new VEXPay_Test_Cart();
+		$this->session = new VEXPay_Test_Session();
 	}
 }
 

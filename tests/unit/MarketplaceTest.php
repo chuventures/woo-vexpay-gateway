@@ -414,8 +414,12 @@ final class MarketplaceTest extends TestCase {
 		$this->assertSame( 'vexpay_split_refused', $result->get_error_code() );
 		$this->assertSame( 'failed', $order->status );
 
+		// A guest posting the OTP form may have no session cookie yet; the notice must still persist.
+		WC()->session = new VEXPay_Test_Session();
+
 		// handle_otp_submit() redirects here (then exits) instead of the failed order's OTP page.
 		$this->assertSame( 'https://shop.test/checkout/', $gateway->split_refused_redirect_url( $order ) );
+		$this->assertTrue( WC()->session->cookie_set );
 		$this->assertSame(
 			array( 'error', VEXPay_Marketplace::customer_refusal_message( $order ) ),
 			end( $GLOBALS['vexpay_test']['notices'] )

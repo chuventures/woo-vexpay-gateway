@@ -2736,6 +2736,10 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		if ( function_exists( 'wc_load_cart' ) && function_exists( 'WC' ) && null === WC()->cart ) {
 			wc_load_cart();
 		}
+		// Persist the notice even when this request arrived without a session cookie.
+		if ( function_exists( 'WC' ) && WC()->session && ! WC()->session->has_session() ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
 		wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
 		return wc_get_checkout_url();
 	}
