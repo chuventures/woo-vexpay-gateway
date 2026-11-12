@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -148,6 +148,11 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.3.0 =
+* New: Marketplace mode (off by default). A store that sells for several VEX Pay comercios can split one débito or card payment between them: each product is linked to a comercio, and VEX Pay credits each comercio its share minus your commission. Developers can use the `vexpay_line_item_merchant_id`, `vexpay_cart_item_merchant_id`, `vexpay_order_splits` and `vexpay_split_refusal_message` filters and the `vexpay_upsert_merchant()` helper.
+* Tweak: When marketplace mode is on and the cart has a comercio's product, USDT is not offered for that order.
+* Tweak: The order screen shows each comercio's share, commission, fee and net.
+
 = 1.2.2 =
 * Tweak: The plugin talks to VEX Pay at its new address, https://api.vexpay.app. Links to VEX Pay, its terms and its privacy policy point at vexpay.app.
 
@@ -164,6 +169,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Adds an optional marketplace mode to split payments between VEX Pay comercios. It is off by default: nothing changes for your store unless you turn it on.
 
 = 1.2.2 =
 VEX Pay moved to vexpay.app. Nothing to configure: your API keys and webhooks keep working.
