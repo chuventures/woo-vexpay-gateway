@@ -218,6 +218,62 @@ class VEXPay_API_Client {
 	}
 
 	/**
+	 * GET /v1/merchants — paginated list (`items`, `nextCursor`).
+	 *
+	 * @param array $query Query (isActive, status, cursor, limit).
+	 * @return array|WP_Error
+	 */
+	public function list_merchants( array $query = array() ) {
+		$path = '/v1/merchants';
+		if ( ! empty( $query ) ) {
+			$path .= '?' . http_build_query( $query, '', '&', PHP_QUERY_RFC3986 );
+		}
+		return $this->request( 'GET', $path );
+	}
+
+	/**
+	 * GET /v1/merchants?externalRef= — single merchant lookup (404 when none).
+	 *
+	 * @param string $external_ref Store's comercio id.
+	 * @return array|WP_Error
+	 */
+	public function get_merchant_by_external_ref( string $external_ref ) {
+		return $this->request( 'GET', '/v1/merchants?externalRef=' . rawurlencode( $external_ref ) );
+	}
+
+	/**
+	 * POST /v1/merchants — create (idempotent on `externalRef`; 409 on a conflicting payload).
+	 *
+	 * @param array $body Body (externalRef, name, identification, contactEmail, contactPhone, bankCode?, phone?).
+	 * @return array|WP_Error
+	 */
+	public function create_merchant( array $body ) {
+		return $this->request( 'POST', '/v1/merchants', $body );
+	}
+
+	/**
+	 * PATCH /v1/merchants/:id — flags (isActive, autoPayoutEnabled, applicationFeePercent).
+	 *
+	 * @param string $merchant_id Merchant id.
+	 * @param array  $body        Body.
+	 * @return array|WP_Error
+	 */
+	public function update_merchant( string $merchant_id, array $body ) {
+		return $this->request( 'PATCH', '/v1/merchants/' . rawurlencode( $merchant_id ), $body );
+	}
+
+	/**
+	 * POST /v1/merchants/:id/payout-methods — add a Pago Móvil payout account (needs verification).
+	 *
+	 * @param string $merchant_id Merchant id.
+	 * @param array  $body        Body (bankCode, phone).
+	 * @return array|WP_Error
+	 */
+	public function add_merchant_payout_method( string $merchant_id, array $body ) {
+		return $this->request( 'POST', '/v1/merchants/' . rawurlencode( $merchant_id ) . '/payout-methods', $body );
+	}
+
+	/**
 	 * Probe API key + reachability (banks + quote).
 	 *
 	 * @return array{ok:bool,message:string,bank_count?:int,bcv_rate?:float,details?:string}|WP_Error

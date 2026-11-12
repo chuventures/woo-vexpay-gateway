@@ -312,8 +312,16 @@ class VEXPay_Gateway_VPOS extends WC_Payment_Gateway {
 		$usd          = VEXPay_Helpers::order_usd_amount( $order );
 		$external_ref = VEXPay_Helpers::external_ref_for_order( (int) $order_id );
 
-		// Never log $fields — it holds cardNumber/cvv in the clear.
-		$result = $this->get_api_client()->execute_vpos(
+		// Marketplace mode: comercio shares in USD (no-op when off).
+		$splits = VEXPay_Marketplace::prepare_order_splits( $order, VEXPay_Marketplace::METHOD_VPOS, $usd );
+		if ( is_wp_error( $splits ) ) {
+			VEXPay_Marketplace::record_refusal( $order, $splits, VEXPay_Marketplace::METHOD_VPOS );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
+			return array( 'result' => 'failure' );
+		}
+
+		// Never log $fields or the body — they hold cardNumber/cvv in the clear.
+		$body   = VEXPay_Marketplace::with_splits(
 			array(
 				'usdAmount'       => $usd,
 				'cardNumber'      => $fields['card_number'],
@@ -325,8 +333,18 @@ class VEXPay_Gateway_VPOS extends WC_Payment_Gateway {
 				'accountType'     => $fields['account_type'],
 				'cardType'        => $fields['brand'],
 				'externalRef'     => $external_ref,
-			)
+			),
+			$order,
+			VEXPay_Marketplace::METHOD_VPOS
 		);
+		$result = $this->get_api_client()->execute_vpos( $body );
+
+		if ( isset( $body[ VEXPay_Marketplace::F_SPLITS ] ) && VEXPay_Marketplace::is_split_rejection( $result ) ) {
+			// Refused before any card charge. Never retry without splits.
+			VEXPay_Marketplace::record_refusal( $order, $result, VEXPay_Marketplace::METHOD_VPOS );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
+			return array( 'result' => 'failure' );
+		}
 
 		if ( is_wp_error( $result ) ) {
 			$data        = $result->get_error_data();
@@ -382,6 +400,8 @@ class VEXPay_Gateway_VPOS extends WC_Payment_Gateway {
 		if ( ! empty( $result['cardBrand'] ) ) {
 			$order->update_meta_data( VEXPay_Helpers::META_CARD_BRAND, (string) $result['cardBrand'] );
 		}
+
+		VEXPay_Marketplace::capture_reported_splits( $order, $result, false );
 
 		$status = isset( $result['status'] ) ? strtoupper( (string) $result['status'] ) : 'COMPLETED';
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, $status );

@@ -75,6 +75,9 @@ class VEXPay_Webhook {
 			return;
 		}
 
+		// Marketplace mode: keep the per-comercio breakdown (commission, fee, net). No-op without `splits`.
+		VEXPay_Marketplace::capture_reported_splits( $order, $data );
+
 		$gateways = WC()->payment_gateways()->payment_gateways();
 
 		if ( $order->get_payment_method() === 'vexpay_usdt' ) {

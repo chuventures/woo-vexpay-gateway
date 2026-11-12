@@ -8,6 +8,15 @@
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName"/>
 	</rule>
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+				<element value="edit_products"/>
+				<element value="edit_shop_orders"/>
+			</property>
+		</properties>
+	</rule>
 	<config name="minimum_supported_wp_version" value="6.0"/>
 	<arg name="extensions" value="php"/>
 	<arg value="s"/>

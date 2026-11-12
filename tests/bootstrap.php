@@ -44,4 +44,14 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+require_once __DIR__ . '/stubs/wordpress.php';
+
 require_once dirname( __DIR__ ) . '/includes/class-vexpay-helpers.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-logger.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-api-client.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-marketplace.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-marketplace-admin.php';
+require_once dirname( __DIR__ ) . '/includes/vexpay-functions.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway-vpos.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway-usdt.php';

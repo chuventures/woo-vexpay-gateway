@@ -91,6 +91,9 @@ add_action(
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-logger.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-helpers.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-api-client.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-marketplace.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-marketplace-admin.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/vexpay-functions.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-webhook.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-poller.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-gateway.php';

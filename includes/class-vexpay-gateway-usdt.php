@@ -135,6 +135,10 @@ class VEXPay_Gateway_USDT extends WC_Payment_Gateway {
 		if ( '' === $key ) {
 			return false;
 		}
+		// Marketplace mode: USDT cannot split, so hide it for carts with comercio items.
+		if ( VEXPay_Marketplace::cart_has_comercio_items() ) {
+			return false;
+		}
 		return $this->account_accepts_usdt( $key );
 	}
 
@@ -202,6 +206,13 @@ class VEXPay_Gateway_USDT extends WC_Payment_Gateway {
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) {
 			wc_add_notice( __( 'Order not found.', 'vexpay-gateway-for-woocommerce' ), 'error' );
+			return array( 'result' => 'failure' );
+		}
+
+		// Marketplace mode: never take a USDT payment for an order with comercio items.
+		if ( VEXPay_Marketplace::order_has_comercio_items( $order ) ) {
+			VEXPay_Logger::error( sprintf( 'USDT refused for order %d: it has comercio items (marketplace splits on).', $order_id ) );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
 			return array( 'result' => 'failure' );
 		}
 

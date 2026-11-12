@@ -10,3 +10,6 @@
 # wordpress.org SVN checkout
 svn-wp/
 .wp-env.override.json
+
+# Claude Code worktrees and local state
+.claude/
