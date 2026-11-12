@@ -1335,7 +1335,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$splits = VEXPay_Marketplace::prepare_order_splits( $order, VEXPay_Marketplace::METHOD_DEBIT, $usd, $ves );
 		if ( is_wp_error( $splits ) ) {
 			VEXPay_Marketplace::record_refusal( $order, $splits, VEXPay_Marketplace::METHOD_DEBIT );
-			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
@@ -2654,8 +2654,9 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$body   = VEXPay_Marketplace::with_splits( $body, $order, VEXPay_Marketplace::METHOD_DEBIT );
 		$result = $this->execute_debit( $order, $body );
 		if ( is_wp_error( $result ) && 'vexpay_split_refused' === $result->get_error_code() ) {
-			$this->set_otp_flash( $order_id, 'error', VEXPay_Marketplace::customer_refusal_message(), 'otp_inline' );
-			$this->redirect_to_otp( $order );
+			// The order is now failed: send the buyer back to checkout, not to its OTP page.
+			wp_safe_redirect( $this->split_refused_redirect_url( $order ) );
+			exit;
 		}
 		if ( is_wp_error( $result ) ) {
 			$order->add_order_note( 'VEXPay débito failed: ' . $result->get_error_message() );
@@ -2719,9 +2720,24 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$result = $this->get_api_client()->debit_execute( $body );
 		if ( isset( $body[ VEXPay_Marketplace::F_SPLITS ] ) && VEXPay_Marketplace::is_split_rejection( $result ) ) {
 			VEXPay_Marketplace::record_refusal( $order, $result, VEXPay_Marketplace::METHOD_DEBIT );
-			return new WP_Error( 'vexpay_split_refused', VEXPay_Marketplace::customer_refusal_message() );
+			return new WP_Error( 'vexpay_split_refused', VEXPay_Marketplace::customer_refusal_message( $order ) );
 		}
 		return $result;
+	}
+
+	/**
+	 * After a split refused at OTP submit: queue the customer message for checkout and
+	 * return the checkout URL (the order is failed, so its OTP page is a dead end).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	public function split_refused_redirect_url( WC_Order $order ): string {
+		if ( function_exists( 'wc_load_cart' ) && function_exists( 'WC' ) && null === WC()->cart ) {
+			wc_load_cart();
+		}
+		wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
+		return wc_get_checkout_url();
 	}
 
 	/**

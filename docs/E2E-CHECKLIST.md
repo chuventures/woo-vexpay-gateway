@@ -79,5 +79,5 @@ Mode on:
 - [ ] Card (VPOS): A + B → two shares in USD with `usdAmount`
 - [ ] USDT hidden in classic and block checkout when the cart has a comercio item; shown again for a cart with only plan C
 - [ ] After payment, the box shows commission, VEX Pay fee and net per comercio (from the response or `payment.completed` webhook); nets match share × (1 − VEX Pay rate − commission %)
-- [ ] Deactivate comercio A in VEX Pay, pay A by débito → customer sees "Este plan no está disponible para pago en este momento", order failed with a note naming the comercio, no money taken, no second request without splits
+- [ ] Deactivate comercio A in VEX Pay, pay A by débito → customer is back on checkout with "Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda.", order failed with a note naming the comercio, no money taken, no second request without splits
 - [ ] `vexpay_upsert_merchant()` twice with the same `external_ref` → one VEX Pay merchant, updated commission

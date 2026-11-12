@@ -212,7 +212,7 @@ class VEXPay_Gateway_USDT extends WC_Payment_Gateway {
 		// Marketplace mode: never take a USDT payment for an order with comercio items.
 		if ( VEXPay_Marketplace::order_has_comercio_items( $order ) ) {
 			VEXPay_Logger::error( sprintf( 'USDT refused for order %d: it has comercio items (marketplace splits on).', $order_id ) );
-			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 

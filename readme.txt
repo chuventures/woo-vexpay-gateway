@@ -55,7 +55,7 @@ For marketplaces whose products belong to different comercios (sellers). Turn on
 * A comercio's share is its lines' totals after coupons plus tax. Shipping, fees and unmapped items stay with the marketplace. Débito shares are converted to VES with the order's quote and rounded down to 0.01; card shares are sent in USD. At most 10 comercios per order.
 * The **VEX Pay split** box on the order screen shows each comercio's share and, once VEX Pay reports the payment, its commission, VEX Pay fee and net.
 * USDT is hidden for carts with comercio items (USDT payments cannot be split).
-* If VEX Pay refuses the split (e.g. an inactive comercio), the customer sees "Este plan no está disponible para pago en este momento", no money is taken, and the order gets a note. The payment is never retried without splits.
+* If VEX Pay refuses the split (e.g. an inactive comercio), the customer is sent back to checkout with "Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda." (filter: `vexpay_split_refusal_message`), no money is taken, and the order gets a note. The payment is never retried without splits.
 
 Custom comercio systems can create comercios with `vexpay_upsert_merchant()` and map items with filters instead of the product field:
 
@@ -87,7 +87,13 @@ Custom comercio systems can create comercios with `vexpay_upsert_merchant()` and
         return my_vexpay_merchant_for_product( $cart_item['product_id'] ) ?: $merchant_id;
     }, 10, 3 );
 
-The `vexpay_order_splits( $splits, $order, $method )` filter can change the final shares, for example to set `applicationFeePercent` per comercio. A new or changed Pago Móvil payout account must be verified with the two micro-deposit amounts before the comercio is paid out.
+The `vexpay_order_splits( $splits, $order, $method )` filter can change the final shares, for example to set `applicationFeePercent` per comercio. The `vexpay_split_refusal_message( $message, $order )` filter changes the message buyers see when a split is refused:
+
+    add_filter( 'vexpay_split_refusal_message', function ( $message, $order ) {
+        return 'Este plan no está disponible para pago en este momento';
+    }, 10, 2 );
+
+ A new or changed Pago Móvil payout account must be verified with the two micro-deposit amounts before the comercio is paid out.
 
 == Installation ==
 

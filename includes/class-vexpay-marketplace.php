@@ -88,10 +88,22 @@ class VEXPay_Marketplace {
 	/**
 	 * Generic customer-facing message when a split cannot be honored.
 	 *
+	 * @param WC_Order|null $order Order, when known.
 	 * @return string
 	 */
-	public static function customer_refusal_message(): string {
-		return __( 'Este plan no está disponible para pago en este momento', 'vexpay-gateway-for-woocommerce' );
+	public static function customer_refusal_message( $order = null ): string {
+		$message = __( 'Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda.', 'vexpay-gateway-for-woocommerce' );
+
+		/**
+		 * Customer-facing message shown when VEX Pay refuses the marketplace split
+		 * (or the split cannot be built). Use it to match your store's wording.
+		 *
+		 * @param string        $message Message (plain text).
+		 * @param WC_Order|null $order   Order, when known.
+		 */
+		$filtered = apply_filters( 'vexpay_split_refusal_message', $message, $order );
+
+		return is_string( $filtered ) && '' !== trim( $filtered ) ? $filtered : $message;
 	}
 
 	/**

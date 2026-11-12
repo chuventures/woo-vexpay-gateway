@@ -316,7 +316,7 @@ class VEXPay_Gateway_VPOS extends WC_Payment_Gateway {
 		$splits = VEXPay_Marketplace::prepare_order_splits( $order, VEXPay_Marketplace::METHOD_VPOS, $usd );
 		if ( is_wp_error( $splits ) ) {
 			VEXPay_Marketplace::record_refusal( $order, $splits, VEXPay_Marketplace::METHOD_VPOS );
-			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
@@ -342,7 +342,7 @@ class VEXPay_Gateway_VPOS extends WC_Payment_Gateway {
 		if ( isset( $body[ VEXPay_Marketplace::F_SPLITS ] ) && VEXPay_Marketplace::is_split_rejection( $result ) ) {
 			// Refused before any card charge. Never retry without splits.
 			VEXPay_Marketplace::record_refusal( $order, $result, VEXPay_Marketplace::METHOD_VPOS );
-			wc_add_notice( VEXPay_Marketplace::customer_refusal_message(), 'error' );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 

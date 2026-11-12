@@ -148,6 +148,10 @@ function wc_get_order( $id ) {
 	return $GLOBALS['vexpay_test']['orders'][ (int) $id ] ?? false;
 }
 
+function wc_get_checkout_url() {
+	return 'https://shop.test/checkout/';
+}
+
 function map_deep( $value, $callback ) {
 	return is_array( $value ) ? array_map( fn( $v ) => map_deep( $v, $callback ), $value ) : $callback( $value );
 }

@@ -75,7 +75,7 @@ For marketplaces whose products belong to different comercios (sellers). With **
 - At most 10 comercios per order. Shares never sum above the payment.
 - The shares are stored on the order (`_vexpay_splits`) and shown in the **VEX Pay split** box on the order screen. When VEX Pay reports the payment (response or `payment.completed` webhook), the box also shows each comercio's commission, VEX Pay fee and net.
 - USDT is hidden (classic and block checkout) for carts with comercio items, because USDT payments cannot be split.
-- If VEX Pay refuses the split (for example an inactive or unknown comercio), the customer sees "Este plan no está disponible para pago en este momento", no money is taken, the order is marked failed with a note naming the comercios, and the error is logged. The payment is never retried without splits.
+- If VEX Pay refuses the split (for example an inactive or unknown comercio), the customer is sent back to checkout with "Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda." (change it with the `vexpay_split_refusal_message` filter), no money is taken, the order is marked failed with a note naming the comercios, and the error is logged. The payment is never retried without splits.
 
 Your commission per comercio defaults to the comercio's `applicationFeePercent` in VEX Pay (then your account default). The comercio's share bears the VEX Pay fee: comercio net = share × (1 − VEX Pay rate − commission %).
 
@@ -125,6 +125,11 @@ add_filter( 'vexpay_order_splits', function ( $splits, $order, $method ) {
 	}
 	return $splits;
 }, 10, 3 );
+
+// 4. Optional: your own wording when VEX Pay refuses the split.
+add_filter( 'vexpay_split_refusal_message', function ( $message, $order ) {
+	return 'Este plan no está disponible para pago en este momento';
+}, 10, 2 );
 ```
 
 `vexpay_upsert_merchant()` returns the VEX Pay merchant id or a `WP_Error`. Calling it again with the same `external_ref` updates the same comercio (commission, auto-payout, active flag). A new or changed Pago Móvil account is added as a new payout method and must be verified with the two micro-deposit amounts before the comercio can be paid out.

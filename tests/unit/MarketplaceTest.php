@@ -367,12 +367,59 @@ final class MarketplaceTest extends TestCase {
 
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'vexpay_split_refused', $result->get_error_code() );
-		$this->assertSame( 'Este plan no está disponible para pago en este momento', $result->get_error_message() );
+		$this->assertSame( VEXPay_Marketplace::customer_refusal_message(), $result->get_error_message() );
 		$this->assertFalse( $order->is_paid() );
 		$this->assertSame( 'failed', $order->status );
 		$this->assertStringContainsString( 'Provider A', implode( "\n", $order->notes ) );
 		$this->assertStringContainsString( 'inactive', implode( "\n", $order->notes ) );
 		$this->assertNotEmpty( $GLOBALS['vexpay_test']['logs'] );
+	}
+
+	public function test_refusal_message_is_neutral_and_filterable(): void {
+		$order = new WC_Order( 81 );
+		$this->assertSame(
+			'Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda.',
+			VEXPay_Marketplace::customer_refusal_message( $order )
+		);
+
+		add_filter(
+			'vexpay_split_refusal_message',
+			static function ( $message, $o ) {
+				return 81 === $o->get_id() ? 'Este plan no está disponible para pago en este momento' : $message;
+			},
+			10,
+			2
+		);
+		$this->assertSame( 'Este plan no está disponible para pago en este momento', VEXPay_Marketplace::customer_refusal_message( $order ) );
+		$this->assertStringStartsWith( 'Este pedido', VEXPay_Marketplace::customer_refusal_message( new WC_Order( 82 ) ) );
+	}
+
+	public function test_refusal_message_filter_cannot_blank_it(): void {
+		add_filter( 'vexpay_split_refusal_message', static fn() => '   ' );
+		$this->assertStringStartsWith( 'Este pedido', VEXPay_Marketplace::customer_refusal_message() );
+	}
+
+	public function test_split_refused_at_otp_submit_redirects_to_checkout_with_notice(): void {
+		$this->enable();
+		$order = $this->two_comercio_order();
+		VEXPay_Marketplace::prepare_order_splits( $order, 'debit', 100.0, 3650.0 );
+
+		$client = $this->createMock( VEXPay_API_Client::class );
+		$client->expects( $this->once() )
+			->method( 'debit_execute' )
+			->willReturn( $this->api_error( 400, array( 'splits.0.merchantId: merchant is inactive' ) ) );
+
+		$gateway = $this->debit_gateway( $client );
+		$result  = $gateway->execute_debit( $order, VEXPay_Marketplace::with_splits( array( 'monto' => 3650.0 ), $order, 'debit' ) );
+		$this->assertSame( 'vexpay_split_refused', $result->get_error_code() );
+		$this->assertSame( 'failed', $order->status );
+
+		// handle_otp_submit() redirects here (then exits) instead of the failed order's OTP page.
+		$this->assertSame( 'https://shop.test/checkout/', $gateway->split_refused_redirect_url( $order ) );
+		$this->assertSame(
+			array( 'error', VEXPay_Marketplace::customer_refusal_message( $order ) ),
+			end( $GLOBALS['vexpay_test']['notices'] )
+		);
 	}
 
 	public function test_non_split_400_is_not_a_split_refusal(): void {
@@ -470,7 +517,7 @@ final class MarketplaceTest extends TestCase {
 		$this->assertFalse( $order->is_paid() );
 		$this->assertSame( 'failed', $order->status );
 		$this->assertSame( 0, $GLOBALS['vexpay_test']['cart_empty'] );
-		$this->assertSame( array( 'error', 'Este plan no está disponible para pago en este momento' ), $GLOBALS['vexpay_test']['notices'][0] );
+		$this->assertSame( array( 'error', VEXPay_Marketplace::customer_refusal_message() ), $GLOBALS['vexpay_test']['notices'][0] );
 	}
 
 	public function test_too_many_comercios_refused_before_any_api_call(): void {
