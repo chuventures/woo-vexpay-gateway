@@ -58,3 +58,26 @@ Requires a URL VEXPay can reach (tunnel or staging host). Prefer webhooks in pro
 ## Blocks
 
 - [ ] Cart & Checkout Blocks: VEXPay fields render; order completes through OTP step
+
+## Marketplace splits (1.3.0)
+
+Needs a VEX Pay tenant set up as a marketplace, with at least two active test-mode comercios.
+
+Mode off (regression, run first):
+
+- [ ] **Marketplace splits** unchecked; the product edit screen has no "Comercio (VEX Pay)" field
+- [ ] Débito and card orders complete as above; no request body contains `splits` (Debug log + API logs) and orders have no `_vexpay_splits` meta
+- [ ] USDT is offered as before
+
+Mode on:
+
+- [ ] Check **Marketplace splits**, save; the product General tab and each variation show "Comercio (VEX Pay)" listing the active comercios; **Refresh comercio list** reloads it
+- [ ] Map plan A → comercio A, plan B → comercio B; leave plan C unmapped
+- [ ] One comercio: débito order with plan A only → execute body has one share; order box "VEX Pay split" shows it
+- [ ] Two comercios + shipping: A + B + shipping → two shares in VES at the order quote (rounded down); shipping stays with the marketplace (box remainder row)
+- [ ] Coupon: 10% cart coupon → shares follow the discounted line totals
+- [ ] Card (VPOS): A + B → two shares in USD with `usdAmount`
+- [ ] USDT hidden in classic and block checkout when the cart has a comercio item; shown again for a cart with only plan C
+- [ ] After payment, the box shows commission, VEX Pay fee and net per comercio (from the response or `payment.completed` webhook); nets match share × (1 − VEX Pay rate − commission %)
+- [ ] Deactivate comercio A in VEX Pay, pay A by débito → customer is back on checkout with "Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda.", order failed with a note naming the comercio, no money taken, no second request without splits
+- [ ] `vexpay_upsert_merchant()` twice with the same `external_ref` → one VEX Pay merchant, updated commission

@@ -202,6 +202,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 				'label'   => __( 'Display BCV VES amount at checkout (display only)', 'vexpay-gateway-for-woocommerce' ),
 				'default' => 'yes',
 			),
+			'marketplace_splits'  => array(
+				'title'       => __( 'Marketplace splits', 'vexpay-gateway-for-woocommerce' ),
+				'type'        => 'checkbox',
+				'label'       => __( 'Split each payment between VEX Pay comercios', 'vexpay-gateway-for-woocommerce' ),
+				'default'     => 'no',
+				'description' => __( 'For marketplaces. Map each product to a comercio with the "Comercio (VEX Pay)" field (or the vexpay_line_item_merchant_id filter). Débito and card payments then send one share per comercio; shipping, fees and unmapped items stay with you. USDT is hidden for carts with comercio items. Leave off for a regular store.', 'vexpay-gateway-for-woocommerce' ),
+			),
 			'debug'               => array(
 				'title'       => __( 'Debug log', 'vexpay-gateway-for-woocommerce' ),
 				'type'        => 'checkbox',
@@ -1321,6 +1328,14 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$ves = VEXPay_Helpers::format_ves_amount( $ves );
 		if ( $ves <= 0 ) {
 			wc_add_notice( __( 'Could not get a VES amount from VEXPay FX quote.', 'vexpay-gateway-for-woocommerce' ), 'error' );
+			return array( 'result' => 'failure' );
+		}
+
+		// Marketplace mode: compute the comercio shares with this quote (no-op when off).
+		$splits = VEXPay_Marketplace::prepare_order_splits( $order, VEXPay_Marketplace::METHOD_DEBIT, $usd, $ves );
+		if ( is_wp_error( $splits ) ) {
+			VEXPay_Marketplace::record_refusal( $order, $splits, VEXPay_Marketplace::METHOD_DEBIT );
+			wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
@@ -2636,7 +2651,13 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			'externalRef' => '' !== $external_ref ? $external_ref : VEXPay_Helpers::external_ref_for_order( (int) $order_id ),
 		);
 
-		$result = $this->get_api_client()->debit_execute( $body );
+		$body   = VEXPay_Marketplace::with_splits( $body, $order, VEXPay_Marketplace::METHOD_DEBIT );
+		$result = $this->execute_debit( $order, $body );
+		if ( is_wp_error( $result ) && 'vexpay_split_refused' === $result->get_error_code() ) {
+			// The order is now failed: send the buyer back to checkout, not to its OTP page.
+			wp_safe_redirect( $this->split_refused_redirect_url( $order ) );
+			exit;
+		}
 		if ( is_wp_error( $result ) ) {
 			$order->add_order_note( 'VEXPay débito failed: ' . $result->get_error_message() );
 			$this->set_otp_flash(
@@ -2684,6 +2705,43 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			'otp_inline'
 		);
 		$this->redirect_to_otp( $order );
+	}
+
+	/**
+	 * POST /v1/payments/debit. When VEX Pay refuses the marketplace split (a 400 naming
+	 * `splits`), the refusal is recorded on the order and a `vexpay_split_refused` error is
+	 * returned; the débito is never retried without splits.
+	 *
+	 * @param WC_Order $order Order.
+	 * @param array    $body  Execute body (with `splits` in marketplace mode).
+	 * @return array|WP_Error
+	 */
+	public function execute_debit( WC_Order $order, array $body ) {
+		$result = $this->get_api_client()->debit_execute( $body );
+		if ( isset( $body[ VEXPay_Marketplace::F_SPLITS ] ) && VEXPay_Marketplace::is_split_rejection( $result ) ) {
+			VEXPay_Marketplace::record_refusal( $order, $result, VEXPay_Marketplace::METHOD_DEBIT );
+			return new WP_Error( 'vexpay_split_refused', VEXPay_Marketplace::customer_refusal_message( $order ) );
+		}
+		return $result;
+	}
+
+	/**
+	 * After a split refused at OTP submit: queue the customer message for checkout and
+	 * return the checkout URL (the order is failed, so its OTP page is a dead end).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	public function split_refused_redirect_url( WC_Order $order ): string {
+		if ( function_exists( 'wc_load_cart' ) && function_exists( 'WC' ) && null === WC()->cart ) {
+			wc_load_cart();
+		}
+		// Persist the notice even when this request arrived without a session cookie.
+		if ( function_exists( 'WC' ) && WC()->session && ! WC()->session->has_session() ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+		wc_add_notice( VEXPay_Marketplace::customer_refusal_message( $order ), 'error' );
+		return wc_get_checkout_url();
 	}
 
 	/**
@@ -2952,6 +3010,7 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			$order->set_transaction_id( (string) $result['bankReference'] );
 		}
 		$this->store_fx_meta_from_result( $order, $result );
+		VEXPay_Marketplace::capture_reported_splits( $order, $result, false );
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, $status );
 
 		$action = VEXPay_Helpers::map_payment_status( $status );

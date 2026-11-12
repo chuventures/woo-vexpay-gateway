@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,54 @@ You configure your own API keys from the VEXPay dashboard. This plugin does not 
 
 Developer docs and E2E checklist: https://github.com/chuventures/woo-vexpay-gateway
 
+= Marketplace =
+
+For marketplaces whose products belong to different comercios (sellers). Turn on **Marketplace splits** under **WooCommerce → Settings → Payments → VEXPay** (off by default; while off, nothing changes). One customer payment (one OTP, one card charge) is then split between the comercios in the cart and you.
+
+* Map each product (or variation) to a VEX Pay comercio with the **Comercio (VEX Pay)** field, which lists your active comercios (cached 10 minutes, with a refresh link).
+* A comercio's share is its lines' totals after coupons plus tax. Shipping, fees and unmapped items stay with the marketplace. Débito shares are converted to VES with the order's quote and rounded down to 0.01; card shares are sent in USD. At most 10 comercios per order.
+* The **VEX Pay split** box on the order screen shows each comercio's share and, once VEX Pay reports the payment, its commission, VEX Pay fee and net.
+* USDT is hidden for carts with comercio items (USDT payments cannot be split).
+* If VEX Pay refuses the split (e.g. an inactive comercio), the customer is sent back to checkout with "Este pedido no se puede pagar en este momento. Intenta de nuevo o contacta a la tienda." (filter: `vexpay_split_refusal_message`), no money is taken, and the order gets a note. The payment is never retried without splits.
+
+Custom comercio systems can create comercios with `vexpay_upsert_merchant()` and map items with filters instead of the product field:
+
+    add_action( 'my_comercio_saved', function ( $comercio ) {
+        $merchant_id = vexpay_upsert_merchant( array(
+            'external_ref'            => (string) $comercio->id, // your comercio id
+            'name'                    => $comercio->name,
+            'identification'          => $comercio->rif,         // V/E+8 or J/G+9 digits
+            'contact_email'           => $comercio->email,
+            'contact_phone'           => $comercio->phone,
+            'bank_code'               => $comercio->bank_code,   // Pago Móvil payout account
+            'phone'                   => $comercio->pago_movil_phone,
+            'application_fee_percent' => 20,                     // your commission
+            'auto_payout'             => true,
+        ) );
+        if ( ! is_wp_error( $merchant_id ) ) {
+            update_post_meta( $comercio->id, '_vexpay_merchant_id', $merchant_id );
+        }
+    } );
+
+    function my_vexpay_merchant_for_product( $product_id ) {
+        $comercio_id = get_post_meta( $product_id, '_my_comercio_id', true );
+        return $comercio_id ? (string) get_post_meta( $comercio_id, '_vexpay_merchant_id', true ) : '';
+    }
+    add_filter( 'vexpay_line_item_merchant_id', function ( $merchant_id, $item, $order ) {
+        return my_vexpay_merchant_for_product( $item->get_product_id() ) ?: $merchant_id;
+    }, 10, 3 );
+    add_filter( 'vexpay_cart_item_merchant_id', function ( $merchant_id, $cart_item, $product ) {
+        return my_vexpay_merchant_for_product( $cart_item['product_id'] ) ?: $merchant_id;
+    }, 10, 3 );
+
+The `vexpay_order_splits( $splits, $order, $method )` filter can change the final shares, for example to set `applicationFeePercent` per comercio. The `vexpay_split_refusal_message( $message, $order )` filter changes the message buyers see when a split is refused:
+
+    add_filter( 'vexpay_split_refusal_message', function ( $message, $order ) {
+        return 'Este plan no está disponible para pago en este momento';
+    }, 10, 2 );
+
+ A new or changed Pago Móvil payout account must be verified with the two micro-deposit amounts before the comercio is paid out.
+
 == Installation ==
 
 1. Upload the `vexpay-gateway-for-woocommerce` folder to `/wp-content/plugins/`, or install the zip via **Plugins → Add New**.
@@ -81,6 +129,7 @@ The following data is sent to VEXPay:
 * When a customer confirms payment: the OTP/token they received from their own banking app.
 * When a merchant clicks "Test connection" in the gateway settings: the store's configured VEXPay API key, to verify it is valid and reachable.
 * When an order is refunded: the original payment reference, to request a reverse.
+* Marketplace splits only (off by default): the comercio (VEX Pay merchant) id and share amount of each comercio in the order, sent with the payment; the list of your comercios is read when staff edit a product; and `vexpay_upsert_merchant()` sends the comercio details your store passes to it (name, cédula/RIF, contact email and phone, Pago Móvil bank and phone, commission).
 * VEXPay also calls back to this site's webhook endpoint with signed payment-status updates.
 
 No data is sent unless a customer actively submits the checkout/OTP form, a merchant explicitly tests the connection, or a refund is triggered by store staff.
@@ -99,6 +148,11 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.3.0 =
+* New: Marketplace mode (off by default). A store that sells for several VEX Pay comercios can split one débito or card payment between them: each product is linked to a comercio, and VEX Pay credits each comercio its share minus your commission. Developers can use the `vexpay_line_item_merchant_id`, `vexpay_cart_item_merchant_id`, `vexpay_order_splits` and `vexpay_split_refusal_message` filters and the `vexpay_upsert_merchant()` helper.
+* Tweak: When marketplace mode is on and the cart has a comercio's product, USDT is not offered for that order.
+* Tweak: The order screen shows each comercio's share, commission, fee and net.
+
 = 1.2.2 =
 * Tweak: The plugin talks to VEX Pay at its new address, https://api.vexpay.app. Links to VEX Pay, its terms and its privacy policy point at vexpay.app.
 
@@ -115,6 +169,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Adds an optional marketplace mode to split payments between VEX Pay comercios. It is off by default: nothing changes for your store unless you turn it on.
 
 = 1.2.2 =
 VEX Pay moved to vexpay.app. Nothing to configure: your API keys and webhooks keep working.

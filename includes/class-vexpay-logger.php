@@ -62,6 +62,19 @@ class VEXPay_Logger {
 	}
 
 	/**
+	 * Error that is logged even when the Debug log setting is off (e.g. a refused
+	 * marketplace split). Never include API keys or card data.
+	 *
+	 * @param string $message Message.
+	 */
+	public static function always_error( string $message ): void {
+		if ( ! function_exists( 'wc_get_logger' ) ) {
+			return;
+		}
+		wc_get_logger()->log( 'error', $message, array( 'source' => self::SOURCE ) );
+	}
+
+	/**
 	 * Debug.
 	 *
 	 * @param string $message Message.
