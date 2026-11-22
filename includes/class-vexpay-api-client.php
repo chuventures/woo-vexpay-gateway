@@ -306,6 +306,24 @@ class VEXPay_API_Client {
 	}
 
 	/**
+	 * VexPay-Client header: tells VEX Pay which integration sent the request, so it can measure
+	 * plugin usage. Analytics only; never used for authentication or pricing.
+	 *
+	 * @return string JSON.
+	 */
+	public static function client_header(): string {
+		$payload = array(
+			'sdk'        => 'vexpay-woocommerce',
+			'sdkVersion' => VEXPAY_GATEWAY_VERSION,
+		);
+		if ( 1 === preg_match( '/^[0-9A-Za-z.+-]{1,32}$/', PHP_VERSION ) ) {
+			$payload['runtime']        = 'php';
+			$payload['runtimeVersion'] = PHP_VERSION;
+		}
+		return (string) wp_json_encode( $payload );
+	}
+
+	/**
 	 * HTTP request.
 	 *
 	 * @param string     $method Method.
@@ -323,10 +341,11 @@ class VEXPay_API_Client {
 			'method'  => $method,
 			'timeout' => $this->timeout,
 			'headers' => array(
-				'Content-Type' => 'application/json',
-				'Accept'       => 'application/json',
-				'x-api-key'    => $this->api_key,
-				'User-Agent'   => 'woo-vexpay-gateway/' . VEXPAY_GATEWAY_VERSION,
+				'Content-Type'  => 'application/json',
+				'Accept'        => 'application/json',
+				'x-api-key'     => $this->api_key,
+				'User-Agent'    => 'woo-vexpay-gateway/' . VEXPAY_GATEWAY_VERSION,
+				'VexPay-Client' => self::client_header(),
 			),
 		);
 
