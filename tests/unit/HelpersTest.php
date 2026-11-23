@@ -446,4 +446,18 @@ final class HelpersTest extends TestCase {
 		$this->assertNull( VEXPay_Helpers::normalize_card_account_type( '5' ) );
 		$this->assertNull( VEXPay_Helpers::normalize_card_account_type( '' ) );
 	}
+
+	public function test_forward_only_action_ignores_late_webhooks(): void {
+		// A paid order is never put back on hold or failed.
+		$this->assertSame( 'ignore', VEXPay_Helpers::forward_only_action( 'hold', true, false ) );
+		$this->assertSame( 'ignore', VEXPay_Helpers::forward_only_action( 'fail', true, false ) );
+		// A refunded order is never paid, held or failed again.
+		$this->assertSame( 'ignore', VEXPay_Helpers::forward_only_action( 'complete', false, true ) );
+		$this->assertSame( 'ignore', VEXPay_Helpers::forward_only_action( 'hold', false, true ) );
+		// Forward moves still apply.
+		$this->assertSame( 'complete', VEXPay_Helpers::forward_only_action( 'complete', false, false ) );
+		$this->assertSame( 'refund', VEXPay_Helpers::forward_only_action( 'refund', true, false ) );
+		$this->assertSame( 'fail', VEXPay_Helpers::forward_only_action( 'fail', false, false ) );
+		$this->assertSame( 'complete', VEXPay_Helpers::forward_only_action( 'complete', true, false ) );
+	}
 }

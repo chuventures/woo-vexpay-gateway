@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -149,6 +149,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.4.2 =
+* Fix: VEX Pay Débito inmediato never moves a paid order back. A late or retried webhook (a pending event after the payment, or the buyer's earlier failed attempt) used to put a paid order On hold or mark it Failed; a refunded order is no longer paid again either. Pago Móvil and USDT orders already worked this way.
+
 = 1.4.1 =
 * Tweak: Requests to VEX Pay carry a `VexPay-Client` header with the plugin and PHP versions, so VEX Pay can see which plugin versions are in use. It holds no store or customer data.
 
@@ -178,6 +181,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.4.2 =
+Recommended: a late VEX Pay webhook can no longer put a paid card order back On hold or Failed.
 
 = 1.4.1 =
 Small update: identifies the plugin version to VEX Pay. No settings change.

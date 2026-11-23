@@ -3002,6 +3002,12 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 	 */
 	public function apply_payment_result( WC_Order $order, array $result ): void {
 		$status = isset( $result['status'] ) ? strtoupper( (string) $result['status'] ) : '';
+		$mapped = VEXPay_Helpers::map_payment_status( $status );
+		$action = VEXPay_Helpers::forward_only_action( $mapped, $order->is_paid(), $order->has_status( 'refunded' ) );
+		if ( 'ignore' === $action && 'ignore' !== $mapped ) {
+			// A late webhook; leave the order, its stored status and its payment id as they are.
+			return;
+		}
 		if ( ! empty( $result['paymentId'] ) ) {
 			$order->update_meta_data( VEXPay_Helpers::META_PAYMENT_ID, (string) $result['paymentId'] );
 		}
@@ -3012,8 +3018,6 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 		$this->store_fx_meta_from_result( $order, $result );
 		VEXPay_Marketplace::capture_reported_splits( $order, $result, false );
 		$order->update_meta_data( VEXPay_Helpers::META_STATUS, $status );
-
-		$action = VEXPay_Helpers::map_payment_status( $status );
 
 		if ( 'complete' === $action ) {
 			$txn = ! empty( $result['bankReference'] ) ? (string) $result['bankReference'] : (string) ( $result['paymentId'] ?? '' );
