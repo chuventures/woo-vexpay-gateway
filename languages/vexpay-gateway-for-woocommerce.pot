@@ -757,3 +757,44 @@ msgstr ""
 #: assets/js/blocks.js:872
 msgid "VEXPay · Débito inmediato"
 msgstr ""
+
+msgid "Pago Móvil (VEX Pay)"
+msgstr ""
+
+msgid "Pago Móvil"
+msgstr ""
+
+msgid "Pago Móvil is not available right now. Please choose another payment method."
+msgstr ""
+
+msgid "Awaiting Pago Móvil (VEX Pay hosted checkout)."
+msgstr ""
+
+#, php-format
+msgid "VEX Pay Pago Móvil completed: Bs %1$s (%2$s)."
+msgstr ""
+
+#, php-format
+msgid "References: %s."
+msgstr ""
+
+#, php-format
+msgid "VEX Pay Pago Móvil in progress: received Bs %1$s, missing Bs %2$s. The buyer can send the rest from their bank app."
+msgstr ""
+
+#, php-format
+msgid "Open until %s."
+msgstr ""
+
+#, php-format
+msgid "VEX Pay Pago Móvil expired before the full amount arrived. VEX Pay support refunds the Bs %s the buyer sent; do not ship this order."
+msgstr ""
+
+msgid "Automatic refunds are not available for Pago Móvil. Ask VEX Pay support to refund the buyer."
+msgstr ""
+
+msgid "VEX Pay — Pago Móvil"
+msgstr ""
+
+msgid "Enable VEX Pay Pago Móvil"
+msgstr ""

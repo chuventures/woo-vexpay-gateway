@@ -4,11 +4,11 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Accept Venezuela C2P and card (VPOS) payments in WooCommerce via the VEXPay payment gateway.
+Accept Venezuela C2P, Pago Móvil and card (VPOS) payments in WooCommerce via the VEXPay payment gateway.
 
 == Description ==
 
@@ -18,6 +18,7 @@ VEXPay Gateway for WooCommerce lets Venezuelan shoppers pay with **C2P** (bank O
 
 * C2P checkout: cédula/RIF, phone, bank, then OTP confirmation
 * Card checkout (VPOS): a second, independent payment method that shares the same API key
+* Pago Móvil checkout: redirects to VEXPay's hosted Pago Móvil page; the buyer can pay in several transfers and the order stays On hold until the rest arrives
 * USDT checkout: redirects to VEXPay's hosted USDT page (shown only when USDT is enabled on your VEXPay account)
 * **Test connection** button — verify API key and reachability from the shop
 * Live and Test API keys (VEXPay twin environments)
@@ -148,6 +149,11 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.4.0 =
+* New: VEX Pay — Pago Móvil, a payment gateway (off by default) that redirects the buyer to VEX Pay's hosted Pago Móvil page. It shares the API key, Sandbox toggle and webhook secret of VEX Pay Débito inmediato; Pago Móvil must be enabled on your VEX Pay account. Classic checkout and Cart & Checkout Blocks support.
+* New: A buyer can pay one order in several Pago Móviles. When part of the money arrives, the order goes On hold with a note of what was received and what is missing. It is paid when the rest arrives, with each bank reference noted. If the rest never arrives, the order is cancelled and VEX Pay support refunds the buyer.
+* Tweak: WooCommerce's "Hold stock" no longer cancels a Pago Móvil order while the buyer can still pay; the settlement poller also checks Pago Móvil orders in case a webhook is missed.
+
 = 1.3.0 =
 * New: Marketplace mode (off by default). A store that sells for several VEX Pay comercios can split one débito or card payment between them: each product is linked to a comercio, and VEX Pay credits each comercio its share minus your commission. Developers can use the `vexpay_line_item_merchant_id`, `vexpay_cart_item_merchant_id`, `vexpay_order_splits` and `vexpay_split_refusal_message` filters and the `vexpay_upsert_merchant()` helper.
 * Tweak: When marketplace mode is on and the cart has a comercio's product, USDT is not offered for that order.
@@ -169,6 +175,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+Adds an optional Pago Móvil payment method, including orders paid in several transfers. It is off by default: nothing changes for your store unless you turn it on.
 
 = 1.3.0 =
 Adds an optional marketplace mode to split payments between VEX Pay comercios. It is off by default: nothing changes for your store unless you turn it on.

@@ -55,3 +55,5 @@ require_once dirname( __DIR__ ) . '/includes/vexpay-functions.php';
 require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway.php';
 require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway-vpos.php';
 require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway-usdt.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-gateway-pago-movil.php';
+require_once dirname( __DIR__ ) . '/includes/class-vexpay-poller.php';
