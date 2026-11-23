@@ -747,6 +747,27 @@ class VEXPay_Helpers {
 	}
 
 	/**
+	 * Drops an action a late webhook would apply backwards. Webhooks can arrive out of order
+	 * (a retried payment.pending after payment.completed, or the buyer's earlier failed attempt
+	 * after the paid one), so a paid order is never put back on hold or failed, and a refunded
+	 * order is never paid again.
+	 *
+	 * @param string $action      Action from map_payment_status().
+	 * @param bool   $is_paid     Whether the order is already paid.
+	 * @param bool   $is_refunded Whether the order is already refunded.
+	 * @return string The action, or 'ignore'.
+	 */
+	public static function forward_only_action( string $action, bool $is_paid, bool $is_refunded ): string {
+		if ( $is_refunded && 'refund' !== $action ) {
+			return 'ignore';
+		}
+		if ( $is_paid && ( 'hold' === $action || 'fail' === $action ) ) {
+			return 'ignore';
+		}
+		return $action;
+	}
+
+	/**
 	 * Whether a VEXPay status is still awaiting bank settlement.
 	 *
 	 * @param string $status Meta / API status.
