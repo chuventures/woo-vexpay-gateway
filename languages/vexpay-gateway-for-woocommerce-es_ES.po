@@ -760,3 +760,43 @@ msgstr "BCV"
 msgid "VEXPay · Débito inmediato"
 msgstr "VEXPay · Débito inmediato"
 
+msgid "Pago Móvil (VEX Pay)"
+msgstr "Pago Móvil (VEX Pay)"
+
+msgid "Pago Móvil"
+msgstr "Pago Móvil"
+
+msgid "Pago Móvil is not available right now. Please choose another payment method."
+msgstr "Pago Móvil no está disponible en este momento. Elige otro método de pago."
+
+msgid "Awaiting Pago Móvil (VEX Pay hosted checkout)."
+msgstr "Esperando el Pago Móvil (checkout de VEX Pay)."
+
+#, php-format
+msgid "VEX Pay Pago Móvil completed: Bs %1$s (%2$s)."
+msgstr "Pago Móvil de VEX Pay completado: Bs %1$s (%2$s)."
+
+#, php-format
+msgid "References: %s."
+msgstr "Referencias: %s."
+
+#, php-format
+msgid "VEX Pay Pago Móvil in progress: received Bs %1$s, missing Bs %2$s. The buyer can send the rest from their bank app."
+msgstr "Pago Móvil de VEX Pay en curso: recibido Bs %1$s, faltan Bs %2$s. El comprador puede enviar el resto desde la app de su banco."
+
+#, php-format
+msgid "Open until %s."
+msgstr "Abierto hasta %s."
+
+#, php-format
+msgid "VEX Pay Pago Móvil expired before the full amount arrived. VEX Pay support refunds the Bs %s the buyer sent; do not ship this order."
+msgstr "El Pago Móvil de VEX Pay venció antes de recibir el monto completo. El soporte de VEX Pay le devuelve al comprador los Bs %s que envió; no despaches este pedido."
+
+msgid "Automatic refunds are not available for Pago Móvil. Ask VEX Pay support to refund the buyer."
+msgstr "Los reembolsos automáticos no están disponibles para Pago Móvil. Pide al soporte de VEX Pay que le devuelva el dinero al comprador."
+
+msgid "VEX Pay — Pago Móvil"
+msgstr "VEX Pay — Pago Móvil"
+
+msgid "Enable VEX Pay Pago Móvil"
+msgstr "Activar Pago Móvil de VEX Pay"

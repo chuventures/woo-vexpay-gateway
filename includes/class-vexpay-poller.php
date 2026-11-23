@@ -97,6 +97,10 @@ class VEXPay_Poller {
 		}
 
 		$gateways = WC()->payment_gateways()->payment_gateways();
+		if ( ! empty( $gateways['vexpay_pago_movil'] ) && $gateways['vexpay_pago_movil'] instanceof VEXPay_Gateway_Pago_Movil ) {
+			self::run_pago_movil( $gateways['vexpay_pago_movil'], time() );
+		}
+
 		if ( empty( $gateways['vexpay'] ) || ! $gateways['vexpay'] instanceof VEXPay_Gateway ) {
 			return;
 		}
@@ -357,5 +361,61 @@ class VEXPay_Poller {
 		}
 
 		return new WP_Error( 'vexpay_poll_missing_ids', __( 'Missing payment id and external ref for settlement poll.', 'vexpay-gateway-for-woocommerce' ) );
+	}
+
+	/**
+	 * Poll unpaid Pago Móvil orders through their checkout session (a buyer may pay in
+	 * several transfers; the webhooks may be missed). Same cooldown, batch and age limits.
+	 *
+	 * @param VEXPay_Gateway_Pago_Movil $gateway Gateway.
+	 * @param int                       $now     Current unix time.
+	 * @return int Orders polled.
+	 */
+	public static function run_pago_movil( VEXPay_Gateway_Pago_Movil $gateway, int $now ): int {
+		if ( 'yes' !== $gateway->enabled || '' === $gateway->get_active_api_key() ) {
+			return 0;
+		}
+		$orders = wc_get_orders(
+			array(
+				'limit'          => VEXPay_Helpers::POLL_BATCH_LIMIT * 2,
+				'status'         => array( 'on-hold', 'pending' ),
+				'payment_method' => 'vexpay_pago_movil',
+				'orderby'        => 'date',
+				'order'          => 'ASC',
+				'return'         => 'objects',
+			)
+		);
+		if ( ! is_array( $orders ) || array() === $orders ) {
+			return 0;
+		}
+
+		$client = $gateway->get_api_client();
+		$done   = 0;
+		foreach ( $orders as $order ) {
+			if ( $done >= VEXPay_Helpers::POLL_BATCH_LIMIT ) {
+				break;
+			}
+			if ( ! $order instanceof WC_Order || $order->is_paid() ) {
+				continue;
+			}
+			if ( '' === (string) $order->get_meta( VEXPay_Gateway_Pago_Movil::META_SESSION_ID ) ) {
+				continue;
+			}
+			$created = $order->get_date_created() ? $order->get_date_created()->getTimestamp() : 0;
+			if ( VEXPay_Helpers::is_poll_expired( $created, $now ) ) {
+				continue;
+			}
+			if ( VEXPay_Helpers::was_polled_recently( (int) $order->get_meta( VEXPay_Helpers::META_LAST_POLLED_AT ), $now ) ) {
+				continue;
+			}
+			$order->update_meta_data( VEXPay_Helpers::META_LAST_POLLED_AT, (string) $now );
+			$order->save();
+
+			if ( ! $gateway->sync_from_session( $order, $client ) ) {
+				VEXPay_Logger::debug( sprintf( 'Settlement poll: Pago Móvil order #%d session read failed.', $order->get_id() ) );
+			}
+			++$done;
+		}
+		return $done;
 	}
 }

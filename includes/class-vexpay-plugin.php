@@ -53,6 +53,7 @@ final class VEXPay_Plugin {
 		VEXPay_Marketplace_Admin::init();
 		VEXPay_Webhook::init();
 		VEXPay_Poller::init();
+		add_filter( 'woocommerce_cancel_unpaid_order', array( 'VEXPay_Gateway_Pago_Movil', 'filter_cancel_unpaid_order' ), 10, 2 );
 		VEXPay_Blocks::init();
 	}
 
@@ -135,6 +136,7 @@ final class VEXPay_Plugin {
 		$gateways[] = 'VEXPay_Gateway';
 		$gateways[] = 'VEXPay_Gateway_VPOS';
 		$gateways[] = 'VEXPay_Gateway_USDT';
+		$gateways[] = 'VEXPay_Gateway_Pago_Movil';
 		return $gateways;
 	}
 

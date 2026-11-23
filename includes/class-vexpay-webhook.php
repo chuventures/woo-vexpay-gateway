@@ -87,6 +87,13 @@ class VEXPay_Webhook {
 			return;
 		}
 
+		if ( $order->get_payment_method() === 'vexpay_pago_movil' ) {
+			if ( str_starts_with( $event, 'payment.' ) && ! empty( $gateways['vexpay_pago_movil'] ) && $gateways['vexpay_pago_movil'] instanceof VEXPay_Gateway_Pago_Movil ) {
+				$gateways['vexpay_pago_movil']->apply_payment_result( $order, $data, $event );
+			}
+			return;
+		}
+
 		if ( $order->get_payment_method() !== 'vexpay' ) {
 			return;
 		}

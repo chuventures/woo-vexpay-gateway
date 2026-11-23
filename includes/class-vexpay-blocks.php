@@ -40,6 +40,7 @@ class VEXPay_Blocks {
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method-vpos.php';
 		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method-usdt.php';
+		require_once VEXPAY_GATEWAY_PATH . 'includes/class-vexpay-blocks-payment-method-pago-movil.php';
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
@@ -47,6 +48,7 @@ class VEXPay_Blocks {
 				$registry->register( new VEXPay_Blocks_Payment_Method() );
 				$registry->register( new VEXPay_Blocks_Payment_Method_VPOS() );
 				$registry->register( new VEXPay_Blocks_Payment_Method_USDT() );
+				$registry->register( new VEXPay_Blocks_Payment_Method_Pago_Movil() );
 			}
 		);
 	}

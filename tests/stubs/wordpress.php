@@ -352,6 +352,37 @@ class WC_Order {
 	public function get_payment_method() {
 		return $this->meta['_payment_method'] ?? '';
 	}
+
+	public $created_at = 0;
+
+	public function get_date_created() {
+		$ts = $this->created_at > 0 ? $this->created_at : time();
+		return new DateTimeImmutable( '@' . $ts );
+	}
+
+	public function get_checkout_payment_url() {
+		return 'https://shop.test/checkout/order-pay/' . $this->id . '/';
+	}
+}
+
+/**
+ * Orders in fake state matching payment_method + status.
+ *
+ * @param array $args Query args.
+ * @return WC_Order[]
+ */
+function wc_get_orders( $args ) {
+	$out = array();
+	foreach ( $GLOBALS['vexpay_test']['orders'] as $order ) {
+		if ( isset( $args['payment_method'] ) && $order->get_payment_method() !== $args['payment_method'] ) {
+			continue;
+		}
+		if ( isset( $args['status'] ) && ! in_array( $order->status, (array) $args['status'], true ) ) {
+			continue;
+		}
+		$out[] = $order;
+	}
+	return $out;
 }
 
 /**

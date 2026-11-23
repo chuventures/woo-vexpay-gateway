@@ -1218,4 +1218,134 @@ class VEXPay_Helpers {
 
 		return '';
 	}
+
+	/**
+	 * Order meta: the last paid amount (Bs) a Pago Móvil order note was written for.
+	 */
+	public const META_PM_PAID_NOTED = '_vexpay_pm_paid_noted';
+
+	/**
+	 * Decide what a Pago Móvil payment update (webhook `data`, session progress or
+	 * GET /v1/payments/:id) does to its WooCommerce order. Pure, so it is unit-tested
+	 * without WooCommerce.
+	 *
+	 * Actions: `hold` (money received, more missing), `complete`, `cancel` (expired
+	 * with money on it: VEX Pay support refunds the buyer), `fail` (ended with nothing
+	 * paid), `none`.
+	 *
+	 * @param array  $data       Payment data. `status` may be empty when `$event` says it.
+	 * @param string $event      Webhook event (`payment.pending`…) or '' for polls.
+	 * @param bool   $is_paid    Whether the order is already paid.
+	 * @param string $noted_paid Paid amount of the last progress note ('' when none).
+	 * @return array{action:string,note:string,paid:string}
+	 */
+	public static function pago_movil_order_update( array $data, string $event, bool $is_paid, string $noted_paid ): array {
+		$none   = array(
+			'action' => 'none',
+			'note'   => '',
+			'paid'   => $noted_paid,
+		);
+		$status = strtoupper( (string) ( $data['status'] ?? '' ) );
+		if ( '' === $status ) {
+			$map    = array(
+				'payment.pending'   => 'PENDING',
+				'payment.completed' => 'COMPLETED',
+				'payment.failed'    => 'FAILED',
+				'payment.canceled'  => 'CANCELED',
+			);
+			$status = $map[ $event ] ?? '';
+		}
+		if ( $is_paid ) {
+			return $none;
+		}
+
+		$money = static function ( $value ): string {
+			return number_format_i18n( (float) $value, 2 );
+		};
+
+		if ( 'COMPLETED' === $status ) {
+			$refs = array();
+			if ( ! empty( $data['transfers'] ) && is_array( $data['transfers'] ) ) {
+				foreach ( $data['transfers'] as $transfer ) {
+					if ( is_array( $transfer ) && ! empty( $transfer['reference'] ) ) {
+						$refs[] = (string) $transfer['reference'];
+					}
+				}
+			}
+			$note = sprintf(
+				/* translators: 1: amount in bolívares 2: payment id */
+				__( 'VEX Pay Pago Móvil completed: Bs %1$s (%2$s).', 'vexpay-gateway-for-woocommerce' ),
+				$money( $data['vesAmount'] ?? 0 ),
+				(string) ( $data['paymentId'] ?? '' )
+			);
+			if ( count( $refs ) > 0 ) {
+				/* translators: %s: bank references, comma separated */
+				$note .= ' ' . sprintf( __( 'References: %s.', 'vexpay-gateway-for-woocommerce' ), implode( ', ', $refs ) );
+			}
+			return array(
+				'action' => 'complete',
+				'note'   => $note,
+				'paid'   => $noted_paid,
+			);
+		}
+
+		if ( 'PENDING' === $status ) {
+			$paid = isset( $data['paidVesAmount'] ) ? (float) $data['paidVesAmount'] : 0.0;
+			if ( $paid <= 0 ) {
+				return $none;
+			}
+			$paid_key = number_format( $paid, 2, '.', '' );
+			if ( $paid_key === $noted_paid ) {
+				return array(
+					'action' => 'hold',
+					'note'   => '',
+					'paid'   => $noted_paid,
+				);
+			}
+			$expires = '';
+			if ( ! empty( $data['expiresAt'] ) ) {
+				$ts      = strtotime( (string) $data['expiresAt'] );
+				$expires = false !== $ts ? gmdate( 'Y-m-d H:i', $ts ) . ' UTC' : '';
+			}
+			$note = sprintf(
+				/* translators: 1: amount received 2: amount missing */
+				__( 'VEX Pay Pago Móvil in progress: received Bs %1$s, missing Bs %2$s. The buyer can send the rest from their bank app.', 'vexpay-gateway-for-woocommerce' ),
+				$money( $paid ),
+				$money( $data['missingVesAmount'] ?? 0 )
+			);
+			if ( '' !== $expires ) {
+				/* translators: %s: date and time */
+				$note .= ' ' . sprintf( __( 'Open until %s.', 'vexpay-gateway-for-woocommerce' ), $expires );
+			}
+			return array(
+				'action' => 'hold',
+				'note'   => $note,
+				'paid'   => $paid_key,
+			);
+		}
+
+		if ( 'FAILED' === $status || 'CANCELED' === $status ) {
+			// The expiry releases the transfers, so a later read can say 0: keep the amount already noted.
+			$paid = max( isset( $data['paidVesAmount'] ) ? (float) $data['paidVesAmount'] : 0.0, (float) $noted_paid );
+			if ( ! empty( $data['refundPending'] ) || $paid > 0 ) {
+				return array(
+					'action' => 'cancel',
+					'note'   => sprintf(
+						/* translators: %s: amount in bolívares */
+						__( 'VEX Pay Pago Móvil expired before the full amount arrived. VEX Pay support refunds the Bs %s the buyer sent; do not ship this order.', 'vexpay-gateway-for-woocommerce' ),
+						$money( $paid )
+					),
+					'paid'   => $noted_paid,
+				);
+			}
+			$reason = ! empty( $data['failureCode'] ) ? (string) $data['failureCode'] : $status;
+			return array(
+				'action' => 'fail',
+				'note'   => 'VEX Pay Pago Móvil: ' . $reason,
+				'paid'   => $noted_paid,
+			);
+		}
+
+		return $none;
+	}
 }
