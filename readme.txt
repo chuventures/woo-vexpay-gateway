@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -149,6 +149,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.4.1 =
+* Tweak: Requests to VEX Pay carry a `VexPay-Client` header with the plugin and PHP versions, so VEX Pay can see which plugin versions are in use. It holds no store or customer data.
+
 = 1.4.0 =
 * New: VEX Pay — Pago Móvil, a payment gateway (off by default) that redirects the buyer to VEX Pay's hosted Pago Móvil page. It shares the API key, Sandbox toggle and webhook secret of VEX Pay Débito inmediato; Pago Móvil must be enabled on your VEX Pay account. Classic checkout and Cart & Checkout Blocks support.
 * New: A buyer can pay one order in several Pago Móviles. When part of the money arrives, the order goes On hold with a note of what was received and what is missing. It is paid when the rest arrives, with each bank reference noted. If the rest never arrives, the order is cancelled and VEX Pay support refunds the buyer.
@@ -175,6 +178,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.4.1 =
+Small update: identifies the plugin version to VEX Pay. No settings change.
 
 = 1.4.0 =
 Adds an optional Pago Móvil payment method, including orders paid in several transfers. It is off by default: nothing changes for your store unless you turn it on.
