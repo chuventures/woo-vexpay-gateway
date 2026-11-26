@@ -297,6 +297,10 @@ class VEXPay_Gateway_Pago_Movil extends WC_Payment_Gateway {
 	 * @param string   $event  Webhook event, '' for polls.
 	 */
 	public function apply_payment_result( WC_Order $order, array $result, string $event = '' ): void {
+		if ( 'payment.refund_requested' === $event || 'payment.refund_updated' === $event ) {
+			$this->apply_refund_update( $order, $result );
+			return;
+		}
 		$noted  = (string) $order->get_meta( VEXPay_Helpers::META_PM_PAID_NOTED );
 		$update = VEXPay_Helpers::pago_movil_order_update( $result, $event, $order->is_paid(), $noted );
 
@@ -335,6 +339,27 @@ class VEXPay_Gateway_Pago_Movil extends WC_Payment_Gateway {
 				break;
 		}
 
+		$order->save();
+	}
+
+	/**
+	 * A buyer's refund request changed: one order note per status, never a status change.
+	 *
+	 * @param WC_Order $order Order.
+	 * @param array    $data  Refund webhook data.
+	 */
+	private function apply_refund_update( WC_Order $order, array $data ): void {
+		$status = (string) ( $data['status'] ?? '' );
+		$key    = (string) ( $data['refundRequestId'] ?? '' ) . ':' . $status;
+		if ( '' === $status || $order->get_meta( VEXPay_Helpers::META_PM_REFUND_NOTED ) === $key ) {
+			return;
+		}
+		$note = VEXPay_Helpers::pago_movil_refund_note( $data );
+		if ( '' === $note ) {
+			return;
+		}
+		$order->add_order_note( $note );
+		$order->update_meta_data( VEXPay_Helpers::META_PM_REFUND_NOTED, $key );
 		$order->save();
 	}
 

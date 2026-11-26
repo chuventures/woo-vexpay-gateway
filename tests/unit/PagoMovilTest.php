@@ -168,6 +168,43 @@ final class PagoMovilTest extends TestCase {
 		$this->assertSame( 'EXPIRED_REFUND', $order->get_meta( VEXPay_Helpers::META_STATUS ) );
 	}
 
+	public function test_buyer_refund_request_cancels_with_its_own_note(): void {
+		$gateway = $this->gateway();
+		$order   = $this->order();
+		$gateway->apply_payment_result( $order, $this->pending( 1000, 837.53 ), 'payment.pending' );
+		$gateway->apply_payment_result( $order, array( 'status' => 'FAILED', 'failureCode' => 'refund_requested', 'paidVesAmount' => 1000, 'refundPending' => true ), 'payment.failed' );
+		$this->assertSame( 'cancelled', $order->status );
+		$this->assertStringContainsString( 'asked for the Bs 1,000.00', end( $order->notes ) );
+		$this->assertStringContainsString( 'Devoluciones', end( $order->notes ) );
+	}
+
+	public function test_refund_updates_add_one_note_per_status_and_never_change_the_order(): void {
+		$gateway = $this->gateway();
+		$order   = $this->order();
+		$gateway->apply_payment_result( $order, $this->pending( 1000, 837.53 ), 'payment.pending' );
+		$gateway->apply_payment_result( $order, array( 'status' => 'FAILED', 'failureCode' => 'refund_requested', 'paidVesAmount' => 1000 ), 'payment.failed' );
+		$notes = count( $order->notes );
+
+		$base = array( 'refundRequestId' => 'rr_1', 'paymentId' => 'pay_1', 'paidVesAmount' => '1000.00', 'bankFeesVesAmount' => '5.98', 'refundVesAmount' => '994.02' );
+		$gateway->apply_payment_result( $order, $base + array( 'status' => 'pending' ), 'payment.refund_requested' );
+		$gateway->apply_payment_result( $order, $base + array( 'status' => 'pending' ), 'payment.refund_requested' );
+		$this->assertCount( $notes + 1, $order->notes, 'a retried webhook adds no note' );
+		$this->assertStringContainsString( 'Bs 994.02', end( $order->notes ) );
+		$this->assertSame( 'cancelled', $order->status, 'a refund status is never read as a payment status' );
+
+		$gateway->apply_payment_result( $order, $base + array( 'status' => 'sent', 'bankReferences' => array( '329912' ) ), 'payment.refund_updated' );
+		$this->assertStringContainsString( 'References: 329912.', end( $order->notes ) );
+		$this->assertSame( 'cancelled', $order->status );
+		$this->assertFalse( $order->is_paid() );
+	}
+
+	public function test_refund_note_texts(): void {
+		$this->assertStringContainsString( 'declined', VEXPay_Helpers::pago_movil_refund_note( array( 'status' => 'declined', 'decisionNote' => 'ya enviado' ) ) );
+		$this->assertStringContainsString( 'Note: ya enviado', VEXPay_Helpers::pago_movil_refund_note( array( 'status' => 'declined', 'decisionNote' => 'ya enviado' ) ) );
+		$this->assertStringContainsString( 'under review', VEXPay_Helpers::pago_movil_refund_note( array( 'status' => 'needs_ops' ) ) );
+		$this->assertSame( '', VEXPay_Helpers::pago_movil_refund_note( array( 'status' => 'weird' ) ) );
+	}
+
 	public function test_process_payment_creates_pago_movil_session(): void {
 		$gateway = $this->gateway();
 		$order   = new WC_Order( 9, array(), 12.5 );
