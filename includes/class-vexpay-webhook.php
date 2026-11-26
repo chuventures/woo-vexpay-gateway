@@ -75,6 +75,11 @@ class VEXPay_Webhook {
 			return;
 		}
 
+		// Refund-request events exist only for Pago Móvil payments; never let them touch another gateway's order.
+		if ( str_starts_with( $event, 'payment.refund_' ) && $order->get_payment_method() !== 'vexpay_pago_movil' ) {
+			return;
+		}
+
 		// Marketplace mode: keep the per-comercio breakdown (commission, fee, net). No-op without `splits`.
 		VEXPay_Marketplace::capture_reported_splits( $order, $data );
 

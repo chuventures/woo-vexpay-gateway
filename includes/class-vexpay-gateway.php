@@ -560,6 +560,8 @@ class VEXPay_Gateway extends WC_Payment_Gateway {
 			'payment.failed',
 			'payment.canceled',
 			'payment.reversed',
+			'payment.refund_requested',
+			'payment.refund_updated',
 		);
 		$endpoint = (string) $this->get_option( 'webhook_endpoint_id', '' );
 		$secret   = (string) $this->get_option( 'webhook_secret', '' );

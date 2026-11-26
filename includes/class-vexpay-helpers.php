@@ -1244,6 +1244,8 @@ class VEXPay_Helpers {
 	 * Order meta: the last paid amount (Bs) a Pago Móvil order note was written for.
 	 */
 	public const META_PM_PAID_NOTED = '_vexpay_pm_paid_noted';
+	/** Last refund request status noted on the order (`<requestId>:<status>`), so a retried webhook adds no note. */
+	public const META_PM_REFUND_NOTED = '_vexpay_pm_refund_noted';
 
 	/**
 	 * Decide what a Pago Móvil payment update (webhook `data`, session progress or
@@ -1348,6 +1350,17 @@ class VEXPay_Helpers {
 		if ( 'FAILED' === $status || 'CANCELED' === $status ) {
 			// The expiry releases the transfers, so a later read can say 0: keep the amount already noted.
 			$paid = max( isset( $data['paidVesAmount'] ) ? (float) $data['paidVesAmount'] : 0.0, (float) $noted_paid );
+			if ( 'refund_requested' === ( $data['failureCode'] ?? '' ) ) {
+				return array(
+					'action' => 'cancel',
+					'note'   => sprintf(
+						/* translators: %s: amount in bolívares */
+						__( 'VEX Pay Pago Móvil: the buyer asked for the Bs %s they sent back and will not finish this payment. Approve or decline the refund in your VEX Pay portal (Devoluciones); do not ship this order.', 'vexpay-gateway-for-woocommerce' ),
+						$money( $paid )
+					),
+					'paid'   => $noted_paid,
+				);
+			}
 			if ( ! empty( $data['refundPending'] ) || $paid > 0 ) {
 				return array(
 					'action' => 'cancel',
@@ -1368,5 +1381,50 @@ class VEXPay_Helpers {
 		}
 
 		return $none;
+	}
+
+	/**
+	 * Order note for a `payment.refund_requested` / `payment.refund_updated` webhook (a buyer's
+	 * refund request for an unfinished Pago Móvil). Never changes the order status: the order was
+	 * already cancelled by `payment.failed` with `refund_requested`. Pure, so it is unit-tested.
+	 *
+	 * @param array $data Webhook data (`status`, `refundVesAmount`, `bankFeesVesAmount`…).
+	 * @return string Note, or '' for an unknown status.
+	 */
+	public static function pago_movil_refund_note( array $data ): string {
+		$money  = static function ( $value ): string {
+			return number_format_i18n( (float) $value, 2 );
+		};
+		$refund = $money( $data['refundVesAmount'] ?? 0 );
+		$fees   = $money( $data['bankFeesVesAmount'] ?? 0 );
+		switch ( (string) ( $data['status'] ?? '' ) ) {
+			case 'pending':
+				/* translators: 1: refund amount 2: bank fees */
+				return sprintf( __( 'VEX Pay refund requested by the buyer: Bs %1$s (bank fees Bs %2$s deducted). Approve or decline it in your VEX Pay portal (Devoluciones).', 'vexpay-gateway-for-woocommerce' ), $refund, $fees );
+			case 'approved':
+			case 'sending':
+				/* translators: %s: refund amount */
+				return sprintf( __( 'VEX Pay refund approved: sending Bs %s to the buyer.', 'vexpay-gateway-for-woocommerce' ), $refund );
+			case 'sent':
+				$refs = ! empty( $data['bankReferences'] ) && is_array( $data['bankReferences'] ) ? implode( ', ', array_map( 'strval', $data['bankReferences'] ) ) : '';
+				/* translators: %s: refund amount */
+				$note = sprintf( __( 'VEX Pay refund sent: Bs %s back to the buyer.', 'vexpay-gateway-for-woocommerce' ), $refund );
+				if ( '' !== $refs ) {
+					/* translators: %s: bank references, comma separated */
+					$note .= ' ' . sprintf( __( 'References: %s.', 'vexpay-gateway-for-woocommerce' ), $refs );
+				}
+				return $note;
+			case 'declined':
+				$note = __( 'VEX Pay refund declined by the seller. VEX Pay support will contact the buyer.', 'vexpay-gateway-for-woocommerce' );
+				if ( ! empty( $data['decisionNote'] ) ) {
+					/* translators: %s: seller note */
+					$note .= ' ' . sprintf( __( 'Note: %s', 'vexpay-gateway-for-woocommerce' ), (string) $data['decisionNote'] );
+				}
+				return $note;
+			case 'failed':
+			case 'needs_ops':
+				return __( 'VEX Pay refund under review by VEX Pay support; they will send it and contact the buyer.', 'vexpay-gateway-for-woocommerce' );
+		}
+		return '';
 	}
 }

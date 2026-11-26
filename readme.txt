@@ -4,7 +4,7 @@ Tags: woocommerce, payments, venezuela, c2p, pago movil
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.4.2
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -149,6 +149,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 
 == Changelog ==
 
+= 1.5.0 =
+* New: VEX Pay Pago Móvil refund requests. A buyer who paid part of an order and won't finish can ask for the money back on the VEX Pay checkout page. The order is cancelled with a note telling you to approve or decline the refund in your VEX Pay portal (Devoluciones), and each step (requested, approved, sent with its bank reference, declined) adds an order note. The plugin subscribes to the new payment.refund_requested and payment.refund_updated webhooks; save the settings once to update the webhook.
+
 = 1.4.2 =
 * Fix: VEX Pay Débito inmediato never moves a paid order back. A late or retried webhook (a pending event after the payment, or the buyer's earlier failed attempt) used to put a paid order On hold or mark it Failed; a refunded order is no longer paid again either. Pago Móvil and USDT orders already worked this way.
 
@@ -181,6 +184,9 @@ Google Fonts: [Google Fonts Terms of Service](https://developers.google.com/font
 * Initial release: C2P intent + OTP, webhooks, refunds, Blocks support.
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+Pago Móvil refund requests: order notes for each step. Save the VEX Pay settings once after updating so the webhook gets the new events.
 
 = 1.4.2 =
 Recommended: a late VEX Pay webhook can no longer put a paid card order back On hold or Failed.
